@@ -497,53 +497,156 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final periods = ['Bugun', 'Haftalik', 'Oylik', 'Yillik', 'Barchasi'];
 
-    final periodSelector = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
+    Widget buildPeriodSelector({bool isFullWidth = false}) {
+      return Container(
+        width: isFullWidth ? double.infinity : null,
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: context.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: context.borderColor),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final p in periods) ...[
-              GestureDetector(
-                onTap: () => setState(() => _selectedTopPeriod = p),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _selectedTopPeriod == p
-                        ? (context.isDark
-                            ? AppColors.neonLime
-                            : AppColors.darkCard)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    p,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: _selectedTopPeriod == p
-                          ? FontWeight.w700
-                          : FontWeight.w600,
-                      color: _selectedTopPeriod == p
-                          ? (context.isDark ? AppColors.ink : Colors.white)
-                          : context.mutedColor,
-                    ),
-                  ),
+        child: isFullWidth
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  final availableW = constraints.maxWidth;
+                  final canDistributeEvenly =
+                      availableW >= (periods.length * 62.0);
+                  if (canDistributeEvenly) {
+                    return Row(
+                      children: [
+                        for (final p in periods) ...[
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedTopPeriod = p),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 7),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: _selectedTopPeriod == p
+                                      ? (context.isDark
+                                          ? AppColors.neonLime
+                                          : AppColors.darkCard)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  p,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: _selectedTopPeriod == p
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: _selectedTopPeriod == p
+                                        ? (context.isDark
+                                            ? AppColors.ink
+                                            : Colors.white)
+                                        : context.mutedColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (p != periods.last) const SizedBox(width: 4),
+                        ],
+                      ],
+                    );
+                  } else {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final p in periods) ...[
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedTopPeriod = p),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: _selectedTopPeriod == p
+                                      ? (context.isDark
+                                          ? AppColors.neonLime
+                                          : AppColors.darkCard)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  p,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: _selectedTopPeriod == p
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: _selectedTopPeriod == p
+                                        ? (context.isDark
+                                            ? AppColors.ink
+                                            : Colors.white)
+                                        : context.mutedColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (p != periods.last) const SizedBox(width: 4),
+                          ],
+                        ],
+                      ),
+                    );
+                  }
+                },
+              )
+            : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final p in periods) ...[
+                      GestureDetector(
+                        onTap: () => setState(() => _selectedTopPeriod = p),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _selectedTopPeriod == p
+                                ? (context.isDark
+                                    ? AppColors.neonLime
+                                    : AppColors.darkCard)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            p,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: _selectedTopPeriod == p
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: _selectedTopPeriod == p
+                                  ? (context.isDark
+                                      ? AppColors.ink
+                                      : Colors.white)
+                                  : context.mutedColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (p != periods.last) const SizedBox(width: 4),
+                    ],
+                  ],
                 ),
               ),
-              if (p != periods.last) const SizedBox(width: 4),
-            ],
-          ],
-        ),
-      ),
-    );
+      );
+    }
 
     Widget headerRow;
     if (isDesktop || isTablet) {
@@ -575,7 +678,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          periodSelector,
+          buildPeriodSelector(isFullWidth: false),
         ],
       );
     } else {
@@ -596,7 +699,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: TextStyle(fontSize: 12, color: context.mutedColor),
           ),
           const SizedBox(height: 10),
-          periodSelector,
+          buildPeriodSelector(isFullWidth: true),
         ],
       );
     }
@@ -948,7 +1051,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       for (int i = 0; i < 4; i++) {
         final (wStart, wEnd, wLabel) = weekIntervals[i];
-        fullLabels.add('$wLabel (Haftalik)');
+        fullLabels.add(wLabel);
 
         double intervalSales = 0.0;
         if (!wStart.isAfter(now)) {

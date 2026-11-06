@@ -29,7 +29,7 @@
         "-d",
         "windows",
         "--dart-define=USE_MOCK=false",
-        "--dart-define=API_URL=https://stonex-erp.onrender.com"
+        "--dart-define=API_URL=https://stonex-erp-ppwx.onrender.com"
       ]
     }
   ]

@@ -471,8 +471,10 @@ class Product {
         stock: parseNum(j['stock']),
         reservedQty: parseNum(j['reserved_qty']),
         rawMaterialId: (j['raw_material_id'] as num?)?.toInt(),
-        wasteRatio: j['waste_ratio'] == null ? null : parseNum(j['waste_ratio']),
-        cuttingRate: j['cutting_rate'] == null ? null : parseNum(j['cutting_rate']),
+        wasteRatio:
+            j['waste_ratio'] == null ? null : parseNum(j['waste_ratio']),
+        cuttingRate:
+            j['cutting_rate'] == null ? null : parseNum(j['cutting_rate']),
         minStock: j['min_stock'] == null ? 15.0 : parseNum(j['min_stock']),
         imageUrl:
             (j['image_url'] != null && j['image_url'].toString().isNotEmpty)
@@ -994,14 +996,17 @@ class FinanceTransaction {
   bool get isIncome => type == 'income';
   bool get isExpense => type == 'expense';
 
-  factory FinanceTransaction.fromJson(Map<String, dynamic> j) => FinanceTransaction(
+  factory FinanceTransaction.fromJson(Map<String, dynamic> j) =>
+      FinanceTransaction(
         id: (j['id'] as num?)?.toInt() ?? 0,
         type: (j['type'] ?? 'expense').toString(),
         category: (j['category'] ?? '').toString(),
         amount: parseNum(j['amount']),
         paymentMethod: (j['payment_method'] ?? 'cash').toString(),
         note: j['note']?.toString(),
-        date: j['date'] != null ? DateTime.tryParse(j['date'].toString()) ?? DateTime.now() : DateTime.now(),
+        date: j['date'] != null
+            ? DateTime.tryParse(j['date'].toString()) ?? DateTime.now()
+            : DateTime.now(),
         createdByName: j['created_by_name']?.toString(),
       );
 
@@ -1063,9 +1068,12 @@ class MonthlyComparison {
     required this.netProfitGrowthPercent,
   });
 
-  factory MonthlyComparison.fromJson(Map<String, dynamic> j) => MonthlyComparison(
-        current: MonthStats.fromJson(j['current'] as Map<String, dynamic>? ?? {}),
-        previous: MonthStats.fromJson(j['previous'] as Map<String, dynamic>? ?? {}),
+  factory MonthlyComparison.fromJson(Map<String, dynamic> j) =>
+      MonthlyComparison(
+        current:
+            MonthStats.fromJson(j['current'] as Map<String, dynamic>? ?? {}),
+        previous:
+            MonthStats.fromJson(j['previous'] as Map<String, dynamic>? ?? {}),
         revenueGrowthPercent: parseNum(j['revenue_growth_percent']),
         expenseGrowthPercent: parseNum(j['expense_growth_percent']),
         netProfitGrowthPercent: parseNum(j['net_profit_growth_percent']),
@@ -1087,7 +1095,8 @@ class RevenueBreakdownItem {
     this.colorHex = '#10B981',
   });
 
-  factory RevenueBreakdownItem.fromJson(Map<String, dynamic> j) => RevenueBreakdownItem(
+  factory RevenueBreakdownItem.fromJson(Map<String, dynamic> j) =>
+      RevenueBreakdownItem(
         category: (j['category'] ?? '').toString(),
         amount: parseNum(j['amount']),
         percentage: parseNum(j['percentage']),
@@ -1154,7 +1163,9 @@ class ProductionTask {
         waste: parseNum(j['waste_qty'] ?? j['waste']),
         status: (j['status'] ?? 'open').toString(),
         approvedBy: (j['approved_by'] as num?)?.toInt(),
-        approvedAt: j['approved_at'] == null ? null : DateTime.tryParse(j['approved_at'].toString()),
+        approvedAt: j['approved_at'] == null
+            ? null
+            : DateTime.tryParse(j['approved_at'].toString()),
         note: j['note']?.toString(),
         orderId: (j['order_id'] as num?)?.toInt(),
         cutLength: parseNumOrNull(j['cut_length']),
@@ -1389,8 +1400,10 @@ class Delivery {
         'delivery_fee': deliveryFee,
         'fee_payer': feePayer,
         'status': status,
-        if (dispatchTime != null) 'dispatch_time': dispatchTime?.toIso8601String(),
-        if (deliveredTime != null) 'delivered_time': deliveredTime?.toIso8601String(),
+        if (dispatchTime != null)
+          'dispatch_time': dispatchTime?.toIso8601String(),
+        if (deliveredTime != null)
+          'delivered_time': deliveredTime?.toIso8601String(),
         if (note != null) 'note': note,
         'items': items.map((i) => i.toJson()).toList(),
       };
