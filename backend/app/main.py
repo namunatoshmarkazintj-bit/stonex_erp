@@ -67,6 +67,7 @@ def root():
         "status": "online",
         "docs": "/docs",
         "ping": "/ping",
+        "version": "2.1-optimized",
     }
 
 
