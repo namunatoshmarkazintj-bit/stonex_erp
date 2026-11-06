@@ -8,7 +8,7 @@ from .config import settings
 _connect_args: dict = {}
 if settings.database_url.startswith("sqlite"):
     _connect_args["check_same_thread"] = False
-elif "aivencloud.com" in settings.database_url or "ssl" in settings.database_url.lower():
+elif "mysql" in settings.database_url and ("aivencloud.com" in settings.database_url or "ssl" in settings.database_url.lower()):
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -113,7 +113,7 @@ def ensure_migrations():
             if "fulfilled_by_name" not in s_columns:
                 conn.execute(text("ALTER TABLE sales ADD COLUMN fulfilled_by_name VARCHAR(128) NULL"))
             if "fulfilled_at" not in s_columns:
-                conn.execute(text("ALTER TABLE sales ADD COLUMN fulfilled_at DATETIME NULL"))
+                conn.execute(text("ALTER TABLE sales ADD COLUMN fulfilled_at TIMESTAMP NULL"))
     if "users" in table_names:
         u_columns = [c["name"] for c in inspector.get_columns("users")]
         with engine.begin() as conn:
@@ -156,7 +156,7 @@ def ensure_migrations():
             if "approved_by" not in pt_columns:
                 conn.execute(text("ALTER TABLE production_tasks ADD COLUMN approved_by INTEGER NULL REFERENCES users(id)"))
             if "approved_at" not in pt_columns:
-                conn.execute(text("ALTER TABLE production_tasks ADD COLUMN approved_at DATETIME NULL"))
+                conn.execute(text("ALTER TABLE production_tasks ADD COLUMN approved_at TIMESTAMP NULL"))
             if "order_id" not in pt_columns:
                 conn.execute(text("ALTER TABLE production_tasks ADD COLUMN order_id INTEGER NULL"))
             if "cut_length" not in pt_columns:

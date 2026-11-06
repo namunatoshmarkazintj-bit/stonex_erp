@@ -29,7 +29,10 @@ uploads_dir.mkdir(parents=True, exist_ok=True)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Jadvallarni yaratish va yangi ustunlarni migratsiya qilish
-    Base.metadata.create_all(engine)
+    try:
+        Base.metadata.create_all(engine)
+    except Exception as e:
+        print(f"create_all xabari: {e}")
     try:
         ensure_migrations()
     except Exception as e:
