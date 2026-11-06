@@ -15,10 +15,10 @@ if env_file.exists():
 
 
 class Settings:
-    _raw_db: str = os.getenv(
-        "DATABASE_URL",
-        "mysql+pymysql://root:password@localhost:3306/stone_erp?charset=utf8mb4",
-    )
+    _raw_db: str = (os.getenv("DATABASE_URL") or "").strip().strip('"').strip("'")
+    if not _raw_db:
+        _raw_db = "mysql+pymysql://root:password@localhost:3306/stone_erp?charset=utf8mb4"
+
     if _raw_db.startswith("postgres://"):
         _raw_db = _raw_db.replace("postgres://", "postgresql+psycopg2://", 1)
     elif _raw_db.startswith("postgresql://") and "+psycopg2" not in _raw_db:
