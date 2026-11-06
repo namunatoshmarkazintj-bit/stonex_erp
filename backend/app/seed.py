@@ -128,39 +128,57 @@ def seed_ntm_dataset(db) -> None:
         return
 
     # 1. Xodimlar (employees)
-    for emp in data.get("employees", []):
+    used_usernames = set(db.scalars(select(m.User.username)).all())
+    for idx, emp in enumerate(data.get("employees", [])):
         full_name = (emp.get("name") or "").strip()
         if not full_name:
             continue
         role = emp.get("role", roles.WORKER)
+        if role not in roles.ALL_ROLES:
+            role = roles.WORKER
         salary = Decimal(str(emp.get("salary", 0)))
         phone = (emp.get("phone") or "").strip()
         parts = full_name.lower().split()
         cand_user = re.sub(r"[^a-z0-9]", "", parts[-1] if len(parts) > 1 else parts[0])
         if not cand_user:
-            cand_user = f"user_{phone[-4:] if len(phone) >= 4 else '1'}"
+            cand_user = f"user_{phone[-4:] if len(phone) >= 4 else idx + 1}"
+        if cand_user in used_usernames:
+            cand_user = f"{cand_user}_{idx + 1}"
+        used_usernames.add(cand_user)
 
         existing = db.scalar(select(m.User).where((m.User.username == cand_user) | (m.User.full_name == full_name)))
         if not existing:
             pwd = f"{cand_user}123" if len(cand_user) >= 4 else "123456"
-            db.add(m.User(
-                username=cand_user,
-                full_name=full_name,
-                role=role,
-                salary=salary,
-                salary_type="monthly",
-                password_hash=hash_password(pwd),
-                is_active=True,
-                can_login=True,
-            ))
-            print(f"NTM xodim yaratildi: {full_name} ({cand_user})")
+            try:
+                with db.begin_nested():
+                    db.add(m.User(
+                        username=cand_user,
+                        full_name=full_name,
+                        role=role,
+                        salary=salary,
+                        salary_type="monthly",
+                        password_hash=hash_password(pwd),
+                        is_active=True,
+                        can_login=True,
+                    ))
+                    db.flush()
+                print(f"NTM xodim yaratildi: {full_name} ({cand_user})")
+            except Exception as e:
+                print(f"Xodim kiritishda xatolik ({full_name}): {e}")
 
     # 2. Mahsulotlar (products)
-    for prod in data.get("products", []):
+    used_skus = set(db.scalars(select(m.Product.sku).where(m.Product.sku.isnot(None))).all())
+    for idx, prod in enumerate(data.get("products", [])):
         name = (prod.get("name") or "").strip()
-        sku = prod.get("sku")
+        raw_sku = (prod.get("sku") or "").strip()
         if not name:
             continue
+
+        sku = raw_sku
+        if sku and sku in used_skus:
+            sku = f"{raw_sku}_{idx + 1}"
+        if sku:
+            used_skus.add(sku)
 
         existing = None
         if sku:
@@ -186,27 +204,31 @@ def seed_ntm_dataset(db) -> None:
 
         dona_m2 = Decimal("0.25") if unit == "m2" and "granit" in (category or "").lower() else None
 
-        p = m.Product(
-            name=name,
-            category=category,
-            sku=sku,
-            qr_code=f"QR-{sku}" if sku else f"QR-{name[:8]}",
-            unit=unit,
-            price=price,
-            cost_price=cost_price,
-            sort=sort_val,
-            tile_length=tile_length,
-            tile_width=tile_width,
-            box_pieces=box_pieces,
-            box_m2=box_m2,
-            dona_m2=dona_m2,
-        )
-        db.add(p)
-        db.flush()
-        if initial_stock > 0:
-            add_movement(db, product_id=p.id, qty_delta=initial_stock, kind=m.MV_OPENING,
-                         note="NTM boshlang'ich qoldiq")
-        print(f"NTM mahsulot qo'shildi: {name} ({initial_stock} {unit})")
+        try:
+            with db.begin_nested():
+                p = m.Product(
+                    name=name,
+                    category=category,
+                    sku=sku,
+                    qr_code=f"QR-{sku}" if sku else f"QR-{name[:8]}_{idx+1}",
+                    unit=unit,
+                    price=price,
+                    cost_price=cost_price,
+                    sort=sort_val,
+                    tile_length=tile_length,
+                    tile_width=tile_width,
+                    box_pieces=box_pieces,
+                    box_m2=box_m2,
+                    dona_m2=dona_m2,
+                )
+                db.add(p)
+                db.flush()
+                if initial_stock > 0:
+                    add_movement(db, product_id=p.id, qty_delta=initial_stock, kind=m.MV_OPENING,
+                                 note="NTM boshlang'ich qoldiq")
+            print(f"NTM mahsulot qo'shildi: {name} ({initial_stock} {unit})")
+        except Exception as e:
+            print(f"Mahsulot kiritishda xatolik ({name}): {e}")
 
 
 if __name__ == "__main__":

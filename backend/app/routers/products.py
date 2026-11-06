@@ -56,6 +56,7 @@ def to_out(p: m.Product, stock) -> ProductOut:
 
 
 @router.get("", response_model=list[ProductOut])
+@router.get("/", response_model=list[ProductOut])
 def list_products(q: str | None = None, category: str | None = None, db: Session = Depends(get_db),
                   _: m.User = Depends(get_current_user)):
     stmt = select(m.Product).where(m.Product.is_active.is_(True)).order_by(m.Product.name)

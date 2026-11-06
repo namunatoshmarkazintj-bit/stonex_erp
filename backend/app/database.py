@@ -14,7 +14,14 @@ elif "aivencloud.com" in settings.database_url or "ssl" in settings.database_url
     ctx.verify_mode = ssl.CERT_NONE
     _connect_args["ssl"] = ctx
 
-engine = create_engine(settings.database_url, pool_pre_ping=True, connect_args=_connect_args)
+engine = create_engine(
+    settings.database_url,
+    pool_pre_ping=True,
+    pool_size=15 if "postgres" in settings.database_url else 5,
+    max_overflow=10 if "postgres" in settings.database_url else 5,
+    pool_recycle=300,
+    connect_args=_connect_args,
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
