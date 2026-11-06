@@ -5,7 +5,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -59,15 +59,21 @@ def to_out(p: m.Product, stock) -> ProductOut:
 @router.get("/", response_model=list[ProductOut])
 def list_products(q: str | None = None, category: str | None = None, db: Session = Depends(get_db),
                   _: m.User = Depends(get_current_user)):
-    stmt = select(m.Product).where(m.Product.is_active.is_(True)).order_by(m.Product.name)
+    stmt = (
+        select(m.Product, func.coalesce(func.sum(m.StockMovement.qty_delta), 0).label("stock"))
+        .outerjoin(m.StockMovement, m.StockMovement.product_id == m.Product.id)
+        .where(m.Product.is_active.is_(True))
+        .group_by(m.Product.id)
+        .order_by(m.Product.name)
+    )
     if category:
         stmt = stmt.where(m.Product.category == category)
     if q:
         like = f"%{q.strip()}%"
         stmt = stmt.where(or_(m.Product.name.like(like), m.Product.sku.like(like),
                               m.Product.qr_code.like(like), m.Product.color.like(like)))
-    stocks = stock_map(db)
-    return [to_out(p, stocks.get(p.id, 0)) for p in db.scalars(stmt).all()]
+    rows = db.execute(stmt).all()
+    return [to_out(p, stock) for p, stock in rows]
 
 
 @router.get("/by-code/{code}", response_model=ProductOut)
