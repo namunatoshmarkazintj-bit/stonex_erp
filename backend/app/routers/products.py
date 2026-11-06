@@ -4,10 +4,11 @@ import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy import func, or_, select
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+import time
 
 from .. import models as m
 from .. import roles
@@ -57,8 +58,9 @@ def to_out(p: m.Product, stock) -> ProductOut:
 
 @router.get("", response_model=list[ProductOut])
 @router.get("/", response_model=list[ProductOut])
-def list_products(q: str | None = None, category: str | None = None, db: Session = Depends(get_db),
+def list_products(response: Response, q: str | None = None, category: str | None = None, db: Session = Depends(get_db),
                   _: m.User = Depends(get_current_user)):
+    t0 = time.time()
     stmt = select(m.Product).where(m.Product.is_active.is_(True)).order_by(m.Product.name)
     if category:
         stmt = stmt.where(m.Product.category == category)
@@ -67,8 +69,15 @@ def list_products(q: str | None = None, category: str | None = None, db: Session
         stmt = stmt.where(or_(m.Product.name.like(like), m.Product.sku.like(like),
                               m.Product.qr_code.like(like), m.Product.color.like(like)))
     prods = db.scalars(stmt).all()
+    t1 = time.time()
     stocks = stock_map(db)
-    return [to_out(p, stocks.get(p.id, 0)) for p in prods]
+    t2 = time.time()
+    res = [to_out(p, stocks.get(p.id, 0)) for p in prods]
+    t3 = time.time()
+    timing_str = f"prods={t1-t0:.3f}s, stocks={t2-t1:.3f}s, to_out={t3-t2:.3f}s"
+    response.headers["X-Debug-Timing"] = timing_str
+    print(f"DEBUG TIMING: {timing_str}")
+    return res
 
 
 @router.get("/by-code/{code}", response_model=ProductOut)
