@@ -2,6 +2,9 @@
 Admin akkaunti (.env dagi ADMIN_*) va namunaviy mahsulotlar yaratiladi. Qayta ishga tushirsa
 mavjudlarini o'zgartirmaydi."""
 from decimal import Decimal
+import json
+from pathlib import Path
+import re
 
 from sqlalchemy import select
 
@@ -62,6 +65,8 @@ def main() -> None:
             add_movement(db, product_id=p.id, qty_delta=stock, kind=m.MV_OPENING,
                          note="Boshlang'ich qoldiq")
 
+        seed_ntm_dataset(db)
+
         # Namunaviy bildirishnomalar
         SAMPLE_NOTIFICATIONS = [
             ("Ombor ogohlantirishi", "Metalogranit zaxirasi 80 m² qoldi. Yangi partiya xaridini rejalashtiring.", "warning"),
@@ -109,6 +114,99 @@ def main() -> None:
 
         db.commit()
     print("Seed tayyor.")
+
+
+def seed_ntm_dataset(db) -> None:
+    data_file = Path(__file__).resolve().parent / "ntm_data.json"
+    if not data_file.exists():
+        return
+    try:
+        with open(data_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"ntm_data.json o'qishda xatolik: {e}")
+        return
+
+    # 1. Xodimlar (employees)
+    for emp in data.get("employees", []):
+        full_name = (emp.get("name") or "").strip()
+        if not full_name:
+            continue
+        role = emp.get("role", roles.WORKER)
+        salary = Decimal(str(emp.get("salary", 0)))
+        phone = (emp.get("phone") or "").strip()
+        parts = full_name.lower().split()
+        cand_user = re.sub(r"[^a-z0-9]", "", parts[-1] if len(parts) > 1 else parts[0])
+        if not cand_user:
+            cand_user = f"user_{phone[-4:] if len(phone) >= 4 else '1'}"
+
+        existing = db.scalar(select(m.User).where((m.User.username == cand_user) | (m.User.full_name == full_name)))
+        if not existing:
+            pwd = f"{cand_user}123" if len(cand_user) >= 4 else "123456"
+            db.add(m.User(
+                username=cand_user,
+                full_name=full_name,
+                role=role,
+                salary=salary,
+                salary_type="monthly",
+                password_hash=hash_password(pwd),
+                is_active=True,
+                can_login=True,
+            ))
+            print(f"NTM xodim yaratildi: {full_name} ({cand_user})")
+
+    # 2. Mahsulotlar (products)
+    for prod in data.get("products", []):
+        name = (prod.get("name") or "").strip()
+        sku = prod.get("sku")
+        if not name:
+            continue
+
+        existing = None
+        if sku:
+            existing = db.scalar(select(m.Product).where(m.Product.sku == sku))
+        if not existing:
+            existing = db.scalar(select(m.Product).where(m.Product.name == name))
+
+        if existing:
+            continue
+
+        unit = prod.get("unit", "m2")
+        category = prod.get("category")
+        price = Decimal(str(prod.get("price", 0)))
+        cost_price = Decimal(str(prod.get("cost_price", 0)))
+        initial_stock = Decimal(str(prod.get("initial_stock", 0)))
+        sort_val = prod.get("sort")
+        tile_length = Decimal(str(prod.get("tile_length"))) if prod.get("tile_length") is not None else None
+        tile_width = Decimal(str(prod.get("tile_width"))) if prod.get("tile_width") is not None else None
+        box_pieces = prod.get("box_pieces")
+        box_m2 = None
+        if tile_length and tile_width and box_pieces:
+            box_m2 = (tile_length * tile_width * Decimal(box_pieces)) / Decimal(10000)
+
+        dona_m2 = Decimal("0.25") if unit == "m2" and "granit" in (category or "").lower() else None
+
+        p = m.Product(
+            name=name,
+            category=category,
+            sku=sku,
+            qr_code=f"QR-{sku}" if sku else f"QR-{name[:8]}",
+            unit=unit,
+            price=price,
+            cost_price=cost_price,
+            sort=sort_val,
+            tile_length=tile_length,
+            tile_width=tile_width,
+            box_pieces=box_pieces,
+            box_m2=box_m2,
+            dona_m2=dona_m2,
+        )
+        db.add(p)
+        db.flush()
+        if initial_stock > 0:
+            add_movement(db, product_id=p.id, qty_delta=initial_stock, kind=m.MV_OPENING,
+                         note="NTM boshlang'ich qoldiq")
+        print(f"NTM mahsulot qo'shildi: {name} ({initial_stock} {unit})")
 
 
 if __name__ == "__main__":
