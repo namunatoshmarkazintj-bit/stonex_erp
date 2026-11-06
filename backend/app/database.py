@@ -17,8 +17,6 @@ elif "aivencloud.com" in settings.database_url or "ssl" in settings.database_url
 engine = create_engine(
     settings.database_url,
     pool_pre_ping=True,
-    pool_size=15 if "postgres" in settings.database_url else 5,
-    max_overflow=10 if "postgres" in settings.database_url else 5,
     pool_recycle=300,
     connect_args=_connect_args,
 )

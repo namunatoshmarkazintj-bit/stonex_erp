@@ -34,9 +34,16 @@ async def lifespan(_: FastAPI):
         ensure_migrations()
     except Exception as e:
         print(f"Migratsiya xabari: {e}")
+
+    # Faqat baza bo'sh bo'lsa boshlang'ich seed qilinadi (har safar qayta yuklab serverni qotirmaydi)
     try:
-        from .seed import main as seed_db
-        seed_db()
+        from .models import User
+        from sqlalchemy import select, func
+        with engine.connect() as conn:
+            user_count = conn.scalar(select(func.count(User.id)))
+            if not user_count:
+                from .seed import main as seed_db
+                seed_db()
     except Exception as e:
         print(f"Boshlang'ich seed xabari: {e}")
     yield

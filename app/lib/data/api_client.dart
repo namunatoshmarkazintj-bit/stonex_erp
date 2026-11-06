@@ -12,9 +12,10 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  ApiClient(this.baseUrl);
+  ApiClient(this.baseUrl) : _client = http.Client();
   String baseUrl;
   String? token;
+  final http.Client _client;
 
   Future<dynamic> get(String path, {Map<String, String>? query}) => _send('GET', path, query: query);
   Future<dynamic> post(String path, {Object? body}) => _send('POST', path, body: body);
@@ -31,7 +32,7 @@ class ApiClient {
 
     http.Response res;
     try {
-      res = await http.Response.fromStream(await req.send().timeout(const Duration(seconds: 15)));
+      res = await http.Response.fromStream(await _client.send(req).timeout(const Duration(seconds: 15)));
     } on Exception {
       throw ApiException('Serverga ulanib bo‘lmadi. Internet va server manzilini tekshiring.');
     }
@@ -52,7 +53,7 @@ class ApiClient {
 
     http.Response res;
     try {
-      final streamedRes = await req.send().timeout(const Duration(seconds: 30));
+      final streamedRes = await _client.send(req).timeout(const Duration(seconds: 30));
       res = await http.Response.fromStream(streamedRes);
     } on Exception {
       throw ApiException('Rasm serverga yuklanmadi. Internet va server holatini tekshiring.');
@@ -105,7 +106,7 @@ class ApiClient {
 
     http.Response res;
     try {
-      res = await http.Response.fromStream(await req.send().timeout(const Duration(seconds: 15)));
+      res = await http.Response.fromStream(await _client.send(req).timeout(const Duration(seconds: 15)));
     } on Exception {
       throw ApiException('Serverga ulanib bo‘lmadi. Internet va server manzilini tekshiring.');
     }
