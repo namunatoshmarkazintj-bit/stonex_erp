@@ -46,7 +46,7 @@ def to_out(p: m.Product, stock) -> ProductOut:
         price_sort1=getattr(p, 'price_sort1', None),
         price_sort1_5=getattr(p, 'price_sort1_5', None),
         price_sort2=getattr(p, 'price_sort2', None),
-        image_url=p.image_url,
+        image_url=f"/uploads/products/prod_{p.id}.jpg" if (p.image_url and len(p.image_url) > 500) else p.image_url,
         reserved_qty=getattr(p, 'reserved_qty', Decimal(0)) or Decimal(0),
         raw_material_id=getattr(p, 'raw_material_id', None),
         waste_ratio=getattr(p, 'waste_ratio', None),
