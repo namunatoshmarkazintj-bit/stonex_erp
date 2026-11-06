@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme.dart';
 import '../data/api_client.dart';
+import '../data/local_image_store.dart';
 
 void showMessage(BuildContext context, String text, {bool error = false}) {
   ScaffoldMessenger.of(context)
@@ -158,25 +159,39 @@ class ProductThumbnail extends StatelessWidget {
           errorBuilder: (_, __, ___) => fallbackAvatar(),
         );
       } else {
-        // Server URL
+        // Server URL yoki keshdagi rasm
         final resolvedUrl = ApiClient.resolveUrl(raw);
-        imageWidget = Image.network(
-          resolvedUrl,
-          width: w,
-          height: h,
-          fit: fit,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            );
-          },
-          errorBuilder: (_, __, ___) => fallbackAvatar(),
-        );
+        final cached = LocalImageStore.getCachedFile(resolvedUrl);
+        if (cached != null) {
+          // Keshdan bir zumda ochish (offline va 0ms kechikish)
+          imageWidget = Image.file(
+            cached,
+            width: w,
+            height: h,
+            fit: fit,
+            errorBuilder: (_, __, ___) => fallbackAvatar(),
+          );
+        } else {
+          // Internetdan yuklab, fonda lokal keshga yozib qo'yish
+          LocalImageStore.downloadAndCache(resolvedUrl);
+          imageWidget = Image.network(
+            resolvedUrl,
+            width: w,
+            height: h,
+            fit: fit,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
+            errorBuilder: (_, __, ___) => fallbackAvatar(),
+          );
+        }
       }
     } catch (_) {
       return fallbackAvatar();

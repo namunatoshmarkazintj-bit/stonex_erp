@@ -56,6 +56,7 @@ class ApiProductRepository implements ProductRepository {
     final j = await _api.get('/products',
         query: (query == null || query.isEmpty) ? null : {'q': query}) as List;
     final list = j.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+    LocalImageStore.prefetchAll(list.map((p) => p.imageUrl).toList());
     return list.map((p) {
       if (p.imageUrl != null && p.imageUrl!.isNotEmpty) {
         LocalImageStore.saveImage(p.id, p.imageUrl, p.name);
