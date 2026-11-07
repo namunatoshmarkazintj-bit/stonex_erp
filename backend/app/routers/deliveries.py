@@ -115,8 +115,8 @@ def create_delivery(
         delivery_fee=data.delivery_fee,
         fee_payer=data.fee_payer,
         status=data.status,
-        dispatch_time=data.dispatch_time or (datetime.utcnow() if data.status == "on_the_way" else None),
-        delivered_time=data.delivered_time or (datetime.utcnow() if data.status == "delivered" else None),
+        dispatch_time=data.dispatch_time or (m.get_server_now() if data.status == "on_the_way" else None),
+        delivered_time=data.delivered_time or (m.get_server_now() if data.status == "delivered" else None),
         note=data.note.strip() if data.note else None,
     )
     db.add(delivery)
@@ -187,9 +187,9 @@ def update_delivery(
     if data.status is not None and data.status != delivery.status:
         delivery.status = data.status
         if data.status == "on_the_way" and not delivery.dispatch_time:
-            delivery.dispatch_time = datetime.utcnow()
+            delivery.dispatch_time = m.get_server_now()
         elif data.status == "delivered" and not delivery.delivered_time:
-            delivery.delivered_time = datetime.utcnow()
+            delivery.delivered_time = m.get_server_now()
 
     if data.dispatch_time is not None:
         delivery.dispatch_time = data.dispatch_time
@@ -243,12 +243,12 @@ def update_delivery_status(
 
     delivery.status = data.status
     if data.status == "on_the_way" and not delivery.dispatch_time:
-        delivery.dispatch_time = datetime.utcnow()
+        delivery.dispatch_time = m.get_server_now()
     elif data.status == "delivered" and not delivery.delivered_time:
-        delivery.delivered_time = datetime.utcnow()
+        delivery.delivered_time = m.get_server_now()
 
     # Audit jurnali
-    ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+    ts = m.get_server_now().strftime("%Y-%m-%d %H:%M")
     audit_log = f"[{ts} | {current_user.full_name} -> {data.status}]"
     delivery.note = f"{delivery.note} {audit_log}".strip() if delivery.note else audit_log
 
@@ -305,7 +305,7 @@ def accept_delivery(
         delivery.driver_phone = current_user.username
     delivery.status = "on_the_way"
     if not delivery.dispatch_time:
-        delivery.dispatch_time = datetime.utcnow()
+        delivery.dispatch_time = m.get_server_now()
 
     db.commit()
     db.refresh(delivery)

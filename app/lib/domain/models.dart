@@ -11,6 +11,13 @@ double? parseNumOrNull(dynamic v) {
   return double.tryParse(v.toString());
 }
 
+DateTime? parseDate(dynamic v) {
+  if (v == null) return null;
+  final dt = DateTime.tryParse(v.toString());
+  if (dt == null) return null;
+  return dt.isUtc ? dt.toLocal() : dt;
+}
+
 enum Role {
   admin('admin', 'Admin'),
   kassir('kassir', 'Kassir'),
@@ -141,12 +148,8 @@ class AttendanceRecord {
         userId: (j['user_id'] as num?)?.toInt() ?? 0,
         userName: j['user_name']?.toString(),
         date: (j['date'] ?? '').toString(),
-        checkIn: j['check_in'] != null
-            ? DateTime.tryParse(j['check_in'].toString())
-            : null,
-        checkOut: j['check_out'] != null
-            ? DateTime.tryParse(j['check_out'].toString())
-            : null,
+        checkIn: parseDate(j['check_in']),
+        checkOut: parseDate(j['check_out']),
         workedHours: parseNum(j['worked_hours']),
         status: (j['status'] ?? 'present').toString(),
         note: j['note']?.toString(),
@@ -908,9 +911,7 @@ class Customer {
         phone: j['phone'] as String?,
         passport: j['passport'] as String?,
         photoUrl: j['photo_url'] as String?,
-        createdAt: j['created_at'] != null
-            ? DateTime.tryParse(j['created_at'].toString())
-            : null,
+        createdAt: parseDate(j['created_at']),
         totalSpent: parseNum(j['total_spent']),
         totalDebt: parseNum(j['total_debt']),
         salesCount: (j['sales_count'] as num?)?.toInt() ?? 0,
@@ -1120,17 +1121,13 @@ class SaleResult {
       cashierId: (j['cashier_id'] as num?)?.toInt(),
       cashierName: j['cashier_name'] as String?,
       paymentMethod: (j['payment_method'] as String?) ?? 'cash',
-      createdAt: j['created_at'] != null
-          ? DateTime.tryParse(j['created_at'].toString())
-          : null,
+      createdAt: parseDate(j['created_at']),
       receivedByName: j['received_by_name'] as String?,
       receivedByPhone: j['received_by_phone'] as String?,
       deliveryType: j['delivery_type'] as String?,
       receiverDocOrCar: j['receiver_doc_or_car'] as String?,
       fulfilledByName: j['fulfilled_by_name'] as String?,
-      fulfilledAt: j['fulfilled_at'] != null
-          ? DateTime.tryParse(j['fulfilled_at'].toString())
-          : null,
+      fulfilledAt: parseDate(j['fulfilled_at']),
       items: itemsRaw != null
           ? itemsRaw
               .map((e) => SaleItemRecord.fromJson(e as Map<String, dynamic>))
@@ -1181,9 +1178,7 @@ class StockMovementRecord {
         note: j['note'] as String?,
         createdByName: j['created_by_name'] as String?,
         unitCost: j['unit_cost'] != null ? parseNum(j['unit_cost']) : null,
-        createdAt: j['created_at'] != null
-            ? DateTime.tryParse(j['created_at'].toString()) ?? DateTime.now()
-            : DateTime.now(),
+        createdAt: parseDate(j['created_at']) ?? DateTime.now(),
       );
 
   @override
@@ -1258,9 +1253,7 @@ class FinanceTransaction {
         amount: parseNum(j['amount']),
         paymentMethod: (j['payment_method'] ?? 'cash').toString(),
         note: j['note']?.toString(),
-        date: j['date'] != null
-            ? DateTime.tryParse(j['date'].toString()) ?? DateTime.now()
-            : DateTime.now(),
+        date: parseDate(j['date']) ?? DateTime.now(),
         createdByName: j['created_by_name']?.toString(),
       );
 
@@ -1417,9 +1410,7 @@ class ProductionTask {
         waste: parseNum(j['waste_qty'] ?? j['waste']),
         status: (j['status'] ?? 'open').toString(),
         approvedBy: (j['approved_by'] as num?)?.toInt(),
-        approvedAt: j['approved_at'] == null
-            ? null
-            : DateTime.tryParse(j['approved_at'].toString()),
+        approvedAt: parseDate(j['approved_at']),
         note: j['note']?.toString(),
         orderId: (j['order_id'] as num?)?.toInt(),
         cutLength: parseNumOrNull(j['cut_length']),
@@ -1483,9 +1474,7 @@ class AppNotification {
         message: (j['message'] ?? '').toString(),
         kind: (j['kind'] ?? 'system').toString(),
         isRead: j['is_read'] == true,
-        createdAt: j['created_at'] != null
-            ? DateTime.tryParse(j['created_at'].toString()) ?? DateTime.now()
-            : DateTime.now(),
+        createdAt: parseDate(j['created_at']) ?? DateTime.now(),
       );
 
   AppNotification copyWith({bool? isRead}) => AppNotification(
@@ -1624,16 +1613,10 @@ class Delivery {
         deliveryFee: parseNum(j['delivery_fee']),
         feePayer: (j['fee_payer'] ?? 'customer').toString(),
         status: (j['status'] ?? 'loading').toString(),
-        dispatchTime: j['dispatch_time'] != null
-            ? DateTime.tryParse(j['dispatch_time'].toString())
-            : null,
-        deliveredTime: j['delivered_time'] != null
-            ? DateTime.tryParse(j['delivered_time'].toString())
-            : null,
+        dispatchTime: parseDate(j['dispatch_time']),
+        deliveredTime: parseDate(j['delivered_time']),
         note: j['note']?.toString(),
-        createdAt: j['created_at'] != null
-            ? DateTime.tryParse(j['created_at'].toString()) ?? DateTime.now()
-            : DateTime.now(),
+        createdAt: parseDate(j['created_at']) ?? DateTime.now(),
         items: (j['items'] as List<dynamic>?)
                 ?.map((e) => DeliveryItem.fromJson(e as Map<String, dynamic>))
                 .toList() ??

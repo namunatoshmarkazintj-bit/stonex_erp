@@ -25,7 +25,7 @@ from ..schemas import (
 from ..units import q2
 
 def _utcnow():
-    return datetime.utcnow()
+    return m.get_server_now()
 
 router = APIRouter(tags=["finance"])
 _admin_or_cashier = require_roles(roles.ADMIN, roles.CASHIER)

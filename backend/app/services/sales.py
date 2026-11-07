@@ -213,7 +213,7 @@ def fulfill_order(db: Session, user: m.User, sale_id: int, fulfill_data: SaleFul
                      ref_type="sale", ref_id=sale.id, user_id=user.id)
 
     sale.status = "completed"
-    sale.fulfilled_at = datetime.utcnow()
+    sale.fulfilled_at = m.get_server_now()
     sale.fulfilled_by_name = user.full_name
     if fulfill_data:
         if fulfill_data.received_by_name:
@@ -272,8 +272,8 @@ def process_return(db: Session, user: m.User, sale_id: int, return_items: list, 
         raise HTTPException(404, "Savdo topilmadi")
 
     # 1. 10 kunlik muddat tekshiruvi
-    created_at = sale.created_at or datetime.utcnow()
-    diff_days = (datetime.utcnow() - created_at).total_seconds() / 86400.0
+    created_at = sale.created_at or m.get_server_now()
+    diff_days = (m.get_server_now() - created_at).total_seconds() / 86400.0
     if diff_days > 10.0:
         raise HTTPException(
             400,
@@ -347,7 +347,7 @@ def process_return(db: Session, user: m.User, sale_id: int, return_items: list, 
     else:
         sale.status = "partially_returned"
 
-    today_str = datetime.utcnow().strftime('%d.%m.%Y')
+    today_str = m.get_server_now().strftime('%d.%m.%Y')
     return_note = f"[Qaytarildi: {total_refund:,.0f} so'm ({today_str})]"
     sale.note = f"{sale.note or ''} {return_note}".strip()
 
