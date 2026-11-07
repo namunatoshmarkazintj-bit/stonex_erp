@@ -2120,15 +2120,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Icon(Icons.receipt_rounded,
                 color: context.isDark ? AppColors.neonLime : AppColors.ink),
             const SizedBox(width: 10),
-            Text('Savdo #${s.id}',
-                style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: context.inkColor)),
+            Expanded(
+              child: Text('Savdo #${s.id}',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: context.inkColor)),
+            ),
           ],
         ),
-        content: SizedBox(
-          width: 340,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 340),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,

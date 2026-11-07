@@ -86,15 +86,23 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
           return AlertDialog(
             backgroundColor: context.dialogBg,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.add_shopping_cart_rounded, color: AppColors.neonLime, size: 24),
-                SizedBox(width: 10),
-                Text('Yangi Xarid Kirimi', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                const Icon(Icons.add_shopping_cart_rounded, color: AppColors.neonLime, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Yangi Xarid Kirimi',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: MediaQuery.sizeOf(context).width < 450 ? 16 : 18,
+                    ),
+                  ),
+                ),
               ],
             ),
-            content: SizedBox(
-              width: 440,
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
