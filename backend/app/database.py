@@ -82,6 +82,12 @@ def ensure_migrations():
                 conn.execute(text("ALTER TABLE products ADD COLUMN waste_ratio DECIMAL(14, 3) DEFAULT 1.15"))
             if "cutting_rate" not in columns:
                 conn.execute(text("ALTER TABLE products ADD COLUMN cutting_rate DECIMAL(14, 2) DEFAULT 0.00"))
+            # Baza mahsulotlari uchun kategoriyalarni to'g'rilash (Miramir, Angola va h.k.)
+            conn.execute(text("UPDATE products SET category = 'Marmar', sort = 'sort 1' WHERE name IN ('Angola', 'Miramir', 'Tan Brown') AND (category IS NULL OR category = '')"))
+            conn.execute(text("UPDATE products SET category = 'Kerama granit', sort = 'sort 1' WHERE name = 'Metalogranit' AND (category IS NULL OR category = '')"))
+            conn.execute(text("UPDATE products SET category = 'Qo‘shimcha' WHERE name IN ('Kley', 'Disk', 'Charx') AND (category IS NULL OR category = '')"))
+            conn.execute(text("UPDATE products SET category = 'Xomashyo' WHERE name = 'Sim' AND (category IS NULL OR category = '' OR category = 'Kafel')"))
+            conn.execute(text("UPDATE products SET category = 'Marmar' WHERE category = 'Granit'"))
     if "customers" in table_names:
         c_columns = [c["name"] for c in inspector.get_columns("customers")]
         with engine.begin() as conn:

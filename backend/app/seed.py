@@ -15,14 +15,14 @@ from .database import Base, SessionLocal, engine, ensure_migrations
 from .security import hash_password
 from .services.stock import add_movement
 
-SAMPLE = [  # nomi, birlik, dona_m2, narx, tannarx, boshlang'ich qoldiq
-    ("Angola", "m2", "0.25", 180000, 120000, 200),
-    ("Miramir", "m2", "0.25", 170000, 110000, 150),
-    ("Tan Brown", "m2", "0.25", 190000, 130000, 120),
-    ("Metalogranit", "m2", None, 150000, 95000, 80),
-    ("Kley", "dona", None, 45000, 30000, 100),
-    ("Sim", "m", None, 12000, 7000, 500),
-    ("Disk", "dona", None, 250000, 170000, 30),
+SAMPLE = [  # nomi, birlik, dona_m2, narx, tannarx, boshlang'ich qoldiq, kategoriya, sort
+    ("Angola", "m2", "0.25", 180000, 120000, 200, "Marmar", "sort 1"),
+    ("Miramir", "m2", "0.25", 170000, 110000, 150, "Marmar", "sort 1"),
+    ("Tan Brown", "m2", "0.25", 190000, 130000, 120, "Marmar", "sort 1"),
+    ("Metalogranit", "m2", None, 150000, 95000, 80, "Kerama granit", "sort 1"),
+    ("Kley", "dona", None, 45000, 30000, 100, "Qo‘shimcha", None),
+    ("Sim", "m", None, 12000, 7000, 500, "Xomashyo", None),
+    ("Disk", "dona", None, 250000, 170000, 30, "Qo‘shimcha", None),
 ]
 
 
@@ -55,11 +55,17 @@ def main() -> None:
             db.add(m.User(username="boshqaruvchi", full_name="Mansur Ish boshqaruvchi",
                           role=roles.FOREMAN, password_hash=hash_password("boshqaruvchi123")))
             print("Ish boshqaruvchi yaratildi: boshqaruvchi")
-        for name, unit, dona, price, cost, stock in SAMPLE:
-            if db.scalar(select(m.Product).where(m.Product.name == name)):
+        for name, unit, dona, price, cost, stock, cat, s_val in SAMPLE:
+            existing = db.scalar(select(m.Product).where(m.Product.name == name))
+            if existing:
+                if cat and existing.category != cat:
+                    existing.category = cat
+                if s_val and existing.sort != s_val:
+                    existing.sort = s_val
                 continue
             p = m.Product(name=name, unit=unit, dona_m2=Decimal(dona) if dona else None,
-                          price=price, cost_price=cost, qr_code=f"STX-{name.upper().replace(' ', '')}")
+                          price=price, cost_price=cost, qr_code=f"STX-{name.upper().replace(' ', '')}",
+                          category=cat, sort=s_val)
             db.add(p)
             db.flush()
             add_movement(db, product_id=p.id, qty_delta=stock, kind=m.MV_OPENING,

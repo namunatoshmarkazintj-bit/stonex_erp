@@ -647,7 +647,7 @@ class _ProductCardState extends State<_ProductCard> {
                               height: 104,
                               borderRadiusGeometry: const BorderRadius.vertical(top: Radius.circular(19)),
                             ),
-                            if (p.category != null && p.category!.isNotEmpty)
+                            if (p.effectiveCategory.isNotEmpty)
                               Positioned(
                                 bottom: 6,
                                 left: 6,
@@ -658,7 +658,7 @@ class _ProductCardState extends State<_ProductCard> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    p.category!,
+                                    p.effectiveCategory,
                                     style: const TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w700,

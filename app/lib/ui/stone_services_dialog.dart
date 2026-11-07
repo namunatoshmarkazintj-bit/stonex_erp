@@ -2140,7 +2140,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              p.category ?? 'Tosh',
+                              p.effectiveCategory.isNotEmpty ? p.effectiveCategory : 'Tosh',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -3502,7 +3502,7 @@ class _ProductPickerDialogState extends State<_ProductPickerDialog> {
                                               borderRadius: BorderRadius.circular(4),
                                             ),
                                             child: Text(
-                                              p.category ?? 'Tosh',
+                                              p.effectiveCategory.isNotEmpty ? p.effectiveCategory : 'Tosh',
                                               style: TextStyle(fontSize: 10, color: context.inkColor),
                                             ),
                                           ),

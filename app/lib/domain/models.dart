@@ -402,6 +402,11 @@ class Product {
         nm.contains('travertin') ||
         nm.contains('tosh') ||
         nm.contains('saroy') ||
+        nm.contains('miramir') ||
+        nm.contains('angola') ||
+        nm.contains('tan brown') ||
+        nm.contains('tambrovun') ||
+        nm.contains('kokkoz') ||
         sk.startsWith('ks')) {
       return true;
     }
@@ -525,6 +530,52 @@ class Product {
     return '';
   }
 
+  String get effectiveCategory {
+    final c = category?.trim();
+    if (c != null && c.isNotEmpty) {
+      if (c.toLowerCase() == 'granit') return 'Marmar';
+      return c;
+    }
+    final nm = name.toLowerCase();
+    if (nm.contains('miramir') ||
+        nm.contains('saroy') ||
+        nm.contains('angola') ||
+        nm.contains('tan brown') ||
+        nm.contains('tambrovun') ||
+        nm.contains('kokkoz') ||
+        nm.contains('marmar') ||
+        nm.contains('travertin') ||
+        nm.contains('granit')) {
+      return 'Marmar';
+    }
+    if (nm.contains('keram') ||
+        nm.contains('metalogranit') ||
+        nm.contains('kristal') ||
+        nm.contains('nomalum') ||
+        nm.contains('sherxon')) {
+      return 'Kerama granit';
+    }
+    if (nm.contains('kafel')) {
+      return 'Kafel';
+    }
+    if (nm.contains('kley') ||
+        nm.contains('akfix') ||
+        nm.contains('benfix') ||
+        nm.contains('dermax') ||
+        nm.contains('disk') ||
+        nm.contains('charx') ||
+        nm.contains('gul')) {
+      return 'Qo‘shimcha';
+    }
+    if (nm.contains('sim') || nm.contains('esk') || nm.contains('yinjiahong')) {
+      return 'Xomashyo';
+    }
+    if (nm.contains('stol') || nm.contains('demehot') || nm.contains('demhot')) {
+      return 'Tayyor mahsulot';
+    }
+    return '';
+  }
+
   Product copyWith({
     int? id,
     String? name,
@@ -580,15 +631,51 @@ class Product {
         id: (j['id'] as num?)?.toInt() ?? 0,
         name: (j['name'] ?? '').toString(),
         category: () {
-          final c = j['category']?.toString();
-          if (c != null && c.trim().toLowerCase() == 'granit') {
-            return 'Marmar';
+          final c = j['category']?.toString()?.trim();
+          if (c != null && c.isNotEmpty) {
+            if (c.toLowerCase() == 'granit') {
+              return 'Marmar';
+            }
+            return c;
           }
           final nm = (j['name'] ?? '').toString().toLowerCase();
-          if (nm.contains('saroy')) {
+          if (nm.contains('miramir') ||
+              nm.contains('saroy') ||
+              nm.contains('angola') ||
+              nm.contains('tan brown') ||
+              nm.contains('tambrovun') ||
+              nm.contains('kokkoz') ||
+              nm.contains('marmar') ||
+              nm.contains('travertin') ||
+              nm.contains('granit')) {
             return 'Marmar';
           }
-          return c;
+          if (nm.contains('keram') ||
+              nm.contains('metalogranit') ||
+              nm.contains('kristal') ||
+              nm.contains('nomalum') ||
+              nm.contains('sherxon')) {
+            return 'Kerama granit';
+          }
+          if (nm.contains('kafel')) {
+            return 'Kafel';
+          }
+          if (nm.contains('kley') ||
+              nm.contains('akfix') ||
+              nm.contains('benfix') ||
+              nm.contains('dermax') ||
+              nm.contains('disk') ||
+              nm.contains('charx') ||
+              nm.contains('gul')) {
+            return 'Qo‘shimcha';
+          }
+          if (nm.contains('sim') || nm.contains('esk') || nm.contains('yinjiahong')) {
+            return 'Xomashyo';
+          }
+          if (nm.contains('stol') || nm.contains('demehot') || nm.contains('demhot')) {
+            return 'Tayyor mahsulot';
+          }
+          return null;
         }(),
         sku: (j['sku'] ?? '').toString(),
         qrCode: (j['qr_code'] ?? '').toString(),

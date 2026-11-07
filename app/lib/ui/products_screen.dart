@@ -639,7 +639,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                                             ),
                                           ),
-                                          if (p.category != null && p.category!.isNotEmpty) ...[
+                                          if (p.effectiveCategory.isNotEmpty) ...[
                                             const SizedBox(width: 6),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -648,7 +648,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Text(
-                                                p.category!,
+                                                p.effectiveCategory,
                                                 style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.w700,
