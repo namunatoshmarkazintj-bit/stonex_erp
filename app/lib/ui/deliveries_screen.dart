@@ -1755,14 +1755,19 @@ class _DeliveryEditDialogState extends State<DeliveryEditDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.delivery != null;
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Dialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 24,
+        vertical: isMobile ? 16 : 24,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: context.cardBg,
       child: Container(
-        width: 620,
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-        padding: const EdgeInsets.all(22),
+        width: isMobile ? double.infinity : 620,
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.90),
+        padding: EdgeInsets.all(isMobile ? 16 : 22),
         child: Form(
           key: _formKey,
           child: Column(
@@ -1804,43 +1809,71 @@ class _DeliveryEditDialogState extends State<DeliveryEditDialog> {
                     // Mashina ma'lumotlari
                     Text('Avtotransport ma’lumotlari', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.subtextColor)),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        // Mashina raqami
-                        Expanded(
-                          flex: 3,
-                          child: TextFormField(
-                            controller: _vehicleNumberCtrl,
-                            textCapitalization: TextCapitalization.characters,
-                            decoration: const InputDecoration(
-                              labelText: 'Mashina raqami *',
-                              hintText: '01 A 777 AA',
-                              prefixIcon: Icon(Icons.pin_rounded, size: 18),
-                              isDense: true,
+                    if (isMobile) ...[
+                      TextFormField(
+                        controller: _vehicleNumberCtrl,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: const InputDecoration(
+                          labelText: 'Mashina raqami *',
+                          hintText: '01 A 777 AA',
+                          prefixIcon: Icon(Icons.pin_rounded, size: 18),
+                          isDense: true,
+                        ),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Mashina raqami shart' : null,
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        value: _vehicleModel,
+                        decoration: const InputDecoration(labelText: 'Turi', isDense: true),
+                        items: const [
+                          DropdownMenuItem(value: 'Labo', child: Text('Labo')),
+                          DropdownMenuItem(value: 'Gazel', child: Text('Gazel')),
+                          DropdownMenuItem(value: 'Isuzu', child: Text('Isuzu')),
+                          DropdownMenuItem(value: 'Kamaz', child: Text('Kamaz')),
+                          DropdownMenuItem(value: 'Damas', child: Text('Damas')),
+                          DropdownMenuItem(value: 'Boshqa', child: Text('Boshqa')),
+                        ],
+                        onChanged: (v) => setState(() => _vehicleModel = v ?? 'Labo'),
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          // Mashina raqami
+                          Expanded(
+                            flex: 3,
+                            child: TextFormField(
+                              controller: _vehicleNumberCtrl,
+                              textCapitalization: TextCapitalization.characters,
+                              decoration: const InputDecoration(
+                                labelText: 'Mashina raqami *',
+                                hintText: '01 A 777 AA',
+                                prefixIcon: Icon(Icons.pin_rounded, size: 18),
+                                isDense: true,
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty ? 'Mashina raqami shart' : null,
                             ),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Mashina raqami shart' : null,
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        // Mashina turi
-                        Expanded(
-                          flex: 2,
-                          child: DropdownButtonFormField<String>(
-                            value: _vehicleModel,
-                            decoration: const InputDecoration(labelText: 'Turi', isDense: true),
-                            items: const [
-                              DropdownMenuItem(value: 'Labo', child: Text('Labo')),
-                              DropdownMenuItem(value: 'Gazel', child: Text('Gazel')),
-                              DropdownMenuItem(value: 'Isuzu', child: Text('Isuzu')),
-                              DropdownMenuItem(value: 'Kamaz', child: Text('Kamaz')),
-                              DropdownMenuItem(value: 'Damas', child: Text('Damas')),
-                              DropdownMenuItem(value: 'Boshqa', child: Text('Boshqa')),
-                            ],
-                            onChanged: (v) => setState(() => _vehicleModel = v ?? 'Labo'),
+                          const SizedBox(width: 10),
+                          // Mashina turi
+                          Expanded(
+                            flex: 2,
+                            child: DropdownButtonFormField<String>(
+                              value: _vehicleModel,
+                              decoration: const InputDecoration(labelText: 'Turi', isDense: true),
+                              items: const [
+                                DropdownMenuItem(value: 'Labo', child: Text('Labo')),
+                                DropdownMenuItem(value: 'Gazel', child: Text('Gazel')),
+                                DropdownMenuItem(value: 'Isuzu', child: Text('Isuzu')),
+                                DropdownMenuItem(value: 'Kamaz', child: Text('Kamaz')),
+                                DropdownMenuItem(value: 'Damas', child: Text('Damas')),
+                                DropdownMenuItem(value: 'Boshqa', child: Text('Boshqa')),
+                              ],
+                              onChanged: (v) => setState(() => _vehicleModel = v ?? 'Labo'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 12),
 
                     // Tizimdagi haydovchilarni biriktirish
@@ -1920,69 +1953,117 @@ class _DeliveryEditDialogState extends State<DeliveryEditDialog> {
                     ],
 
                     // Haydovchi
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _driverNameCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Haydovchi ismi *',
-                              hintText: 'Farhod Haydovchi',
-                              prefixIcon: Icon(Icons.badge_rounded, size: 18),
-                              isDense: true,
-                            ),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Haydovchi ismi shart' : null,
-                          ),
+                    if (isMobile) ...[
+                      TextFormField(
+                        controller: _driverNameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Haydovchi ismi *',
+                          hintText: 'Farhod Haydovchi',
+                          prefixIcon: Icon(Icons.badge_rounded, size: 18),
+                          isDense: true,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _driverPhoneCtrl,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Haydovchi telefoni',
-                              hintText: '+998 90 ...',
-                              prefixIcon: Icon(Icons.phone_rounded, size: 18),
-                              isDense: true,
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Haydovchi ismi shart' : null,
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _driverPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Haydovchi telefoni',
+                          hintText: '+998 90 ...',
+                          prefixIcon: Icon(Icons.phone_rounded, size: 18),
+                          isDense: true,
+                        ),
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _driverNameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Haydovchi ismi *',
+                                hintText: 'Farhod Haydovchi',
+                                prefixIcon: Icon(Icons.badge_rounded, size: 18),
+                                isDense: true,
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty ? 'Haydovchi ismi shart' : null,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _driverPhoneCtrl,
+                              keyboardType: TextInputType.phone,
+                              decoration: const InputDecoration(
+                                labelText: 'Haydovchi telefoni',
+                                hintText: '+998 90 ...',
+                                prefixIcon: Icon(Icons.phone_rounded, size: 18),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 16),
 
-                    // Qabul qiluvchi mijoz va manzil
+                    // Qabul qiluvchi mijoz va Manzil
                     Text('Qabul qiluvchi mijoz va Manzil', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.subtextColor)),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _recipientNameCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Mijoz ismi *',
-                              hintText: 'Akmal aka',
-                              prefixIcon: Icon(Icons.person_outline_rounded, size: 18),
-                              isDense: true,
-                            ),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Mijoz ismi shart' : null,
-                          ),
+                    if (isMobile) ...[
+                      TextFormField(
+                        controller: _recipientNameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Mijoz ismi *',
+                          hintText: 'Akmal aka',
+                          prefixIcon: Icon(Icons.person_outline_rounded, size: 18),
+                          isDense: true,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _recipientPhoneCtrl,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Mijoz telefoni',
-                              hintText: '+998 93 ...',
-                              prefixIcon: Icon(Icons.phone_iphone_rounded, size: 18),
-                              isDense: true,
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Mijoz ismi shart' : null,
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _recipientPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Mijoz telefoni',
+                          hintText: '+998 93 ...',
+                          prefixIcon: Icon(Icons.phone_iphone_rounded, size: 18),
+                          isDense: true,
+                        ),
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _recipientNameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Mijoz ismi *',
+                                hintText: 'Akmal aka',
+                                prefixIcon: Icon(Icons.person_outline_rounded, size: 18),
+                                isDense: true,
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty ? 'Mijoz ismi shart' : null,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _recipientPhoneCtrl,
+                              keyboardType: TextInputType.phone,
+                              decoration: const InputDecoration(
+                                labelText: 'Mijoz telefoni',
+                                hintText: '+998 93 ...',
+                                prefixIcon: Icon(Icons.phone_iphone_rounded, size: 18),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _addressCtrl,
@@ -1996,65 +2077,111 @@ class _DeliveryEditDialogState extends State<DeliveryEditDialog> {
                     const SizedBox(height: 16),
 
                     // Yo‘l haqi va Holat
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _deliveryFeeCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Yo‘l haqi summasi',
-                              suffixText: 'so‘m',
-                              isDense: true,
+                    if (isMobile) ...[
+                      TextFormField(
+                        controller: _deliveryFeeCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Yo‘l haqi summasi',
+                          suffixText: 'so‘m',
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        value: _feePayer,
+                        decoration: const InputDecoration(labelText: 'To‘lovchi', isDense: true),
+                        items: const [
+                          DropdownMenuItem(value: 'customer', child: Text('Mijoz to‘laydi')),
+                          DropdownMenuItem(value: 'store', child: Text('Do‘kon hisobidan')),
+                          DropdownMenuItem(value: 'included', child: Text('Narx ichida')),
+                        ],
+                        onChanged: (v) => setState(() => _feePayer = v ?? 'customer'),
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _deliveryFeeCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Yo‘l haqi summasi',
+                                suffixText: 'so‘m',
+                                isDense: true,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _feePayer,
-                            decoration: const InputDecoration(labelText: 'To‘lovchi', isDense: true),
-                            items: const [
-                              DropdownMenuItem(value: 'customer', child: Text('Mijoz to‘laydi')),
-                              DropdownMenuItem(value: 'store', child: Text('Do‘kon hisobidan')),
-                              DropdownMenuItem(value: 'included', child: Text('Narx ichida')),
-                            ],
-                            onChanged: (v) => setState(() => _feePayer = v ?? 'customer'),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _feePayer,
+                              decoration: const InputDecoration(labelText: 'To‘lovchi', isDense: true),
+                              items: const [
+                                DropdownMenuItem(value: 'customer', child: Text('Mijoz to‘laydi')),
+                                DropdownMenuItem(value: 'store', child: Text('Do‘kon hisobidan')),
+                                DropdownMenuItem(value: 'included', child: Text('Narx ichida')),
+                              ],
+                              onChanged: (v) => setState(() => _feePayer = v ?? 'customer'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 12),
 
                     // Holat va Izoh
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _status,
-                            decoration: const InputDecoration(labelText: 'Holat', isDense: true),
-                            items: const [
-                              DropdownMenuItem(value: 'loading', child: Text('Yuklanmoqda')),
-                              DropdownMenuItem(value: 'on_the_way', child: Text('Yo‘lda')),
-                              DropdownMenuItem(value: 'delivered', child: Text('Yetkazildi')),
-                              DropdownMenuItem(value: 'cancelled', child: Text('Bekor qilingan')),
-                            ],
-                            onChanged: (v) => setState(() => _status = v ?? 'loading'),
-                          ),
+                    if (isMobile) ...[
+                      DropdownButtonFormField<String>(
+                        value: _status,
+                        decoration: const InputDecoration(labelText: 'Holat', isDense: true),
+                        items: const [
+                          DropdownMenuItem(value: 'loading', child: Text('Yuklanmoqda')),
+                          DropdownMenuItem(value: 'on_the_way', child: Text('Yo‘lda')),
+                          DropdownMenuItem(value: 'delivered', child: Text('Yetkazildi')),
+                          DropdownMenuItem(value: 'cancelled', child: Text('Bekor qilingan')),
+                        ],
+                        onChanged: (v) => setState(() => _status = v ?? 'loading'),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _noteCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Izoh / Qo‘shimcha',
+                          hintText: 'Qurilish joyi, topshirish...',
+                          isDense: true,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _noteCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Izoh / Qo‘shimcha',
-                              hintText: 'Qurilish joyi, topshirish...',
-                              isDense: true,
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _status,
+                              decoration: const InputDecoration(labelText: 'Holat', isDense: true),
+                              items: const [
+                                DropdownMenuItem(value: 'loading', child: Text('Yuklanmoqda')),
+                                DropdownMenuItem(value: 'on_the_way', child: Text('Yo‘lda')),
+                                DropdownMenuItem(value: 'delivered', child: Text('Yetkazildi')),
+                                DropdownMenuItem(value: 'cancelled', child: Text('Bekor qilingan')),
+                              ],
+                              onChanged: (v) => setState(() => _status = v ?? 'loading'),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _noteCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Izoh / Qo‘shimcha',
+                                hintText: 'Qurilish joyi, topshirish...',
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
