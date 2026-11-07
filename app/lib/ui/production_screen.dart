@@ -161,9 +161,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
     final hasOrderId = t.orderId != null;
     final hasCutSpec = (t.cutSpec != null && t.cutSpec!.trim().isNotEmpty);
     final hasPieces = t.cutPieces != null && t.cutPieces! > 0;
+    final isDimensionSpec = hasCutSpec && (t.cutSpec!.contains('×') || t.cutSpec!.contains('x') || t.cutSpec!.contains('X') || t.cutSpec!.contains('*'));
 
     String? dimStr;
-    if (hasCutSpec) {
+    if (isDimensionSpec) {
       dimStr = t.cutSpec;
     } else if (t.cutLength != null && t.cutWidth != null) {
       dimStr = '${t.cutLength}m × ${t.cutWidth}m';
@@ -172,9 +173,28 @@ class _ProductionScreenState extends State<ProductionScreen> {
     }
 
     final piecesStr = hasPieces ? '${t.cutPieces} dona' : RegExp(r'(\\d+\\s*dona)').firstMatch(note)?.group(1);
-    final hasPolish = note.toLowerCase().contains('silliqlash') || t.productName.toLowerCase().contains('silliqlash');
-    final hasChamfer = note.toLowerCase().contains('faska') || t.productName.toLowerCase().contains('faska');
-    final hasGroove = note.toLowerCase().contains('chizish') || t.productName.toLowerCase().contains('chizish');
+    final fullServiceText = '${t.note ?? ""} ${t.cutSpec ?? ""} ${t.productName}'.toLowerCase();
+    final hasPolish = fullServiceText.contains('silliqlash') || fullServiceText.contains('silliq');
+    final hasChamfer = fullServiceText.contains('faska');
+    final hasGroove = fullServiceText.contains('chizish');
+
+    String polishLabel = '✨ Silliqlash';
+    final polishMatch = RegExp(r'silliqlash\s*\(([^\)]+)\)', caseSensitive: false).firstMatch('${t.note ?? ""} ${t.cutSpec ?? ""}');
+    if (polishMatch != null) {
+      polishLabel = '✨ Silliqlash (${polishMatch.group(1)})';
+    }
+
+    String chamferLabel = '📐 Faska';
+    final chamferMatch = RegExp(r'faska\s*\(([^\)]+)\)', caseSensitive: false).firstMatch('${t.note ?? ""} ${t.cutSpec ?? ""}');
+    if (chamferMatch != null) {
+      chamferLabel = '📐 Faska (${chamferMatch.group(1)})';
+    }
+
+    String grooveLabel = '〰️ Chizish';
+    final grooveMatch = RegExp(r'chizish\s*\(([^\)]+)\)', caseSensitive: false).firstMatch('${t.note ?? ""} ${t.cutSpec ?? ""}');
+    if (grooveMatch != null) {
+      grooveLabel = '〰️ Chizish (${grooveMatch.group(1)})';
+    }
 
     // Clean note for display
     var cleanNote = note;
@@ -184,6 +204,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
     if (dimStr != null) {
       cleanNote = cleanNote.replaceAll(dimStr, '');
     }
+    cleanNote = cleanNote.replaceAll(RegExp(r'\[Xizmatlar:[^\]]+\]'), '');
     cleanNote = cleanNote.replaceAll(RegExp(r'\\[[^\\]]*\\]'), '').replaceAll('—', '').replaceAll('|', '').trim();
 
     final isDark = context.isDark;
@@ -247,12 +268,12 @@ class _ProductionScreenState extends State<ProductionScreen> {
               if (piecesStr != null && piecesStr.isNotEmpty)
                 _buildSpecTag('📦 Soni: $piecesStr', const Color(0xFF7C3AED), isDark),
               if (hasPolish)
-                _buildSpecTag('✨ Silliqlash', const Color(0xFF059669), isDark),
+                _buildSpecTag(polishLabel, const Color(0xFF059669), isDark),
               if (hasChamfer)
-                _buildSpecTag('📐 Faska', const Color(0xFFD97706), isDark),
+                _buildSpecTag(chamferLabel, const Color(0xFFD97706), isDark),
               if (hasGroove)
-                _buildSpecTag('〰️ Chizish', const Color(0xFFD97706), isDark),
-              if (dimStr == null && piecesStr == null)
+                _buildSpecTag(grooveLabel, const Color(0xFFD97706), isDark),
+              if (dimStr == null && piecesStr == null && !hasPolish && !hasChamfer && !hasGroove)
                 _buildSpecTag('📦 Reja: ${qty(t.planned)} ${t.unit}', const Color(0xFF475569), isDark),
             ],
           ),
@@ -304,8 +325,9 @@ class _ProductionScreenState extends State<ProductionScreen> {
     final isDark = context.isDark;
     final note = t.note ?? '';
     final hasCutSpec = (t.cutSpec != null && t.cutSpec!.trim().isNotEmpty);
+    final isDimensionSpec = hasCutSpec && (t.cutSpec!.contains('×') || t.cutSpec!.contains('x') || t.cutSpec!.contains('X') || t.cutSpec!.contains('*'));
     String? dimStr;
-    if (hasCutSpec) {
+    if (isDimensionSpec) {
       dimStr = t.cutSpec;
     } else if (t.cutLength != null && t.cutWidth != null) {
       dimStr = '${t.cutLength}m × ${t.cutWidth}m';
@@ -315,9 +337,28 @@ class _ProductionScreenState extends State<ProductionScreen> {
     final piecesStr = (t.cutPieces != null && t.cutPieces! > 0)
         ? '${t.cutPieces} dona'
         : RegExp(r'(\\d+\\s*dona)').firstMatch(note)?.group(1);
-    final hasPolish = note.toLowerCase().contains('silliqlash') || t.productName.toLowerCase().contains('silliqlash');
-    final hasChamfer = note.toLowerCase().contains('faska') || t.productName.toLowerCase().contains('faska');
-    final hasGroove = note.toLowerCase().contains('chizish') || t.productName.toLowerCase().contains('chizish');
+    final fullServiceText = '${t.note ?? ""} ${t.cutSpec ?? ""} ${t.productName}'.toLowerCase();
+    final hasPolish = fullServiceText.contains('silliqlash') || fullServiceText.contains('silliq');
+    final hasChamfer = fullServiceText.contains('faska');
+    final hasGroove = fullServiceText.contains('chizish');
+
+    String polishLabel = '✨ Silliqlash';
+    final polishMatch = RegExp(r'silliqlash\s*\(([^\)]+)\)', caseSensitive: false).firstMatch('${t.note ?? ""} ${t.cutSpec ?? ""}');
+    if (polishMatch != null) {
+      polishLabel = '✨ Silliqlash (${polishMatch.group(1)})';
+    }
+
+    String chamferLabel = '📐 Faska';
+    final chamferMatch = RegExp(r'faska\s*\(([^\)]+)\)', caseSensitive: false).firstMatch('${t.note ?? ""} ${t.cutSpec ?? ""}');
+    if (chamferMatch != null) {
+      chamferLabel = '📐 Faska (${chamferMatch.group(1)})';
+    }
+
+    String grooveLabel = '〰️ Chizish';
+    final grooveMatch = RegExp(r'chizish\s*\(([^\)]+)\)', caseSensitive: false).firstMatch('${t.note ?? ""} ${t.cutSpec ?? ""}');
+    if (grooveMatch != null) {
+      grooveLabel = '〰️ Chizish (${grooveMatch.group(1)})';
+    }
 
     await showModalBottomSheet<void>(
       context: context,
@@ -463,12 +504,14 @@ class _ProductionScreenState extends State<ProductionScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (dimStr != null && dimStr.isNotEmpty)
+                  _buildSpecTag('✂️ Razmer kesish: $dimStr', const Color(0xFF0284C7), isDark),
                 if (hasPolish)
-                  _buildSpecTag('✨ Silliqlash talab etiladi', const Color(0xFF059669), isDark),
+                  _buildSpecTag('$polishLabel talab etiladi', const Color(0xFF059669), isDark),
                 if (hasChamfer)
-                  _buildSpecTag('📐 Faska ochish talab etiladi', const Color(0xFFD97706), isDark),
+                  _buildSpecTag('$chamferLabel talab etiladi', const Color(0xFFD97706), isDark),
                 if (hasGroove)
-                  _buildSpecTag('〰️ Chizish talab etiladi', const Color(0xFFD97706), isDark),
+                  _buildSpecTag('$grooveLabel talab etiladi', const Color(0xFFD97706), isDark),
               ],
             ),
             if (t.note != null && t.note!.isNotEmpty) ...[
@@ -1740,6 +1783,28 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
   String? _error;
   bool _busy = false;
 
+  // Xizmatlar:
+  bool _serviceCut = false;
+  bool _servicePolish = false;
+  bool _serviceChamfer = false;
+  bool _serviceGroove = false;
+
+  // Kesish parametrlari
+  String _cutUnit = 'sm'; // 'sm' yoki 'm'
+  final _cutLengthCtrl = TextEditingController(text: '120');
+  final _cutWidthCtrl = TextEditingController(text: '60');
+  final _cutPiecesCtrl = TextEditingController(text: '1');
+
+  // Silliqlash parametrlari
+  String _polishStoneType = 'granite'; // 'granite' (Granit) yoki 'ceramics' (Keramogranit)
+  final _polishMetersCtrl = TextEditingController();
+
+  // Faska ochish parametri
+  final _chamferMetersCtrl = TextEditingController();
+
+  // Chizish parametri
+  final _grooveMetersCtrl = TextEditingController();
+
   ({String? cutSpec, int? pieces, String? cleanStoneName}) _parseCuttingItemDetails(String text) {
     final dimMatch = RegExp(r'(\d+(?:\.\d+)?\s*(?:sm|m)?\s*[×xX*]\s*\d+(?:\.\d+)?\s*(?:sm|m)?)').firstMatch(text);
     final piecesMatch = RegExp(r'(\d+)\s*dona').firstMatch(text);
@@ -1763,6 +1828,27 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
     _cutSpec = widget.initialCutSpec;
     _cutPieces = widget.initialCutPieces;
     _customerInfo = widget.initialCustomerInfo;
+
+    if (widget.initialCutSpec != null && widget.initialCutSpec!.isNotEmpty) {
+      _serviceCut = true;
+      final m = RegExp(r'(\d+(?:\.\d+)?)\s*(sm|m)?\s*[×xX*]\s*(\d+(?:\.\d+)?)\s*(sm|m)?').firstMatch(widget.initialCutSpec!);
+      if (m != null) {
+        _cutLengthCtrl.text = m.group(1)!;
+        _cutWidthCtrl.text = m.group(3)!;
+        if (m.group(2) != null) _cutUnit = m.group(2)!;
+      }
+    }
+    if (widget.initialCutPieces != null && widget.initialCutPieces! > 0) {
+      _cutPiecesCtrl.text = widget.initialCutPieces.toString();
+    }
+    final initNoteLower = (widget.initialNote ?? '').toLowerCase();
+    if (initNoteLower.contains('silliqlash') || initNoteLower.contains('silliq')) {
+      _servicePolish = true;
+      if (initNoteLower.contains('keramo')) _polishStoneType = 'ceramics';
+    }
+    if (initNoteLower.contains('faska')) _serviceChamfer = true;
+    if (initNoteLower.contains('chizish')) _serviceGroove = true;
+
     _loadFuture = _loadData();
   }
 
@@ -1783,7 +1869,182 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
   void dispose() {
     _planCtrl.dispose();
     _noteCtrl.dispose();
+    _cutLengthCtrl.dispose();
+    _cutWidthCtrl.dispose();
+    _cutPiecesCtrl.dispose();
+    _polishMetersCtrl.dispose();
+    _chamferMetersCtrl.dispose();
+    _grooveMetersCtrl.dispose();
     super.dispose();
+  }
+
+  double? _calculateCutAreaM2() {
+    final len = double.tryParse(_cutLengthCtrl.text.replaceAll(',', '.').trim());
+    final wid = double.tryParse(_cutWidthCtrl.text.replaceAll(',', '.').trim());
+    final pieces = int.tryParse(_cutPiecesCtrl.text.trim()) ?? 1;
+    if (len == null || wid == null || len <= 0 || wid <= 0 || pieces <= 0) return null;
+
+    final lenM = _cutUnit == 'sm' ? (len / 100.0) : len;
+    final widM = _cutUnit == 'sm' ? (wid / 100.0) : wid;
+    final area = lenM * widM * pieces;
+    return (area * 100).round() / 100.0;
+  }
+
+  void _applyCutAreaToPlan() {
+    final area = _calculateCutAreaM2();
+    if (area != null && area > 0) {
+      _planCtrl.text = qty(area);
+    }
+  }
+
+  void _autoFillPolishMeters() {
+    if (_serviceCut) {
+      final len = double.tryParse(_cutLengthCtrl.text.replaceAll(',', '.').trim());
+      final pieces = int.tryParse(_cutPiecesCtrl.text.trim()) ?? 1;
+      if (len != null && len > 0) {
+        final lenM = _cutUnit == 'sm' ? (len / 100.0) : len;
+        final totalM = (lenM * pieces * 10).round() / 10.0;
+        _polishMetersCtrl.text = totalM % 1 == 0 ? totalM.toInt().toString() : totalM.toString();
+      }
+    }
+  }
+
+  void _autoFillChamferMeters() {
+    if (_serviceCut) {
+      final len = double.tryParse(_cutLengthCtrl.text.replaceAll(',', '.').trim());
+      final pieces = int.tryParse(_cutPiecesCtrl.text.trim()) ?? 1;
+      if (len != null && len > 0) {
+        final lenM = _cutUnit == 'sm' ? (len / 100.0) : len;
+        final totalM = (lenM * pieces * 10).round() / 10.0;
+        _chamferMetersCtrl.text = totalM % 1 == 0 ? totalM.toInt().toString() : totalM.toString();
+      }
+    }
+  }
+
+  void _convertCutUnits(String oldUnit, String newUnit) {
+    if (oldUnit == newUnit) return;
+    final len = double.tryParse(_cutLengthCtrl.text.replaceAll(',', '.').trim());
+    final wid = double.tryParse(_cutWidthCtrl.text.replaceAll(',', '.').trim());
+    if (newUnit == 'm') {
+      if (len != null) _cutLengthCtrl.text = (len / 100.0).toString();
+      if (wid != null) _cutWidthCtrl.text = (wid / 100.0).toString();
+    } else {
+      if (len != null) {
+        final smVal = len * 100.0;
+        _cutLengthCtrl.text = smVal % 1 == 0 ? smVal.toInt().toString() : smVal.toString();
+      }
+      if (wid != null) {
+        final smVal = wid * 100.0;
+        _cutWidthCtrl.text = smVal % 1 == 0 ? smVal.toInt().toString() : smVal.toString();
+      }
+    }
+  }
+
+  void _applyOrder(SaleResult? ord, List<Product> products) {
+    if (ord == null) {
+      setState(() {
+        _orderId = null;
+        _cutSpec = null;
+        _cutPieces = null;
+        _customerInfo = null;
+        _noteCtrl.clear();
+        _serviceCut = false;
+        _servicePolish = false;
+        _serviceChamfer = false;
+        _serviceGroove = false;
+      });
+      return;
+    }
+
+    SaleItemRecord? cutItem;
+    SaleItemRecord? polishItem;
+    SaleItemRecord? chamferItem;
+    SaleItemRecord? grooveItem;
+
+    for (final it in ord.items) {
+      final name = it.productName.toLowerCase();
+      if (it.isCut || name.contains('kesish') || name.contains('ishlov') || RegExp(r'\d+\s*[×xX*]\s*\d+').hasMatch(name)) {
+        cutItem ??= it;
+      }
+      if (name.contains('silliq')) {
+        polishItem ??= it;
+      }
+      if (name.contains('faska')) {
+        chamferItem ??= it;
+      }
+      if (name.contains('chizish')) {
+        grooveItem ??= it;
+      }
+    }
+
+    cutItem ??= ord.items.where(
+      (it) => it.isCut || it.productName.toLowerCase().contains('kesish'),
+    ).firstOrNull ?? ord.items.firstOrNull;
+
+    final targetCutItem = cutItem;
+    final matching = targetCutItem == null
+        ? null
+        : products.where((p) => p.id == targetCutItem.productId || p.name.toLowerCase() == targetCutItem.productName.toLowerCase()).firstOrNull;
+    final details = targetCutItem == null ? (cutSpec: null, pieces: null, cleanStoneName: null) : _parseCuttingItemDetails(targetCutItem.productName);
+
+    setState(() {
+      _orderId = ord.id;
+      _customerInfo = '${ord.customerName ?? "Mijoz"}${ord.customerPhone != null ? " (${ord.customerPhone})" : ""}';
+      _noteCtrl.text = (ord.cleanNote != null && ord.cleanNote!.isNotEmpty) ? ord.cleanNote! : (ord.note ?? '');
+
+      if (matching != null) {
+        _selectedProductId = matching.id;
+      }
+
+      // 1. Kesish
+      if (targetCutItem != null && (details.cutSpec != null || targetCutItem.isCut || targetCutItem.productName.toLowerCase().contains('kesish'))) {
+        _serviceCut = true;
+        _cutSpec = details.cutSpec;
+        _cutPieces = details.pieces;
+        if (details.cutSpec != null) {
+          final dimMatch = RegExp(r'(\d+(?:\.\d+)?)\s*(sm|m)?\s*[×xX*]\s*(\d+(?:\.\d+)?)\s*(sm|m)?').firstMatch(details.cutSpec!);
+          if (dimMatch != null) {
+            _cutLengthCtrl.text = dimMatch.group(1)!;
+            _cutWidthCtrl.text = dimMatch.group(3)!;
+            if (dimMatch.group(2) != null) _cutUnit = dimMatch.group(2)!;
+          }
+        }
+        if (details.pieces != null && details.pieces! > 0) {
+          _cutPiecesCtrl.text = details.pieces.toString();
+        }
+        _planCtrl.text = qty(targetCutItem.quantity);
+      } else {
+        _serviceCut = false;
+        if (ord.items.isNotEmpty) {
+          _planCtrl.text = qty(ord.items.first.quantity);
+        }
+      }
+
+      // 2. Silliqlash
+      if (polishItem != null) {
+        _servicePolish = true;
+        _polishStoneType = polishItem.productName.toLowerCase().contains('keramo') ? 'ceramics' : 'granite';
+        _polishMetersCtrl.text = qty(polishItem.quantity);
+      } else {
+        _servicePolish = false;
+      }
+
+      // 3. Faska
+      if (chamferItem != null) {
+        _serviceChamfer = true;
+        _chamferMetersCtrl.text = qty(chamferItem.quantity);
+      } else {
+        _serviceChamfer = false;
+      }
+
+      // 4. Chizish
+      if (grooveItem != null) {
+        _serviceGroove = true;
+        _grooveMetersCtrl.text = qty(grooveItem.quantity);
+      } else {
+        _serviceGroove = false;
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -1793,6 +2054,14 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
       });
       return;
     }
+
+    if (_planCtrl.text.trim().isEmpty && _serviceCut) {
+      final calc = _calculateCutAreaM2();
+      if (calc != null && calc > 0) {
+        _planCtrl.text = qty(calc);
+      }
+    }
+
     final planned = parseInput(_planCtrl.text);
     if (planned == null || planned <= 0) {
       setState(() {
@@ -1807,16 +2076,67 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
     });
 
     try {
+      double? cutLen;
+      double? cutWid;
+      int? pieces;
+      String? spec;
+
+      if (_serviceCut) {
+        final rawLen = double.tryParse(_cutLengthCtrl.text.replaceAll(',', '.').trim());
+        final rawWid = double.tryParse(_cutWidthCtrl.text.replaceAll(',', '.').trim());
+        pieces = int.tryParse(_cutPiecesCtrl.text.trim()) ?? 1;
+
+        if (rawLen != null && rawLen > 0) {
+          cutLen = _cutUnit == 'sm' ? (rawLen / 100.0) : rawLen;
+        }
+        if (rawWid != null && rawWid > 0) {
+          cutWid = _cutUnit == 'sm' ? (rawWid / 100.0) : rawWid;
+        }
+        spec = '${_cutLengthCtrl.text.trim()} $_cutUnit × ${_cutWidthCtrl.text.trim()} $_cutUnit';
+      }
+
+      final serviceTags = <String>[];
+      if (_servicePolish) {
+        final pMeters = _polishMetersCtrl.text.trim();
+        final pType = _polishStoneType == 'granite' ? 'Granit' : 'Keramogranit';
+        serviceTags.add('✨ Silliqlash ($pType${pMeters.isNotEmpty ? ", $pMeters m" : ""})');
+      }
+      if (_serviceChamfer) {
+        final cMeters = _chamferMetersCtrl.text.trim();
+        serviceTags.add('📐 Faska (${cMeters.isNotEmpty ? "$cMeters m" : ""})');
+      }
+      if (_serviceGroove) {
+        final gMeters = _grooveMetersCtrl.text.trim();
+        serviceTags.add('〰️ Chizish (${gMeters.isNotEmpty ? "$gMeters m" : ""})');
+      }
+
+      if (!_serviceCut && serviceTags.isNotEmpty) {
+        spec = serviceTags.first;
+      }
+
+      final userNote = _noteCtrl.text.trim();
+      String? finalNote;
+      if (serviceTags.isNotEmpty) {
+        final servicesSummary = serviceTags.join(' • ');
+        if (userNote.isNotEmpty) {
+          finalNote = '$userNote [Xizmatlar: $servicesSummary]';
+        } else {
+          finalNote = servicesSummary;
+        }
+      } else {
+        finalNote = userNote.isNotEmpty ? userNote : null;
+      }
+
       await widget.productionRepo.create(
         productId: _selectedProductId!,
         workerId: _selectedWorkerId!,
         plannedQty: planned,
-        note: _noteCtrl.text.trim().isNotEmpty ? _noteCtrl.text.trim() : null,
+        note: finalNote,
         orderId: _orderId,
-        cutLength: null,
-        cutWidth: null,
-        cutPieces: _cutPieces,
-        cutSpec: _cutSpec,
+        cutLength: cutLen,
+        cutWidth: cutWid,
+        cutPieces: pieces,
+        cutSpec: spec,
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1922,37 +2242,7 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
                             ),
                           ),
                       ],
-                      onChanged: (ord) {
-                        if (ord == null) {
-                          setState(() {
-                            _orderId = null;
-                            _cutSpec = null;
-                            _cutPieces = null;
-                            _customerInfo = null;
-                            _noteCtrl.clear();
-                          });
-                          return;
-                        }
-                        final cutItem = ord.items.firstWhere(
-                          (it) => it.isCut || it.productName.toLowerCase().contains('kesish') || it.productName.toLowerCase().contains('ishlov'),
-                          orElse: () => ord.items.first,
-                        );
-                        final matching = products.where((p) => p.id == cutItem.productId || p.name.toLowerCase() == cutItem.productName.toLowerCase()).firstOrNull;
-                        final details = _parseCuttingItemDetails(cutItem.productName);
-
-                        setState(() {
-                          if (matching != null) {
-                            _selectedProductId = matching.id;
-                          }
-                          _planCtrl.text = qty(cutItem.quantity);
-                          _orderId = ord.id;
-                          _cutSpec = details.cutSpec;
-                          _cutPieces = details.pieces;
-                          _customerInfo = '\${ord.customerName ?? "Mijoz"}\${ord.customerPhone != null ? " (\${ord.customerPhone})" : ""}';
-                          // Eni-bo'yi izohga yozilmaydi! Faqat mijozning haqiqiy izohi yoziladi:
-                          _noteCtrl.text = (ord.note != null && ord.note!.isNotEmpty) ? ord.note! : '';
-                        });
-                      },
+                      onChanged: (ord) => _applyOrder(ord, products),
                     ),
                     const SizedBox(height: 14),
                   ],
@@ -2038,10 +2328,23 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
                     onChanged: (v) {
                       setState(() {
                         _selectedProductId = v;
+                        final p = products.where((item) => item.id == v).firstOrNull;
+                        if (p != null) {
+                          final pName = p.name.toLowerCase();
+                          if (pName.contains('keramo')) {
+                            _polishStoneType = 'ceramics';
+                          } else if (pName.contains('granit')) {
+                            _polishStoneType = 'granite';
+                          }
+                        }
                       });
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
+
+                  // Toshga ishlov berish va xizmatlar bloki
+                  _buildServicesSection(context, selProd),
+                  const SizedBox(height: 14),
 
                   // Miqdor
                   TextField(
@@ -2094,6 +2397,388 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
           ],
         );
       },
+    );
+  }
+  Widget _buildServicesSection(BuildContext context, Product selProd) {
+    final isDark = context.isDark;
+    final hasAnyService = _serviceCut || _servicePolish || _serviceChamfer || _serviceGroove;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF131F2A) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: hasAnyService
+              ? (isDark ? AppColors.neonLime.withValues(alpha: 0.4) : const Color(0xFF0284C7).withValues(alpha: 0.4))
+              : context.borderColor,
+          width: hasAnyService ? 1.5 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.handyman_rounded,
+                size: 18,
+                color: hasAnyService ? (isDark ? AppColors.neonLime : const Color(0xFF0284C7)) : AppColors.muted,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Toshga ishlov berish xizmatlari',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: context.inkColor,
+                  ),
+                ),
+              ),
+              if (hasAnyService)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.green.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text('Xizmatlar faol', style: TextStyle(color: AppColors.green, fontSize: 10.5, fontWeight: FontWeight.w800)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Ushbu tosh ustida bajarilishi kerak bo‘lgan ishlarni belgilang:',
+            style: TextStyle(fontSize: 11.5, color: context.mutedColor),
+          ),
+          const SizedBox(height: 10),
+
+          // Xizmat tanlash chiplari
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('✂️ Razmer kesish'),
+                selected: _serviceCut,
+                selectedColor: (isDark ? AppColors.neonLime : const Color(0xFF0284C7)).withValues(alpha: 0.2),
+                checkmarkColor: isDark ? AppColors.neonLime : const Color(0xFF0284C7),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: _serviceCut ? FontWeight.w800 : FontWeight.w600,
+                  color: _serviceCut ? (isDark ? AppColors.neonLime : const Color(0xFF0284C7)) : context.inkColor,
+                ),
+                onSelected: (val) {
+                  setState(() {
+                    _serviceCut = val;
+                    if (val) {
+                      _applyCutAreaToPlan();
+                    }
+                  });
+                },
+              ),
+              FilterChip(
+                label: const Text('✨ Silliqlash'),
+                selected: _servicePolish,
+                selectedColor: AppColors.green.withValues(alpha: 0.2),
+                checkmarkColor: AppColors.green,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: _servicePolish ? FontWeight.w800 : FontWeight.w600,
+                  color: _servicePolish ? AppColors.green : context.inkColor,
+                ),
+                onSelected: (val) {
+                  setState(() {
+                    _servicePolish = val;
+                    if (val && _polishMetersCtrl.text.isEmpty) {
+                      _autoFillPolishMeters();
+                    }
+                  });
+                },
+              ),
+              FilterChip(
+                label: const Text('📐 Faska ochish'),
+                selected: _serviceChamfer,
+                selectedColor: const Color(0xFFD97706).withValues(alpha: 0.2),
+                checkmarkColor: const Color(0xFFD97706),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: _serviceChamfer ? FontWeight.w800 : FontWeight.w600,
+                  color: _serviceChamfer ? const Color(0xFFD97706) : context.inkColor,
+                ),
+                onSelected: (val) {
+                  setState(() {
+                    _serviceChamfer = val;
+                    if (val && _chamferMetersCtrl.text.isEmpty) {
+                      _autoFillChamferMeters();
+                    }
+                  });
+                },
+              ),
+              FilterChip(
+                label: const Text('〰️ Chizish'),
+                selected: _serviceGroove,
+                selectedColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                checkmarkColor: const Color(0xFF8B5CF6),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: _serviceGroove ? FontWeight.w800 : FontWeight.w600,
+                  color: _serviceGroove ? const Color(0xFF8B5CF6) : context.inkColor,
+                ),
+                onSelected: (val) {
+                  setState(() {
+                    _serviceGroove = val;
+                  });
+                },
+              ),
+            ],
+          ),
+
+          // 1. Kesish parametrlari
+          if (_serviceCut) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F2438) : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '✂️ KESISH O‘LCHAMLARI',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: Color(0xFF2563EB)),
+                      ),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(value: 'sm', label: Text('sm', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'm', label: Text('m', style: TextStyle(fontSize: 11))),
+                        ],
+                        selected: {_cutUnit},
+                        showSelectedIcon: false,
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 8)),
+                        ),
+                        onSelectionChanged: (set) {
+                          setState(() {
+                            final oldUnit = _cutUnit;
+                            _cutUnit = set.first;
+                            _convertCutUnits(oldUnit, _cutUnit);
+                            _applyCutAreaToPlan();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _cutLengthCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (_) => _applyCutAreaToPlan(),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          decoration: InputDecoration(
+                            labelText: 'Bo‘yi / Uzunlik ($_cutUnit)',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _cutWidthCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (_) => _applyCutAreaToPlan(),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          decoration: InputDecoration(
+                            labelText: 'Eni / Kenglik ($_cutUnit)',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 85,
+                        child: TextField(
+                          controller: _cutPiecesCtrl,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => _applyCutAreaToPlan(),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          decoration: const InputDecoration(
+                            labelText: 'Soni (dona)',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_calculateCutAreaM2() != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.green),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Hisoblangan maydon: ${_calculateCutAreaM2()!} m²',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.green),
+                        ),
+                        const Spacer(),
+                        InkWell(
+                          onTap: _applyCutAreaToPlan,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('Rejaga nusxalash', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF2563EB))),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          // 2. Silliqlash parametrlari
+          if (_servicePolish) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0B2E24) : const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '✨ SILLIQLASH (JILOLASH)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: Color(0xFF059669)),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Granit', style: TextStyle(fontSize: 11)),
+                        selected: _polishStoneType == 'granite',
+                        onSelected: (val) {
+                          if (val) setState(() => _polishStoneType = 'granite');
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: const Text('Keramogranit', style: TextStyle(fontSize: 11)),
+                        selected: _polishStoneType == 'ceramics',
+                        onSelected: (val) {
+                          if (val) setState(() => _polishStoneType = 'ceramics');
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _polishMetersCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          decoration: const InputDecoration(
+                            labelText: 'Ishlov hajmi (metr)',
+                            hintText: 'masalan: 12',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // 3. Faska ochish
+          if (_serviceChamfer) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C1E0A) : const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '📐 FASKA OCHISH (QIRRA)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: Color(0xFFD97706)),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _chamferMetersCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                      labelText: 'Faska ochish uzunligi (metr)',
+                      hintText: 'masalan: 12',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // 4. Chizish
+          if (_serviceGroove) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF221638) : const Color(0xFFF5F3FF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '〰️ CHIZISH (SIRPANISHGA QARSHI)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: Color(0xFF7C3AED)),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _grooveMetersCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                      labelText: 'Chizish uzunligi (metr)',
+                      hintText: 'masalan: 6',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

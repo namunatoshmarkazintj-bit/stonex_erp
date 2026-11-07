@@ -19,6 +19,7 @@ import 'package:stonex_erp/state/currency_controller.dart';
 import 'package:stonex_erp/state/theme_controller.dart';
 
 import 'package:stonex_erp/ui/stone_services_dialog.dart';
+import 'package:stonex_erp/ui/production_screen.dart';
 
 
 
@@ -639,6 +640,84 @@ void main() {
       // Jonli hisob formulasini tekshiramiz
       expect(find.textContaining('1 ta plitadan:'), findsOneWidget);
       expect(find.textContaining('8 ta bo‘lak'), findsOneWidget);
+    });
+
+    testWidgets('TaskCreateDialog: Topshiriq berishda toshni kesish va silliqlash xizmatlarini qo‘shish', (tester) async {
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            Provider<AppRepositories>.value(value: repos),
+            ChangeNotifierProvider(create: (_) => AuthController(repos.auth)),
+            ChangeNotifierProvider(create: (_) => CartController(repos.sales)),
+            ChangeNotifierProvider(create: (_) => CurrencyController()),
+            ChangeNotifierProvider(create: (_) => ThemeController()),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => showDialog(
+                    context: ctx,
+                    builder: (_) => TaskCreateDialog(
+                      productionRepo: repos.production,
+                      productRepo: repos.products,
+                    ),
+                  ),
+                  child: const Text('Topshiriq Oyna'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Topshiriq Oyna'));
+      await tester.pumpAndSettle();
+
+      // Dialog ochildi
+      expect(find.text('Yangi Ishlab Chiqarish Topshirig‘i'), findsOneWidget);
+      expect(find.text('Toshga ishlov berish xizmatlari'), findsOneWidget);
+
+      // Xizmat chiplari mavjud
+      expect(find.text('✂️ Razmer kesish'), findsOneWidget);
+      expect(find.text('✨ Silliqlash'), findsOneWidget);
+      expect(find.text('📐 Faska ochish'), findsOneWidget);
+      expect(find.text('〰️ Chizish'), findsOneWidget);
+
+      // 1. Kesish xizmatini tanlaymiz
+      await tester.tap(find.text('✂️ Razmer kesish'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('✂️ KESISH O‘LCHAMLARI'), findsOneWidget);
+      expect(find.textContaining('Hisoblangan maydon:'), findsOneWidget);
+
+      // 2. Silliqlash xizmatini tanlaymiz
+      await tester.tap(find.text('✨ Silliqlash'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('✨ SILLIQLASH (JILOLASH)'), findsOneWidget);
+      expect(find.text('Granit'), findsOneWidget);
+      expect(find.text('Keramogranit'), findsOneWidget);
+
+      // Topshiriq berish tugmasini bosamiz
+      expect(find.text('Topshiriq berish'), findsOneWidget);
+      await tester.tap(find.text('Topshiriq berish'));
+      await tester.pumpAndSettle();
+
+      // Topshiriqlar ro'yxatida yangi xizmatli topshiriq paydo bo'ldi
+      final tasks = await repos.production.list();
+      expect(tasks.isNotEmpty, isTrue);
+      // Oxirgi qo'shilgan topshiriq
+      final newTask = tasks.firstWhere(
+        (t) => (t.note ?? '').contains('✨ Silliqlash'),
+        orElse: () => tasks.last,
+      );
+      expect(newTask.cutSpec, isNotNull);
+      expect(newTask.note, contains('Silliqlash'));
     });
 
   });
