@@ -691,29 +691,29 @@ class _UsersScreenState extends State<UsersScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Text(
+                  u.fullName,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: context.inkColor),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Flexible(
-                      child: Text(
-                        u.fullName,
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: context.inkColor),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                       decoration: BoxDecoration(
                         color: roleColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         u.role.label,
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: roleColor),
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: roleColor),
                       ),
                     ),
-                    const SizedBox(width: 6),
                     if (!u.canLogin)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -755,16 +755,18 @@ class _UsersScreenState extends State<UsersScreen> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 3),
-                Row(
+                const SizedBox(height: 5),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     if (u.canLogin) ...[
                       Text(
                         '@${u.username}',
                         style: TextStyle(fontSize: 11.5, color: context.mutedColor),
                       ),
-                      const SizedBox(width: 8),
-                      const Text('· ', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
+                      const Text('·', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
                     ],
                     Text(
                       u.salaryType == 'trip'
@@ -779,19 +781,32 @@ class _UsersScreenState extends State<UsersScreen> {
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit_rounded, size: 18),
-            onPressed: () => _editUser(u),
-            tooltip: 'Tahrirlash',
-          ),
-          IconButton(
-            icon: Icon(
-              u.isActive ? Icons.lock_open_rounded : Icons.lock_rounded,
-              size: 18,
-              color: u.isActive ? AppColors.green : AppColors.danger,
-            ),
-            onPressed: () => _toggleUserStatus(u),
-            tooltip: u.isActive ? 'Bloklash' : 'Faollashtirish',
+          const SizedBox(width: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.edit_rounded, size: 18),
+                onPressed: () => _editUser(u),
+                tooltip: 'Tahrirlash',
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                icon: Icon(
+                  u.isActive ? Icons.lock_open_rounded : Icons.lock_rounded,
+                  size: 18,
+                  color: u.isActive ? AppColors.green : AppColors.danger,
+                ),
+                onPressed: () => _toggleUserStatus(u),
+                tooltip: u.isActive ? 'Bloklash' : 'Faollashtirish',
+              ),
+            ],
           ),
         ],
       ),

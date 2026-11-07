@@ -808,6 +808,28 @@ class SaleResult {
 
   bool get isOrder => status == 'order';
 
+  int get returnDays {
+    if (note != null && note!.isNotEmpty) {
+      final m = RegExp(r'\[Qaytarish:\s*(\d+)\s*kun\]', caseSensitive: false).firstMatch(note!);
+      if (m != null) {
+        final d = int.tryParse(m.group(1)!);
+        if (d != null && d > 0) return d.clamp(1, 30);
+      }
+    }
+    return 14;
+  }
+
+  DateTime get returnDeadline {
+    final base = createdAt ?? DateTime.now();
+    return base.add(Duration(days: returnDays));
+  }
+
+  String? get cleanNote {
+    if (note == null) return null;
+    final cleaned = note!.replaceAll(RegExp(r'\[Qaytarish:\s*\d+\s*kun\]\s*', caseSensitive: false), '').trim();
+    return cleaned.isEmpty ? null : cleaned;
+  }
+
   const SaleResult({
     required this.id,
     required this.total,

@@ -16,7 +16,10 @@ import 'return_product_dialog.dart';
 
 bool isReceiptQr(String code) {
   final c = code.trim().toUpperCase();
-  return c.startsWith('NTM-CHEK-') ||
+  return c.startsWith('NTJ-CHEK-') ||
+      c.startsWith('NTJ-SALE-') ||
+      c.startsWith('NTJ-') ||
+      c.startsWith('NTM-CHEK-') ||
       c.startsWith('NTM-SALE-') ||
       c.startsWith('STONEX-CHEK-') ||
       c.startsWith('STONEX-SALE-') ||
@@ -105,6 +108,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     if (sale.debt > 0.005) {
       sb.writeln('Qoldiq nasiya:  ${money(sale.debt)}');
     }
+    sb.writeln('--------------------------------');
+    sb.writeln('Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)');
+    sb.writeln('(Mahsulot butun va chek taqdim etilganda)');
     sb.writeln('================================');
     sb.writeln('   Xaridingiz uchun tashakkur!  ');
     sb.writeln(' Tovarlar sifati kafolatlangan. ');
@@ -379,9 +385,32 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       ],
                     ),
                   ],
-                  pw.SizedBox(height: 10),
+                  pw.SizedBox(height: 6),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 6),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+                    ),
+                    child: pw.Column(
+                      children: [
+                        pw.Text(
+                          'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)',
+                          style: pw.TextStyle(font: fontBold, fontSize: 7.5),
+                          textAlign: pw.TextAlign.center,
+                        ),
+                        pw.SizedBox(height: 1),
+                        pw.Text(
+                          '(Mahsulot butun va chek taqdim etilganda)',
+                          style: pw.TextStyle(font: font, fontSize: 6, color: PdfColors.grey700),
+                          textAlign: pw.TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: 6),
                   pw.BarcodeWidget(
-                    data: 'NTM-CHEK-#${sale.id}-${sale.total.round()}UZS',
+                    data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
                     barcode: pw.Barcode.qrCode(),
                     width: 50,
                     height: 50,
@@ -390,7 +419,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.Text('Xaridingiz uchun tashakkur!',
                       style: pw.TextStyle(font: font, fontSize: 8),
                       textAlign: pw.TextAlign.center),
-                  pw.Text('NTM ERP tizimi orqali berildi',
+                  pw.Text('NTJ — Namuna Tosh Jilo',
                       style: pw.TextStyle(font: font, fontSize: 7, color: PdfColors.grey700),
                       textAlign: pw.TextAlign.center),
                 ],
@@ -800,13 +829,56 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               ),
                             ],
 
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.assignment_return_outlined, size: 13, color: Color(0xFF1E293B)),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)',
+                                          style: const TextStyle(
+                                            fontFamily: 'Courier',
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '(Mahsulot butun va chek taqdim etilganda)',
+                                    style: TextStyle(
+                                      fontFamily: 'Courier',
+                                      fontSize: 8.5,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
                             Center(
                               child: SizedBox(
                                 width: 85,
                                 height: 85,
                                 child: QrImageView(
-                                  data: 'NTM-CHEK-#${sale.id}-${sale.total.round()}UZS',
+                                  data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
                                   version: QrVersions.auto,
                                   size: 85.0,
                                   eyeStyle: const QrEyeStyle(
@@ -823,7 +895,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             const SizedBox(height: 10),
                             const Center(
                               child: Text(
-                                'Xaridingiz uchun tashakkur!\nNTM ERP orqali ro‘yxatga olindi.',
+                                'Xaridingiz uchun tashakkur!\nNTJ — Namuna Tosh Jilo',
                                 style: TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,

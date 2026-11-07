@@ -1840,6 +1840,8 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
   final _phone = TextEditingController();
   final _passport = TextEditingController();
   final _note = TextEditingController();
+  int _returnDays = 14;
+  late final _returnDaysCtrl = TextEditingController(text: '14');
   bool _isOrder = false;
   String? _photoUrl;
   int? _selectedCustomerId;
@@ -1872,6 +1874,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
     _phone.dispose();
     _passport.dispose();
     _note.dispose();
+    _returnDaysCtrl.dispose();
     super.dispose();
   }
 
@@ -1995,6 +1998,11 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
       }
     }
     final effectivePaid = totalEquivalent > widget.total ? widget.total : totalEquivalent;
+    final combinedNote = StringBuffer();
+    combinedNote.write('[Qaytarish: $_returnDays kun]');
+    if (_note.text.trim().isNotEmpty) {
+      combinedNote.write(' ${_note.text.trim()}');
+    }
     Navigator.pop(
       context,
       _CheckoutInput(
@@ -2003,7 +2011,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
         paidUzs: paidUzsVal,
         paidUsd: paidUsdVal,
         status: _isOrder ? 'order' : 'completed',
-        note: _note.text.trim().isNotEmpty ? _note.text.trim() : null,
+        note: combinedNote.toString(),
         customerId: _selectedCustomerId,
         name: _name.text.trim().isNotEmpty ? _name.text.trim() : null,
         phone: _phone.text.trim().isNotEmpty ? _phone.text.trim() : null,
@@ -2302,6 +2310,89 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
               ),
               const SizedBox(height: 14),
             ],
+
+            // Mahsulotni qaytarish muddati (uzog'i 30 kun)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.assignment_return_outlined, size: 17, color: Color(0xFF10B981)),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          'Mahsulotni qaytarish muddati (uzog‘i 30 kun):',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.inkColor),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$_returnDays kun',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      for (final d in [3, 7, 14, 30])
+                        ChoiceChip(
+                          label: Text('$d kun', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                          selected: _returnDays == d,
+                          onSelected: (sel) {
+                            if (sel) {
+                              setState(() {
+                                _returnDays = d;
+                                _returnDaysCtrl.text = d.toString();
+                              });
+                            }
+                          },
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      SizedBox(
+                        width: 90,
+                        child: TextField(
+                          controller: _returnDaysCtrl,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            hintText: '1..30',
+                            suffixText: 'kun',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onChanged: (val) {
+                            final n = int.tryParse(val.trim());
+                            if (n != null) {
+                              final clamped = n.clamp(1, 30);
+                              setState(() => _returnDays = clamped);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
 
             // Mijoz ma'lumotlari sarlavhasi
             Row(
