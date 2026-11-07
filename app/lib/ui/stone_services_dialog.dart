@@ -285,7 +285,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   // Kesiladigan mahsulot o'lchamlari (Kenglik sm va jami Uzunlik metr)
   final _cutWidthCtrl = TextEditingController(text: '15'); // Kesiladigan kenglik (sm)
   final _cutLengthCtrl = TextEditingController(text: '4.8'); // Kesiladigan jami uzunlik (m)
-  final _kerfCtrl = TextEditingController(text: '0.0'); // Disk qalinligi (zarez / kerf loss, sm)
+  final _m2Ctrl = TextEditingController(text: '0.72'); // Metr kvadrat (m²) kiritish joyi
   bool _isSyncingCutDimensions = false;
 
   final _lengthCtrl = TextEditingController(text: '1.2'); // Bo'yi (m) - boshlang'ich m2 uchun
@@ -406,6 +406,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       _includeStoneInCart = true;
     }
 
+    _syncM2FromDimensions();
     _recalcFromCutWidth();
 
     if (!initial && mounted) {
@@ -453,7 +454,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   void dispose() {
     _cutWidthCtrl.dispose();
     _cutLengthCtrl.dispose();
-    _kerfCtrl.dispose();
+    _m2Ctrl.dispose();
     _lengthCtrl.dispose();
     _widthCtrl.dispose();
     _piecesCtrl.dispose();
@@ -481,11 +482,21 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     return raw < 20 ? (raw * 100.0) : raw;
   }
 
-  /// Ustaxona tabiiy tosh va kafel kesish kalkulyatori (Zarez / Kerf loss va Otxod hisobi bilan)
+  void _syncM2FromDimensions() {
+    final l = _effectiveLengthM;
+    final w = _effectiveWidthM;
+    final pieces = _parsePieces();
+    if (l > 0 && w > 0) {
+      final area = l * w * pieces;
+      final rounded = double.parse(area.toStringAsFixed(3));
+      _m2Ctrl.text = rounded % 1 == 0 ? rounded.toInt().toString() : rounded.toString();
+    }
+  }
+
+  /// Ustaxona tabiiy tosh va kafel kesish kalkulyatori
   StoneCuttingResult get _currentCuttingCalculation {
     final cutW = _parseVal(_cutWidthCtrl);
     final totalLenM = _parseVal(_cutLengthCtrl);
-    final kerf = parseInput(_kerfCtrl.text) ?? 0.0;
     final widVal = _parseVal(_widthCtrl);
 
     final slabLenM = widVal < 20 ? widVal : widVal / 100.0;
@@ -498,7 +509,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       itemLengthM: totalLenM,
       slabWidthCm: slabWidCm,
       slabLengthM: slabLenM,
-      kerfCm: kerf,
+      kerfCm: 0.0,
       pricePerM2: price,
     );
   }
@@ -540,7 +551,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   String get _neededSheetsDisplay {
     final calc = _currentCuttingCalculation;
     if (calc.isValid && calc.nLines > 0) {
-      return '${calc.nLines} ta list (${calc.grossM2} m²)';
+      return '${calc.nLines} ta list';
     }
     final count = _neededSheetsCount;
     if (count <= 0) return '${_parsePieces()} ta list';
@@ -563,12 +574,10 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       final hSm = _effectiveLengthCm;
       final cutWSm = _parseVal(_cutWidthCtrl);
       final rawW = _parseVal(_widthCtrl);
-      final kerf = parseInput(_kerfCtrl.text) ?? 0.0;
       final pieces = _parsePieces();
 
       if (hSm > 0 && cutWSm > 0 && rawW > 0) {
-        final effW = cutWSm + (kerf > 0 ? kerf : 0.0);
-        final strips = effW > 0 ? (hSm / effW).floor() : 0;
+        final strips = (hSm / cutWSm).floor();
         final oneSheetM = strips * (rawW < 20 ? rawW : rawW / 100.0);
         final totalLengthM = oneSheetM * pieces;
         final roundedM = (totalLengthM * 100).round() / 100.0;
@@ -586,6 +595,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       final calc = _currentCuttingCalculation;
       if (calc.isValid && calc.nLines > 0) {
         _piecesCtrl.text = calc.nLines.toString();
+        _syncM2FromDimensions();
       } else {
         final oneM = _oneSheetMeters;
         final totalLengthM = _parseVal(_cutLengthCtrl);
@@ -595,6 +605,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
           final sheetsInt = needed.ceil();
           final effectiveSheets = sheetsInt > 0 ? sheetsInt : 1;
           _piecesCtrl.text = effectiveSheets.toString();
+          _syncM2FromDimensions();
         }
       }
     } finally {
@@ -614,12 +625,16 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     return raw; // Eni har doim metrda (m) kiritiladi va hisoblanadi
   }
 
-  /// Jami hisoblangan metr yoki miqdor
+  /// Jami hisoblangan metr yoki miqdor (pul to'g'ridan-to'g'ri shu metr kvadratga qarab hisoblanadi!)
   double get _calculatedTotalMeters {
     final def = kStoneServices[_selectedServiceIdx];
 
     if (def.key == 'cut') {
       if (_isTileOrCeramic) {
+        final m2Val = _parseVal(_m2Ctrl);
+        if (m2Val > 0) {
+          return m2Val;
+        }
         final w = _effectiveWidthM;
         final l = _effectiveLengthM;
         final pieces = _parsePieces();
@@ -724,6 +739,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     final cur = _parsePieces();
     final next = (cur + delta).clamp(1, 9999);
     _piecesCtrl.text = next.toString();
+    _syncM2FromDimensions();
     _recalcFromCutWidth();
     setState(() {});
   }
@@ -1390,6 +1406,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
                                           ),
                                           onChanged: (_) {
+                                            _syncM2FromDimensions();
                                             _recalcFromCutWidth();
                                             setState(() {});
                                           },
@@ -1475,6 +1492,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
                                           ),
                                           onChanged: (_) {
+                                            _syncM2FromDimensions();
                                             _recalcFromCutWidth();
                                             final lenM = _effectiveLengthM;
                                             if (lenM > 0) {
@@ -1522,6 +1540,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
                                           ),
                                           onChanged: (_) {
+                                            _syncM2FromDimensions();
                                             _recalcFromCutWidth();
                                             setState(() {});
                                           },
@@ -1531,38 +1550,55 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                   ),
                                   const SizedBox(width: 8),
 
-                                  // Disk qalinligi (kerf loss, sm)
+                                  // Metr kvadrat (m²) kiritish joyi
                                   Expanded(
                                     flex: 3,
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Disk (kerf):',
+                                          'Metr kvadrat (m²):',
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
-                                            color: context.mutedColor,
+                                            color: isDark ? AppColors.neonLime : const Color(0xFF047857),
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         TextField(
-                                          controller: _kerfCtrl,
+                                          controller: _m2Ctrl,
                                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w900,
+                                            color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                          ),
                                           decoration: InputDecoration(
                                             filled: true,
-                                            fillColor: context.cardColor,
+                                            fillColor: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
                                             isDense: true,
-                                            hintText: '0.5',
-                                            suffixText: 'sm',
-                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            hintText: '0.72',
+                                            suffixText: 'm²',
+                                            suffixStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                            ),
                                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: const BorderSide(color: Color(0xFF059669), width: 1.8),
+                                            ),
                                           ),
                                           onChanged: (_) {
-                                            _recalcFromCutWidth();
                                             setState(() {});
                                           },
                                         ),
@@ -1621,7 +1657,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                             const SizedBox(width: 6),
                                             Expanded(
                                               child: Text(
-                                                '1 ta plitadan: ${calc.slabWidthCm.toInt()} sm ÷ ${_cutWidthCtrl.text}${calc.kerfCm > 0 ? " (+${calc.kerfCm} disk)" : ""} sm = ${calc.nStrips} ta bo‘lak × Eni (${calc.slabLengthM} m) → ${_formatNumber(calc.nStrips * calc.slabLengthM)} metr',
+                                                '1 ta plitadan: ${calc.slabWidthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${calc.nStrips} ta bo‘lak × Eni (${calc.slabLengthM} m) → ${_formatNumber(calc.nStrips * calc.slabLengthM)} metr',
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.w700,
@@ -1651,7 +1687,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                                       style: TextStyle(fontWeight: FontWeight.w600),
                                                     ),
                                                     TextSpan(
-                                                      text: '${calc.nLines} ta list (brutto: ${calc.grossM2} m²) ',
+                                                      text: '${calc.nLines} ta list ',
                                                       style: TextStyle(
                                                         fontWeight: FontWeight.w900,
                                                         color: isDark ? AppColors.neonLime : const Color(0xFF047857),
@@ -1674,7 +1710,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                           ],
                                         ),
                                         const Divider(height: 12),
-                                        // Ustaxona aniq hisob-kitob tafsiloti (Netto, Brutto, Chiqindi, Jami narx)
+                                        // Aniq hisob-kitob tafsiloti (Kiritilgan Metr Kvadrat, Narxi va Jami summa)
                                         Row(
                                           children: [
                                             Expanded(
@@ -1682,18 +1718,17 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    'Netto: ${calc.netM2} m²',
+                                                    'Hisob maydoni:',
                                                     style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 10.5,
                                                       color: context.mutedColor,
                                                     ),
                                                   ),
                                                   Text(
-                                                    'Brutto: ${calc.grossM2} m²',
+                                                    '${_calculatedTotalMeters.toStringAsFixed(2)} m²',
                                                     style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w800,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w900,
                                                       color: isDark ? AppColors.neonLime : const Color(0xFF047857),
                                                     ),
                                                   ),
@@ -1705,18 +1740,40 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    'Chiqindi (otxod):',
+                                                    '1 m² narxi:',
                                                     style: TextStyle(
                                                       fontSize: 10.5,
                                                       color: context.mutedColor,
                                                     ),
                                                   ),
                                                   Text(
-                                                    '${calc.wasteM2} m² (${calc.grossM2 > 0 ? ((calc.wasteM2 / calc.grossM2) * 100).toStringAsFixed(1) : 0}%)',
-                                                    style: const TextStyle(
-                                                      fontSize: 11,
+                                                    money(_activeUnitPrice),
+                                                    style: TextStyle(
+                                                      fontSize: 11.5,
                                                       fontWeight: FontWeight.w700,
-                                                      color: Color(0xFFD97706),
+                                                      color: context.inkColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  Text(
+                                                    'Jami xizmat puli:',
+                                                    style: TextStyle(
+                                                      fontSize: 10.5,
+                                                      color: context.mutedColor,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    money(_calculatedTotalPrice),
+                                                    style: const TextStyle(
+                                                      fontSize: 12.5,
+                                                      fontWeight: FontWeight.w900,
+                                                      color: Color(0xFF10B981),
                                                     ),
                                                   ),
                                                 ],
@@ -1824,6 +1881,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                                 focusedBorder: InputBorder.none,
                                               ),
                                               onChanged: (_) {
+                                                _syncM2FromDimensions();
                                                 _recalcFromCutWidth();
                                                 setState(() {});
                                               },
