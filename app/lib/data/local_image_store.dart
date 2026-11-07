@@ -16,6 +16,15 @@ class LocalImageStore {
   static final Set<String> _inFlight = {};
 
   static Directory _getBaseDir() {
+    if (Platform.isAndroid || Platform.isIOS) {
+      final dir = Directory('${Directory.systemTemp.path}/stonex_erp');
+      if (!dir.existsSync()) {
+        try {
+          dir.createSync(recursive: true);
+        } catch (_) {}
+      }
+      return dir.existsSync() ? dir : Directory.systemTemp;
+    }
     final appData = Platform.environment['APPDATA'] ??
         Platform.environment['HOME'] ??
         Directory.systemTemp.path;

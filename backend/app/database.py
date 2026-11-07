@@ -174,7 +174,7 @@ def ensure_migrations():
                 conn.execute(text("ALTER TABLE expenses ADD COLUMN type VARCHAR(16) DEFAULT 'expense'"))
             if "payment_method" not in exp_columns:
                 conn.execute(text("ALTER TABLE expenses ADD COLUMN payment_method VARCHAR(16) DEFAULT 'cash'"))
-    # Base64 rasmlarni faylga o'tkazish
+    # Base64 rasmlarni faylga o'tkazish (agar fayl yo'q bo'lsa kesh faylini yaratish)
     try:
         from pathlib import Path
         import base64
@@ -184,7 +184,6 @@ def ensure_migrations():
         with SessionLocal() as s_db:
             from sqlalchemy import select
             prods = s_db.scalars(select(m.Product).where(m.Product.image_url.isnot(None))).all()
-            changed = False
             for p in prods:
                 val = p.image_url or ""
                 if val.startswith("data:image/") or len(val) > 500:
@@ -193,15 +192,11 @@ def ensure_migrations():
                         img_bytes = base64.b64decode(b64_str)
                         filename = f"prod_{p.id}.jpg"
                         filepath = upload_dir / filename
-                        with open(filepath, "wb") as f_img:
-                            f_img.write(img_bytes)
-                        p.image_url = f"/uploads/products/{filename}"
-                        changed = True
+                        if not filepath.exists():
+                            with open(filepath, "wb") as f_img:
+                                f_img.write(img_bytes)
                     except Exception as e:
-                        print(f"Rasm o'tkazishda xato: {e}")
-            if changed:
-                s_db.commit()
-                print("Base64 rasmlar faylga muvaffaqiyatli aylantirildi!")
+                        print(f"Rasm faylga yozishda xato: {e}")
     except Exception as e:
         print(f"Rasm migratsiya xabari: {e}")
 

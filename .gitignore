@@ -23,7 +23,8 @@ windows/flutter/ephemeral/
 Thumbs.db
 
 # Uploads
-backend/uploads/
+backend/uploads/temp/
+backend/uploads/customers/
 apk/
 *.apk
 
