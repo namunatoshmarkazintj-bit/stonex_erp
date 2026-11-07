@@ -757,19 +757,21 @@ class _OrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 3,
                         children: [
                           Text(
                             'Buyurtma #${order.id}',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 15.5,
+                              fontSize: 15,
                               color: context.inkColor,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(100),
@@ -778,12 +780,12 @@ class _OrderCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(statusIcon, size: 11, color: statusColor),
-                                const SizedBox(width: 4),
+                                Icon(statusIcon, size: 10.5, color: statusColor),
+                                const SizedBox(width: 3.5),
                                 Text(
                                   statusText,
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w800,
                                     color: statusColor,
                                   ),
@@ -798,35 +800,46 @@ class _OrderCard extends StatelessWidget {
                         children: [
                           Icon(Icons.calendar_today_outlined, size: 12, color: context.subtextColor),
                           const SizedBox(width: 4),
-                          Text(
-                            formatDateTime(order.createdAt ?? DateTime.now()),
-                            style: TextStyle(fontSize: 11.5, color: context.subtextColor),
+                          Expanded(
+                            child: Text(
+                              formatDateTime(order.createdAt ?? DateTime.now()),
+                              style: TextStyle(fontSize: 11.5, color: context.subtextColor),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
 
                 // Jami summa
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Jami summa',
-                      style: TextStyle(fontSize: 11, color: context.subtextColor, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      money(order.total),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16.5,
-                        color: context.inkColor,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 130),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Jami summa',
+                        style: TextStyle(fontSize: 11, color: context.subtextColor, fontWeight: FontWeight.w500),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 1),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          money(order.total),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15.5,
+                            color: context.inkColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1023,7 +1036,11 @@ class _OrderCard extends StatelessWidget {
           // 4. To'lov holati kapsulalari (Avans va Qoldiq qarz)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 // Avans kapsulasi
                 Container(
@@ -1049,7 +1066,7 @@ class _OrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Spacer(),
+
                 // Qoldiq qarz kapsulasi
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
