@@ -80,7 +80,7 @@ void main() {
 
 
 
-      expect(StoneServicesStore.getPrice('cut_meter'), 15000);
+      expect(StoneServicesStore.getPrice('cut'), 25000);
 
       expect(StoneServicesStore.getAllPrices()['cut_m2'], 25000);
 
@@ -96,26 +96,15 @@ void main() {
 
 
 
-    test('Kesish hisobi: Metrda eni bo‘yicha (0.6 m) va Metr kvadratda (0.72 m²)', () {
-
-      const lSm = 120.0;
-
+    test('Kesish hisobi: Metr kvadratda (0.72 m²) maydon va narx hisobi', () {
+      const lM = 1.2;
       const wM = 0.6;
-
-      final area = (lSm / 100) * wM;
-
+      final area = lM * wM;
       expect(area, 0.72);
 
-
-
-      final priceCutM = StoneServicesStore.getPrice('cut_meter');
-
-      final priceCutM2 = StoneServicesStore.getAllPrices()['cut_m2'] ?? 25000;
-
-      expect(wM * priceCutM, 9000.0);
-
+      final priceCutM2 = StoneServicesStore.getPrice('cut');
+      expect(priceCutM2, 25000.0);
       expect(area * priceCutM2, 18000.0);
-
     });
 
 
@@ -198,15 +187,13 @@ void main() {
 
 
 
-      // Dialog va Kesish o'lchovi (Metrda / Metr kvadratda) render bo'lganini tekshiramiz
+      // Dialog va Kesish o'lchovi (Metr kvadratda) render bo'lganini tekshiramiz
 
       expect(find.text('Xizmatlar (Toshga ishlov berish)'), findsOneWidget);
 
       expect(find.text('Kesish o‘lchovi:'), findsOneWidget);
 
-      expect(find.text('m²'), findsWidgets);
-
-      expect(find.text('m'), findsWidgets);
+      expect(find.text('m² (Kvadrat metr)'), findsWidgets);
 
 
 
@@ -330,9 +317,7 @@ void main() {
 
       expect(find.text('Xizmatlar narxini belgilash'), findsOneWidget);
 
-      expect(find.text('Kesish — Metrda (eni bo‘yicha)'), findsOneWidget);
-
-      expect(find.text('Kesish — Kvadratda (m²)'), findsOneWidget);
+      expect(find.text('Razmer kesish (m²)'), findsOneWidget);
 
       expect(find.text('Silliqlash — Granit'), findsOneWidget);
 
@@ -602,29 +587,7 @@ void main() {
 
       expect(find.textContaining('Maydon: 0.72 m²'), findsOneWidget);
 
-
-
-      // Metrga (m) o'tkazganda Bo'yi (sm) ga aylanadi
-
-      await tester.tap(find.text('m').first);
-
-      await tester.pumpAndSettle();
-
-      expect(find.text('Bo‘yi (sm):'), findsOneWidget);
-
-      expect(find.textContaining('120 sm × 0.6 m'), findsOneWidget);
-
-
-
-      // Yana m2 ga qaytaramiz
-
-      await tester.tap(find.text('m²').first);
-
-      await tester.pumpAndSettle();
-
-      expect(find.text('Bo‘yi (m):'), findsOneWidget);
-
-      expect(find.textContaining('1.2 m × 0.6 m'), findsOneWidget);
+      expect(find.text('m² (Kvadrat metr)'), findsOneWidget);
 
     });
 

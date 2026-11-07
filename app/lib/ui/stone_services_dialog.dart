@@ -35,12 +35,12 @@ const List<StoneServiceDef> kStoneServices = [
   StoneServiceDef(
     key: 'cut',
     name: 'Razmer kesish',
-    unit: 'metr',
+    unit: 'm²',
     description: 'Eni va bo‘yi bo‘yicha plita va toshlarni aniq o‘lchamda kesish',
     icon: Icons.content_cut_rounded,
     assetIcon: 'assets/icons/service_cut.png',
-    defaultPrice: 15000,
-    defaultProductId: 19,
+    defaultPrice: 25000,
+    defaultProductId: 24,
   ),
   StoneServiceDef(
     key: 'chamfer',
@@ -75,8 +75,8 @@ const List<StoneServiceDef> kStoneServices = [
 /// Xizmat narxlarini doimiy saqlash (in-memory + database sync)
 class StoneServicesStore {
   static final Map<String, double> _prices = {
-    'cut': 15000,
-    'cut_meter': 15000,
+    'cut': 25000,
+    'cut_meter': 25000,
     'cut_m2': 25000,
     'chamfer': 20000,
     'polish_granite': 30000,
@@ -89,14 +89,17 @@ class StoneServicesStore {
       return _prices['polish_granite'] ?? 30000;
     }
     if (key == 'cut') {
-      return _prices['cut_meter'] ?? _prices['cut'] ?? 15000;
+      return _prices['cut_m2'] ?? _prices['cut'] ?? 25000;
     }
     return _prices[key] ?? 10000;
   }
 
   static void setPrice(String key, double price) {
     _prices[key] = price;
-    if (key == 'cut_meter') _prices['cut'] = price;
+    if (key == 'cut_m2') {
+      _prices['cut'] = price;
+      _prices['cut_meter'] = price;
+    }
   }
 
   static Map<String, double> getAllPrices() => Map.unmodifiable(_prices);
@@ -251,11 +254,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     if (len != null && len > 0) {
       final lenM = len / 100.0;
       final lenMStr = lenM % 1 == 0 ? lenM.toInt().toString() : lenM.toString();
-      if (_cutUnit == 'm2') {
-        _lengthCtrl.text = lenMStr;
-      } else {
-        _lengthCtrl.text = len % 1 == 0 ? len.toInt().toString() : len.toString();
-      }
+      _lengthCtrl.text = lenMStr;
       _polishMetersCtrl.text = lenMStr;
       _chamferMetersCtrl.text = lenMStr;
       _grooveMetersCtrl.text = lenMStr;
@@ -409,14 +408,9 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
   double get _effectiveLengthM {
     final raw = _parseVal(_lengthCtrl);
-    if (_cutUnit == 'm2') {
-      // Metr kvadratda bo'yi metrda kiritiladi (masalan: 1.2 m)
-      // Agar foydalanuvchi odat bo'yicha 120 (sm) kiritib yuborsa ham xato hisoblanmasligi uchun:
-      return raw >= 20 ? (raw / 100.0) : raw;
-    } else {
-      // Metrda bo'yi santimetrda kiritiladi (masalan: 120 sm)
-      return raw >= 20 ? (raw / 100.0) : raw;
-    }
+    // Metr kvadratda bo'yi metrda kiritiladi (masalan: 1.2 m)
+    // Agar foydalanuvchi sm kiritib yuborsa (masalan 120):
+    return raw >= 20 ? (raw / 100.0) : raw;
   }
 
   double get _effectiveWidthM {
@@ -431,30 +425,22 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
     if (def.key == 'cut') {
       final w = _effectiveWidthM;
+      final l = _effectiveLengthM;
       final pieces = _parsePieces();
-      if (_cutUnit == 'meter') {
-        // Metrda: eni bo'yicha metr * dona
-        final total = w * pieces;
-        return double.parse(total.toStringAsFixed(2));
-      } else {
-        // Metr kvadratda: (Bo'yi_sm / 100) * Eni_m * dona
-        final l = _effectiveLengthM;
-        final area = l * w * pieces;
-        return double.parse(area.toStringAsFixed(3));
-      }
+      // Kesish har doim Metr kvadratda (m2): Bo'yi_m * Eni_m * dona
+      final area = l * w * pieces;
+      return double.parse(area.toStringAsFixed(3));
     }
 
     final m = _parseVal(_manualMetersCtrl);
     return m > 0 ? m : 1.0;
   }
 
-  /// Joriy tanlangan xizmat narxi (so'm / metr)
+  /// Joriy tanlangan xizmat narxi (so'm / metr yoki m²)
   double get _activeUnitPrice {
     final def = kStoneServices[_selectedServiceIdx];
     if (def.key == 'cut') {
-      return _cutUnit == 'meter'
-          ? StoneServicesStore.getPrice('cut_meter')
-          : (StoneServicesStore.getAllPrices()['cut_m2'] ?? 25000);
+      return StoneServicesStore.getAllPrices()['cut_m2'] ?? 25000;
     }
     if (def.key == 'polish') {
       return _polishStoneType == 'granite'
@@ -565,13 +551,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     String serviceDisplayName = def.name;
 
     if (def.key == 'cut') {
-      if (_cutUnit == 'meter') {
-        targetProductId = 19;
-        serviceDisplayName = 'Razmer kesish (Metrda)';
-      } else {
-        targetProductId = 24;
-        serviceDisplayName = 'Razmer kesish (Kvadratda)';
-      }
+      targetProductId = 24;
+      serviceDisplayName = 'Razmer kesish (Kvadratda)';
     } else if (def.key == 'polish') {
       if (_polishStoneType == 'granite') {
         targetProductId = 21;
@@ -605,17 +586,12 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     String specText;
     final lenVal = _parseVal(_lengthCtrl);
     final widVal = _parseVal(_widthCtrl);
-    final lenUnit = _cutUnit == 'm2' ? 'm' : 'sm';
-    final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} $lenUnit';
+    final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} m';
     final widStr = '${widVal % 1 == 0 ? widVal.toInt() : widVal} m';
 
     final pStr = pieces > 1 ? ' · $pieces dona' : '';
     if (def.key == 'cut') {
-      if (_cutUnit == 'meter') {
-        specText = '$lenStr × $widStr$pStr (eni: $qty metr)';
-      } else {
-        specText = '$lenStr × $widStr$pStr ($qty m²)';
-      }
+      specText = '$lenStr × $widStr$pStr ($qty m²)';
     } else {
       specText = '$qty ${def.unit}';
     }
@@ -1147,56 +1123,22 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                 ),
                                 const Spacer(),
                                 Container(
-                                  padding: const EdgeInsets.all(3),
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF14181F) : const Color(0xFFEFF2F6),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: isDark ? AppColors.neonLime.withValues(alpha: 0.15) : const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: isDark ? const Color(0xFF2D3748) : const Color(0xFFCBD5E1),
+                                      color: isDark ? AppColors.neonLime.withValues(alpha: 0.4) : const Color(0xFF16A34A).withValues(alpha: 0.3),
                                       width: 0.8,
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _buildMiniCutUnitPill(
-                                        label: 'm',
-                                        selected: _cutUnit == 'meter',
-                                        isDark: isDark,
-                                        onTap: () {
-                                          if (_cutUnit != 'meter') {
-                                            setState(() {
-                                              _cutUnit = 'meter';
-                                              final curLen = _parseVal(_lengthCtrl);
-                                              if (curLen > 0 && curLen < 20) {
-                                                // Metrdan sm ga o'tkazish (masalan 1.2 m -> 120 sm)
-                                                final inCm = curLen * 100.0;
-                                                _lengthCtrl.text = inCm % 1 == 0 ? inCm.toInt().toString() : inCm.toString();
-                                              }
-                                            });
-                                          }
-                                        },
-                                      ),
-                                      const SizedBox(width: 3),
-                                      _buildMiniCutUnitPill(
-                                        label: 'm²',
-                                        selected: _cutUnit == 'm2',
-                                        isDark: isDark,
-                                        onTap: () {
-                                          if (_cutUnit != 'm2') {
-                                            setState(() {
-                                              _cutUnit = 'm2';
-                                              final curLen = _parseVal(_lengthCtrl);
-                                              if (curLen >= 20) {
-                                                // sm dan metrga o'tkazish (masalan 120 sm -> 1.2 m)
-                                                final inM = curLen / 100.0;
-                                                _lengthCtrl.text = inM % 1 == 0 ? inM.toInt().toString() : inM.toString();
-                                              }
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ],
+                                  child: Text(
+                                    'm² (Kvadrat metr)',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark ? AppColors.neonLime : const Color(0xFF16A34A),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -1291,13 +1233,13 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                             // 2-Qator: Ishlatiladigan mahsulotning bo'yi va eni
                             Row(
                               children: [
-                                // Bo'yi (m2 rejimida metrda, metr rejimida sm da)
+                                // Bo'yi (har doim metrda)
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _cutUnit == 'm2' ? 'Bo‘yi (m):' : 'Bo‘yi (sm):',
+                                        'Bo‘yi (m):',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
@@ -1313,8 +1255,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                           filled: true,
                                           fillColor: context.cardColor,
                                           isDense: true,
-                                          hintText: _cutUnit == 'm2' ? '1.2' : '120',
-                                          suffixText: _cutUnit == 'm2' ? 'm' : 'sm',
+                                          hintText: '1.2',
+                                          suffixText: 'm',
                                           suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
                                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
@@ -1424,34 +1366,20 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                         final lenVal = _parseVal(_lengthCtrl);
                                         final widVal = _parseVal(_widthCtrl);
                                         final pieces = _parsePieces();
-                                        final lenUnit = _cutUnit == 'm2' ? 'm' : 'sm';
-                                        final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} $lenUnit';
+                                        final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} m';
                                         final widStr = '${widVal % 1 == 0 ? widVal.toInt() : widVal} m';
                                         final pStr = pieces > 1 ? ' · $pieces dona' : '';
 
-                                        if (_cutUnit == 'meter') {
-                                          return Text(
-                                            'O‘lcham: $lenStr × $widStr$pStr → Eni: $_calculatedTotalMeters m',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: context.inkColor,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          );
-                                        } else {
-                                          return Text(
-                                            'O‘lcham: $lenStr × $widStr$pStr → Maydon: $_calculatedTotalMeters m²',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: context.inkColor,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          );
-                                        }
+                                        return Text(
+                                          'O‘lcham: $lenStr × $widStr$pStr → Maydon: $_calculatedTotalMeters m²',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.inkColor,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        );
                                       },
                                     ),
                                   ),
@@ -2370,91 +2298,98 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: context.inkColor,
                       ),
                     ),
+                    const SizedBox(height: 1),
                     Text(
-                      ' / metr',
+                      '${money(unitPrice)} / metr',
                       style: TextStyle(fontSize: 11, color: context.mutedColor),
                     ),
                   ],
                 ),
               ),
-              if (enabled) ...[
-                // Metr kiritish va stepper
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    InkWell(
-                      onTap: () => onAdjustMeters(-0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF222831) : Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: context.borderColor),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(Icons.remove_rounded, size: 13, color: context.inkColor),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 42,
-                      child: TextField(
-                        controller: metersCtrl,
-                        textAlign: TextAlign.center,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 2),
-                          border: InputBorder.none,
-                        ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => onAdjustMeters(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF222831) : Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: context.borderColor),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(Icons.add_rounded, size: 13, color: context.inkColor),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text('m', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: context.mutedColor)),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF232D38) : const Color(0xFFE2E8F0),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        money(cost),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? AppColors.neonLime : const Color(0xFF16A34A),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
+          if (enabled) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 38),
+              child: Row(
+                children: [
+                  Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF222831) : Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: context.borderColor),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () => onAdjustMeters(-0.1),
+                          borderRadius: const BorderRadius.horizontal(left: Radius.circular(7)),
+                          child: Container(
+                            width: 28,
+                            height: 32,
+                            alignment: Alignment.center,
+                            child: Icon(Icons.remove_rounded, size: 14, color: context.inkColor),
+                          ),
+                        ),
+                        Container(
+                          width: 44,
+                          alignment: Alignment.center,
+                          child: TextField(
+                            controller: metersCtrl,
+                            textAlign: TextAlign.center,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: context.inkColor),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 4),
+                              border: InputBorder.none,
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => onAdjustMeters(0.1),
+                          borderRadius: const BorderRadius.horizontal(right: Radius.circular(7)),
+                          child: Container(
+                            width: 28,
+                            height: 32,
+                            alignment: Alignment.center,
+                            child: Icon(Icons.add_rounded, size: 14, color: context.inkColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('metr', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: context.mutedColor)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF232D38) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      money(cost),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? AppColors.neonLime : const Color(0xFF16A34A),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (extraWidget != null) extraWidget,
         ],
       ),
@@ -2633,7 +2568,7 @@ class _ServicesPriceConfigDialogState extends State<ServicesPriceConfigDialog> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E232B) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
@@ -2642,123 +2577,124 @@ class _ServicesPriceConfigDialogState extends State<ServicesPriceConfigDialog> {
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Rangli belgi (Icon container)
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: isDark ? 0.2 : 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 19, color: accentColor),
-          ),
-          const SizedBox(width: 12),
-
-          // Sarlavha, izoh va birlik belgisi
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+          // 1-qator: Belgisi + Nomi + Birligi
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 17, color: accentColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        title,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: context.inkColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF28313E) : const Color(0xFFE2E8F0),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            unit,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: context.mutedColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        subtitle,
                         style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          color: context.inkColor,
+                          fontSize: 11,
+                          color: context.mutedColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF28313E) : const Color(0xFFE2E8F0),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        unit,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: context.mutedColor,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: context.mutedColor,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 10),
 
-          // Narxni o'zgartirish bloki: [-] [ input ] [+] va +5k chip
+          // 2-qator: Narx boshqaruvi (+5k, [-] input [+], so'm)
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               // Tezkor +5k qo'shish tugmachasi
               InkWell(
                 onTap: () => _adjustPrice(controller, 5000),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF14181F) : const Color(0xFFEDF2F7),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: context.borderColor),
                   ),
                   child: Text(
-                    '+5k',
+                    '+5 000',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                       color: context.inkColor,
                     ),
                   ),
                 ),
               ),
+              const Spacer(),
 
               // Stepper konteyneri
               Container(
-                height: 38,
+                height: 36,
                 decoration: BoxDecoration(
                   color: context.cardColor,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(9),
                   border: Border.all(color: context.borderColor),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Minus tugmasi
                     InkWell(
-                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(9)),
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
                       onTap: () => _adjustPrice(controller, -1000),
                       child: SizedBox(
-                        width: 30,
-                        height: 38,
-                        child: Icon(Icons.remove, size: 15, color: context.mutedColor),
+                        width: 32,
+                        height: 36,
+                        child: Icon(Icons.remove, size: 14, color: context.mutedColor),
                       ),
                     ),
-
-                    // Matn kiritish maydoni
                     SizedBox(
                       width: 82,
                       child: TextField(
@@ -2773,20 +2709,18 @@ class _ServicesPriceConfigDialogState extends State<ServicesPriceConfigDialog> {
                         decoration: const InputDecoration(
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 9),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
                         ),
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
-
-                    // Plus tugmasi
                     InkWell(
-                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(9)),
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
                       onTap: () => _adjustPrice(controller, 1000),
                       child: SizedBox(
-                        width: 30,
-                        height: 38,
-                        child: Icon(Icons.add, size: 15, color: context.mutedColor),
+                        width: 32,
+                        height: 36,
+                        child: Icon(Icons.add, size: 14, color: context.mutedColor),
                       ),
                     ),
                   ],
@@ -2872,7 +2806,7 @@ class _ServicesPriceConfigDialogState extends State<ServicesPriceConfigDialog> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Kesish, faska, silliqlash va chizish narxlari (1 metr / 1 m²)',
+                          'Kesish (m²), faska, silliqlash va chizish narxlari',
                           style: TextStyle(
                             fontSize: 12,
                             color: context.mutedColor,
@@ -2922,24 +2856,14 @@ class _ServicesPriceConfigDialogState extends State<ServicesPriceConfigDialog> {
                         ),
                       ),
 
-                    // 1-Guruh: Kesish xizmatlari
+                    // 1-Guruh: Kesish xizmati
                     _buildGroupHeader(
-                      title: 'Kesish xizmatlari',
+                      title: 'Kesish xizmati',
                       icon: Icons.content_cut_rounded,
                       context: context,
                     ),
                     _buildServiceCard(
-                      title: 'Kesish — Metrda (eni bo‘yicha)',
-                      subtitle: 'Chiziqli metr bo‘yicha kesish narxi',
-                      unit: '1 metr',
-                      icon: Icons.straighten_rounded,
-                      accentColor: const Color(0xFFF59E0B),
-                      controller: _cutMeterCtrl,
-                      isDark: isDark,
-                      context: context,
-                    ),
-                    _buildServiceCard(
-                      title: 'Kesish — Kvadratda (m²)',
+                      title: 'Razmer kesish (m²)',
                       subtitle: 'Tosh yuzasi kvadrat metri bo‘yicha kesish narxi',
                       unit: '1 m²',
                       icon: Icons.crop_square_rounded,
