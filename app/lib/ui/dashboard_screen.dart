@@ -2421,7 +2421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Mini KPI paneli
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                          horizontal: 10, vertical: 10),
                       decoration: BoxDecoration(
                         color: ctx.isDark
                             ? const Color(0xFF161F1A)
@@ -2446,26 +2446,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.error_rounded,
-                                            size: 14, color: AppColors.danger),
-                                        SizedBox(width: 4),
-                                        Text('Kritik tanqislik',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.muted)),
+                                            size: 12, color: AppColors.danger),
+                                        SizedBox(width: 3),
+                                        Flexible(
+                                          child: Text('Kritik',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.muted)),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 3),
-                                    Text('${critical.length} ta tovar',
+                                    Text('${critical.length} ta',
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w900,
-                                            fontSize: 16,
+                                            fontSize: 15,
                                             color: AppColors.danger)),
                                   ],
                                 ),
@@ -2473,7 +2479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           Container(
-                              width: 1, height: 32, color: ctx.borderColor),
+                              width: 1, height: 28, color: ctx.borderColor),
                           Expanded(
                             child: InkWell(
                               borderRadius: BorderRadius.circular(10),
@@ -2490,26 +2496,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.warning_amber_rounded,
-                                            size: 14, color: Color(0xFFD97706)),
-                                        SizedBox(width: 4),
-                                        Text('Zaxira zarur',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.muted)),
+                                            size: 12, color: Color(0xFFD97706)),
+                                        SizedBox(width: 3),
+                                        Flexible(
+                                          child: Text('Zaxira kam',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.muted)),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 3),
-                                    Text('${warning.length} ta tovar',
+                                    Text('${warning.length} ta',
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w900,
-                                            fontSize: 16,
+                                            fontSize: 15,
                                             color: Color(0xFFD97706))),
                                   ],
                                 ),
@@ -2517,7 +2529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           Container(
-                              width: 1, height: 32, color: ctx.borderColor),
+                              width: 1, height: 28, color: ctx.borderColor),
                           Expanded(
                             child: InkWell(
                               borderRadius: BorderRadius.circular(10),
@@ -2533,26 +2545,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.check_circle_rounded,
-                                            size: 14, color: AppColors.green),
-                                        SizedBox(width: 4),
-                                        Text('Yetarli zaxira',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.muted)),
+                                            size: 12, color: AppColors.green),
+                                        SizedBox(width: 3),
+                                        Flexible(
+                                          child: Text('Yetarli',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.muted)),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 3),
-                                    Text('${optimal.length} ta tovar',
+                                    Text('${optimal.length} ta',
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w900,
-                                            fontSize: 16,
+                                            fontSize: 15,
                                             color: AppColors.green)),
                                   ],
                                 ),
@@ -2565,65 +2583,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 12),
 
                     // Filter va qidiruv paneli
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 38,
-                            child: TextField(
-                              onChanged: (val) =>
-                                  setDialogState(() => search = val),
-                              style: TextStyle(
-                                  fontSize: 12.5, color: ctx.inkColor),
-                              decoration: InputDecoration(
-                                hintText: 'Tovar nomini qidirish...',
-                                hintStyle: TextStyle(
-                                    fontSize: 12, color: ctx.mutedColor),
-                                prefixIcon:
-                                    const Icon(Icons.search_rounded, size: 18),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 0),
-                                filled: true,
-                                fillColor: ctx.isDark
-                                    ? const Color(0xFF1A222C)
-                                    : const Color(0xFFF1F5F9),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
+                        SizedBox(
+                          height: 38,
+                          child: TextField(
+                            onChanged: (val) =>
+                                setDialogState(() => search = val),
+                            style: TextStyle(
+                                fontSize: 12.5, color: ctx.inkColor),
+                            decoration: InputDecoration(
+                              hintText: 'Tovar nomini qidirish...',
+                              hintStyle: TextStyle(
+                                  fontSize: 12, color: ctx.mutedColor),
+                              prefixIcon:
+                                  const Icon(Icons.search_rounded, size: 18),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 0),
+                              filled: true,
+                              fillColor: ctx.isDark
+                                  ? const Color(0xFF1A222C)
+                                  : const Color(0xFFF1F5F9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Wrap(
-                          spacing: 6,
-                          children: [
-                            ChoiceChip(
-                              label: Text('Barchasi (${items.length})',
-                                  style: const TextStyle(fontSize: 11.5)),
-                              selected: filter == 'all',
-                              onSelected: (_) =>
-                                  setDialogState(() => filter = 'all'),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            ChoiceChip(
-                              label: Text('Kritik (${critical.length})',
-                                  style: const TextStyle(fontSize: 11.5)),
-                              selected: filter == 'critical',
-                              onSelected: (_) =>
-                                  setDialogState(() => filter = 'critical'),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            ChoiceChip(
-                              label: Text('Kam (${warning.length})',
-                                  style: const TextStyle(fontSize: 11.5)),
-                              selected: filter == 'warning',
-                              onSelected: (_) =>
-                                  setDialogState(() => filter = 'warning'),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              ChoiceChip(
+                                label: Text('Barchasi (${items.length})',
+                                    style: const TextStyle(fontSize: 11)),
+                                selected: filter == 'all',
+                                onSelected: (_) =>
+                                    setDialogState(() => filter = 'all'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              const SizedBox(width: 6),
+                              ChoiceChip(
+                                label: Text('Kritik (${critical.length})',
+                                    style: const TextStyle(fontSize: 11)),
+                                selected: filter == 'critical',
+                                onSelected: (_) =>
+                                    setDialogState(() => filter = 'critical'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              const SizedBox(width: 6),
+                              ChoiceChip(
+                                label: Text('Kam (${warning.length})',
+                                    style: const TextStyle(fontSize: 11)),
+                                selected: filter == 'warning',
+                                onSelected: (_) =>
+                                    setDialogState(() => filter = 'warning'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              const SizedBox(width: 6),
+                              ChoiceChip(
+                                label: Text('Yetarli (${optimal.length})',
+                                    style: const TextStyle(fontSize: 11)),
+                                selected: filter == 'optimal',
+                                onSelected: (_) =>
+                                    setDialogState(() => filter = 'optimal'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -2651,16 +2681,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                                 Color statusColor = AppColors.green;
                                 String statusText =
-                                    'Yetarli (~${item.daysRemaining} kun)';
+                                    'Yetarli (~${item.daysRemaining}k)';
                                 if (isCrit) {
                                   statusColor = AppColors.danger;
                                   statusText = isOut
-                                      ? 'Tugagan (0 ${item.product.unit})'
-                                      : 'Kritik (~${item.daysRemaining} kun)';
+                                      ? 'Tugagan'
+                                      : 'Kritik (~${item.daysRemaining}k)';
                                 } else if (isWarn) {
                                   statusColor = const Color(0xFFD97706);
                                   statusText =
-                                      'Kam (~${item.daysRemaining} kun)';
+                                      'Kam (~${item.daysRemaining}k)';
                                 }
 
                                 final totalTarget =
@@ -2724,8 +2754,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     Container(
                                                       padding: const EdgeInsets
                                                           .symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 3),
+                                                          horizontal: 6,
+                                                          vertical: 2.5),
                                                       decoration: BoxDecoration(
                                                         color: statusColor
                                                             .withValues(
@@ -3016,9 +3046,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            'AI Zaxira Tavsiyasi',
+                            MediaQuery.sizeOf(context).width < 500
+                                ? 'AI Zaxira'
+                                : 'AI Zaxira Tavsiyasi',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w800,
                               color: context.inkColor,
                               letterSpacing: -0.3,

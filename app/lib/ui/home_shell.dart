@@ -985,16 +985,6 @@ class _HomeShellState extends State<HomeShell> {
                   ),
               ],
             ),
-            IconButton(
-              tooltip: 'Sozlamalar',
-              icon: const Icon(Icons.settings_outlined, size: 21),
-              onPressed: _openSettingsBottomSheet,
-            ),
-            IconButton(
-              tooltip: 'Chiqish',
-              icon: const Icon(Icons.logout_rounded, size: 20),
-              onPressed: logout,
-            ),
             const SizedBox(width: 4),
           ],
         ],

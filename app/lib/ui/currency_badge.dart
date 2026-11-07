@@ -42,25 +42,6 @@ class CurrencyBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: currency.isCustom ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                '\$',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
             if (currency.isLoading)
               const SizedBox(
                 width: 12,
