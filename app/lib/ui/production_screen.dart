@@ -227,15 +227,18 @@ class _ProductionScreenState extends State<ProductionScreen> {
             children: [
               const Icon(Icons.architecture_rounded, size: 16, color: Color(0xFF0284C7)),
               const SizedBox(width: 6),
-              const Text(
-                '📐 Kesish & Ishlov tafsilotlari:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  color: Color(0xFF0284C7),
+              const Expanded(
+                child: Text(
+                  '📐 Kesish & Ishlov tafsilotlari:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: Color(0xFF0284C7),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 6),
               if (hasOrderId)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -243,7 +246,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
                     color: const Color(0xFF0284C7).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text('Buyurtma #${t.orderId}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF0284C7))),
+                  child: Text(
+                    'Buyurtma #${t.orderId}',
+                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF0284C7)),
+                  ),
                 ),
               if (t.isRejected) ...[
                 const SizedBox(width: 6),
@@ -253,7 +259,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
                     color: const Color(0xFFEF4444).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('Qaytarilgan', style: TextStyle(color: Color(0xFFEF4444), fontSize: 10.5, fontWeight: FontWeight.w800)),
+                  child: const Text(
+                    'Qaytarilgan',
+                    style: TextStyle(color: Color(0xFFEF4444), fontSize: 10.5, fontWeight: FontWeight.w800),
+                  ),
                 ),
               ],
             ],

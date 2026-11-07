@@ -160,8 +160,8 @@ class _CurrencySettingsDialogState extends State<_CurrencySettingsDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 440,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -182,11 +182,14 @@ class _CurrencySettingsDialogState extends State<_CurrencySettingsDialog> {
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          '🇺🇿 O‘zbekiston Markaziy Banki (CBU)',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                        const Expanded(
+                          child: Text(
+                            '🇺🇿 O‘zbekiston MB (CBU)',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 6),
                         if (currency.isLoading)
                           const SizedBox(
                             width: 14,
@@ -218,30 +221,36 @@ class _CurrencySettingsDialogState extends State<_CurrencySettingsDialog> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
-                        const Text(
-                          '1 USD = ',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.muted),
-                        ),
-                        Text(
-                          money(currency.cbuRate),
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF10B981),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: '1 USD = ',
+                                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppColors.muted),
+                              ),
+                              TextSpan(
+                                text: money(currency.cbuRate),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF10B981),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 8),
                         if (currency.cbuDiff.isNotEmpty && currency.cbuDiff != '0.00')
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: currency.cbuDiff.startsWith('-')
-                                  ? const Color(0xFFEF4444).withOpacity(0.12)
-                                  : const Color(0xFF10B981).withOpacity(0.12),
+                                  ? const Color(0xFFEF4444).withValues(alpha: 0.12)
+                                  : const Color(0xFF10B981).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -360,18 +369,29 @@ class _CurrencySettingsDialogState extends State<_CurrencySettingsDialog> {
                         style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Text(
-                            '\$100 = ${money(currency.toUzs(_calcUsd))}',
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-                          ),
+                        const Text(
+                          '\$100 =',
+                          style: TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w600),
                         ),
-                        Expanded(
-                          child: Text(
-                            '1 mln so‘m = ${moneyUsd(currency.toUsd(_calcUzs))}',
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-                          ),
+                        Text(
+                          money(currency.toUzs(_calcUsd)),
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '1 000 000 so‘m =',
+                          style: TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          moneyUsd(currency.toUsd(_calcUzs)),
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
                         ),
                       ],
                     ),
