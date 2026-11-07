@@ -50,11 +50,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
   void _copyReminderText(SaleResult sale) {
     final name = sale.customerName?.isNotEmpty == true ? sale.customerName! : 'Hurmatli mijoz';
     final text = 'Assalomu alaykum, $name!\n'
-        'NTM (Namuna Tosh Markazi) dan xaridlaringiz bo‘yicha #${sale.id}-sonli chekdan '
+        'NTJ (Namuna Tosh Jilo) dan xaridlaringiz bo‘yicha #${sale.id}-sonli chekdan '
         '${money(sale.debt)} miqdorida nasiya qarzdorligingiz mavjud.\n'
         'Iltimos, imkon qadar tezroq to‘lovni amalga oshirishingizni so‘raymiz.\n'
         'Aloqa va ma‘lumot uchun: +998 (90) 123-45-67\n'
-        'Manzil: Namuna Tosh Markazi';
+        'Manzil: Namuna Tosh Jilo';
 
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -74,7 +74,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
 
   void _copyCustomerTotalReminder(String name, String? phone, double totalDebt, int count) {
     final text = 'Assalomu alaykum, $name!\n'
-        'NTM (Namuna Tosh Markazi) dan xaridlaringiz ($count ta chek) bo‘yicha jami '
+        'NTJ (Namuna Tosh Jilo) dan xaridlaringiz ($count ta chek) bo‘yicha jami '
         '${money(totalDebt)} miqdorida nasiya qarzdorligingiz mavjud.\n'
         'Iltimos, to‘lovni amalga oshirishingizni so‘raymiz.\n'
         'Aloqa va ma‘lumot uchun: +998 (90) 123-45-67';

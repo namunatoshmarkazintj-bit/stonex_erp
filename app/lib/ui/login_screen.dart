@@ -355,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'NTM',
+                  'NTJ',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
@@ -364,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
                 Text(
-                  'NAMUNA TOSH MARKAZI · v2.5',
+                  'NAMUNA TOSH JILO · v2.5',
                   style: TextStyle(
                     fontSize: 11,
                     letterSpacing: 1.2,
@@ -551,7 +551,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 12),
         const Text(
-          'NTM',
+          'NTJ',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w900,
@@ -561,7 +561,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 3),
         const Text(
-          'Namuna Tosh Markazi — Korxona Boshqaruv Tizimi',
+          'Namuna Tosh Jilo — Korxona Boshqaruv Tizimi',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,

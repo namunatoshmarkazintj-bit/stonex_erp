@@ -61,7 +61,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     final sale = widget.sale;
     final sb = StringBuffer();
     sb.writeln('================================');
-    sb.writeln('   NTM — NAMUNA TOSH MARKAZI    ');
+    sb.writeln('   NTJ — NAMUNA TOSH JILO    ');
     sb.writeln('  Tabiiy tosh va granit markazi ');
     sb.writeln('   Tel: +998 (90) 123-45-67     ');
     sb.writeln('================================');
@@ -217,7 +217,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 mainAxisSize: pw.MainAxisSize.min,
                 children: [
                   pw.Text(
-                    'NTM — NAMUNA TOSH MARKAZI',
+                    'NTJ — NAMUNA TOSH JILO',
                     style: pw.TextStyle(
                       font: fontBold,
                       fontSize: 14,
@@ -571,7 +571,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             // Brand
                             const Center(
                               child: Text(
-                                'NTM — NAMUNA TOSH MARKAZI',
+                                'NTJ — NAMUNA TOSH JILO',
                                 style: TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 16,

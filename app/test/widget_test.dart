@@ -108,7 +108,7 @@ void main() {
 
 
 
-    expect(find.text('NTM'), findsWidgets);
+    expect(find.text('NTJ'), findsWidgets);
 
     expect(find.text('Tizimga kirish'), findsWidgets);
 
@@ -932,7 +932,7 @@ void main() {
 
     expect(find.text('Kassa Cheki'), findsOneWidget);
 
-    expect(find.text('NTM — NAMUNA TOSH MARKAZI'), findsOneWidget);
+    expect(find.text('NTJ — NAMUNA TOSH JILO'), findsOneWidget);
 
     expect(find.text('Sobirjon Aka'), findsOneWidget);
 
@@ -1172,7 +1172,7 @@ void main() {
 
     expect(find.text('Kassa Cheki'), findsOneWidget);
 
-    expect(find.text('NTM — NAMUNA TOSH MARKAZI'), findsOneWidget);
+    expect(find.text('NTJ — NAMUNA TOSH JILO'), findsOneWidget);
 
     expect(find.textContaining('95'), findsWidgets);
 

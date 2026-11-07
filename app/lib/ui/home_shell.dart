@@ -1344,7 +1344,7 @@ class _VaultSidebar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'NTM',
+                      'NTJ',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 19,
@@ -1353,7 +1353,7 @@ class _VaultSidebar extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Namuna Tosh Markazi',
+                      'Namuna Tosh Jilo',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Color(0xFF8E959E),

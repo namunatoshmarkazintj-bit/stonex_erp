@@ -2170,7 +2170,7 @@ class DeliveryWaybillDialog extends StatelessWidget {
                   const Center(
                     child: Column(
                       children: [
-                        Text('STONEX ERP · MARMAR VA GRANIT MARKAZI', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                        Text('NAMUNA TOSH JILO · NTJ ERP', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
                         SizedBox(height: 2),
                         Text('Tovarlarni avtotransport orqali yetkazib berish hujjati', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                       ],

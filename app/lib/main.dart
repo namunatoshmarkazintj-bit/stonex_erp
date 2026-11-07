@@ -33,7 +33,7 @@ class StonexApp extends StatelessWidget {
       ],
       child: Consumer<ThemeController>(
         builder: (_, themeCtrl, __) => MaterialApp(
-          title: 'NTM — Namuna Tosh Markazi',
+          title: 'NTJ — Namuna Tosh Jilo',
           debugShowCheckedModeBanner: false,
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),
