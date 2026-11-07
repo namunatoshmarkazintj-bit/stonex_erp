@@ -187,6 +187,8 @@ def seed_ntm_dataset(db) -> None:
             existing = db.scalar(select(m.Product).where(m.Product.name == name))
 
         if existing:
+            if category and existing.category != category:
+                existing.category = category
             continue
 
         unit = prod.get("unit", "m2")
