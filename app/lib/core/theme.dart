@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Vault / STONEX dizayn tizimi (zamonaviy quyuq grafit menyu + och kulrang panel + neon-laym urg‘ular).
 class AppColors {
@@ -71,6 +72,14 @@ ThemeData buildTheme([Brightness brightness = Brightness.light]) {
       foregroundColor: isDark ? const Color(0xFFF0F3F6) : AppColors.ink,
       elevation: 0,
       scrolledUnderElevation: 0,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: isDark ? const Color(0xFF0D1015) : Colors.white,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
       titleTextStyle: TextStyle(
         color: isDark ? const Color(0xFFF0F3F6) : AppColors.ink,
         fontSize: 22,
