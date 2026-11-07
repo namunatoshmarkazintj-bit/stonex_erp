@@ -326,7 +326,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
     _recalcFromCutWidth();
     if (widget.product != null) {
-      _applyProduct(widget.product!, initial: true);
+      _applyProduct(widget.product!, initial: true, force: true);
     }
     _loadPricesAndProducts();
   }
@@ -354,7 +354,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                 stones.where((p) => p.isTileOrCeramic).firstOrNull ??
                 stones.firstOrNull;
             if (preferredStone != null) {
-              _applyProduct(preferredStone, initial: true, fallbackM2: cartStoneLine?.quantity);
+              _applyProduct(preferredStone, initial: true, fallbackM2: cartStoneLine?.quantity, force: true);
             }
           }
         });
@@ -363,8 +363,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     if (mounted) setState(() => _syncing = false);
   }
 
-  void _applyProduct(Product p, {bool initial = false, double? fallbackM2}) {
-    if (!p.isCuttableStone) return;
+  void _applyProduct(Product p, {bool initial = false, double? fallbackM2, bool force = false}) {
+    if (!force && !p.isCuttableStone && widget.product?.id != p.id) return;
     _selectedProduct = p;
 
     double? len = p.tileLength;
@@ -730,10 +730,13 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
     int targetProductId = def.defaultProductId;
     String serviceDisplayName = def.name;
+    final stoneName = _selectedProduct?.name;
 
     if (def.key == 'cut') {
       targetProductId = 24;
-      serviceDisplayName = 'Razmer kesish (Kvadratda)';
+      serviceDisplayName = stoneName != null && stoneName.isNotEmpty
+          ? 'Kesish xizmati ($stoneName)'
+          : 'Razmer kesish (Kvadratda)';
     } else if (def.key == 'polish') {
       if (_polishStoneType == 'granite') {
         targetProductId = 21;
@@ -742,6 +745,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
         targetProductId = 23;
         serviceDisplayName = 'Silliqlash (Keramogranit)';
       }
+    } else {
+      serviceDisplayName = def.name;
     }
 
     Product? targetProduct;
@@ -2010,7 +2015,70 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
     if (_selectedProduct != null) {
       final p = _selectedProduct!;
-      return Container(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (cartStones.length > 1) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E2630) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.borderColor),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.shopping_cart_outlined, size: 14, color: context.mutedColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Savatdagi mahsulot:',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context.mutedColor,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final line in cartStones)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                avatar: line.product.id == _selectedProduct?.id
+                                    ? const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981))
+                                    : null,
+                                label: Text(
+                                  '${line.product.name} (${line.quantity % 1 == 0 ? line.quantity.toInt() : line.quantity} ${line.product.unit})',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: line.product.id == _selectedProduct?.id
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                  ),
+                                ),
+                                selected: line.product.id == _selectedProduct?.id,
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (sel) {
+                                  if (sel) {
+                                    _applyProduct(line.product, fallbackM2: line.quantity, force: true);
+                                  }
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1B2228) : const Color(0xFFF1F5F9),
@@ -2170,6 +2238,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
             ),
           ],
         ),
+      ),
+      ],
       );
     }
 

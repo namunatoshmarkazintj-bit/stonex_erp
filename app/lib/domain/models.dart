@@ -400,7 +400,9 @@ class Product {
         nm.contains('granit') ||
         nm.contains('marmar') ||
         nm.contains('travertin') ||
-        nm.contains('tosh')) {
+        nm.contains('tosh') ||
+        nm.contains('saroy') ||
+        sk.startsWith('ks')) {
       return true;
     }
 
@@ -580,6 +582,10 @@ class Product {
         category: () {
           final c = j['category']?.toString();
           if (c != null && c.trim().toLowerCase() == 'granit') {
+            return 'Marmar';
+          }
+          final nm = (j['name'] ?? '').toString().toLowerCase();
+          if (nm.contains('saroy')) {
             return 'Marmar';
           }
           return c;

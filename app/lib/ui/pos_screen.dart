@@ -1648,6 +1648,19 @@ class _CartLineTile extends StatelessWidget {
                     ],
                   ],
                 ),
+                if (l.cutSpec != null && l.cutSpec!.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    '✂️ ${l.cutSpec}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: context.isDark ? AppColors.neonLime : const Color(0xFF047857),
+                    ),
+                  ),
+                ],
               ]),
             ),
             IconButton(
