@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import 'core/theme.dart';
 import 'data/repositories.dart';
 import 'data/repository_factory.dart';
+import 'state/app_lock_controller.dart';
 import 'state/auth_controller.dart';
 import 'state/cart_controller.dart';
 import 'state/currency_controller.dart';
 import 'state/theme_controller.dart';
 import 'ui/home_shell.dart';
 import 'ui/login_screen.dart';
+import 'ui/pin_lock_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,7 @@ class StonexApp extends StatelessWidget {
       providers: [
         Provider<AppRepositories>.value(value: repos),
         ChangeNotifierProvider(create: (_) => AuthController(repos.auth)),
+        ChangeNotifierProvider(create: (_) => AppLockController()),
         ChangeNotifierProvider(create: (_) => CartController(repos.sales)),
         ChangeNotifierProvider(create: (_) => CurrencyController()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
@@ -38,8 +41,8 @@ class StonexApp extends StatelessWidget {
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),
           themeMode: themeCtrl.mode,
-          home: Consumer<AuthController>(
-            builder: (_, auth, __) {
+          home: Consumer2<AuthController, AppLockController>(
+            builder: (ctx, auth, appLock, _) {
               if (auth.loading && auth.user == null) {
                 return const Scaffold(
                   backgroundColor: AppColors.panel,
@@ -48,7 +51,21 @@ class StonexApp extends StatelessWidget {
                   ),
                 );
               }
-              return auth.user == null ? const LoginScreen() : HomeShell(user: auth.user!);
+              if (auth.user == null) {
+                return const LoginScreen();
+              }
+
+              if (appLock.currentUser?.id != auth.user?.id) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  appLock.syncUser(auth.user);
+                });
+              }
+
+              if (appLock.isLocked) {
+                return PinLockScreen(user: auth.user!);
+              }
+
+              return HomeShell(user: auth.user!);
             },
           ),
         ),

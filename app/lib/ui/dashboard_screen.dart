@@ -396,7 +396,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   : 'O‘tgan yilga nisbatan';
       badgeRevenue = '$sign${revGrowth.toStringAsFixed(0)}% $compText';
     } else {
-      badgeRevenue = stats.revenue > 0 ? '${stats.salesCount} ta savdo cheki' : 'Savdo yo‘q';
+      badgeRevenue = stats.revenue > 0
+          ? '${stats.salesCount} ta savdo cheki'
+          : 'Savdo yo‘q';
     }
 
     // 2. Kassa tushumi badge matni (Real tushum sur'ati / to'lov foizi)
@@ -1498,8 +1500,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 },
               ),
-
-
             ],
           ),
         );
@@ -2598,8 +2598,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: TextField(
                             onChanged: (val) =>
                                 setDialogState(() => search = val),
-                            style: TextStyle(
-                                fontSize: 12.5, color: ctx.inkColor),
+                            style:
+                                TextStyle(fontSize: 12.5, color: ctx.inkColor),
                             decoration: InputDecoration(
                               hintText: 'Tovar nomini qidirish...',
                               hintStyle: TextStyle(
@@ -2696,8 +2696,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       : 'Kritik (~${item.daysRemaining}k)';
                                 } else if (isWarn) {
                                   statusColor = const Color(0xFFD97706);
-                                  statusText =
-                                      'Kam (~${item.daysRemaining}k)';
+                                  statusText = 'Kam (~${item.daysRemaining}k)';
                                 }
 
                                 final totalTarget =
@@ -2830,8 +2829,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 8, vertical: 4),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                 decoration: BoxDecoration(
                                                   color: ctx.isDark
                                                       ? const Color(0xFF1E2833)
@@ -2843,14 +2844,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   'Qoldiq: ${qty(item.currentStock)} ${item.product.unit}',
                                                   style: TextStyle(
                                                       fontSize: 11,
-                                                      fontWeight: FontWeight.w700,
+                                                      fontWeight:
+                                                          FontWeight.w700,
                                                       color: ctx.inkColor),
                                                 ),
                                               ),
                                               const SizedBox(width: 6),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 8, vertical: 4),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                 decoration: BoxDecoration(
                                                   color: ctx.isDark
                                                       ? const Color(0xFF1E2833)
@@ -2872,26 +2876,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 4),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
                                                   decoration: BoxDecoration(
                                                     color: ctx.isDark
                                                         ? AppColors.neonLime
-                                                            .withValues(alpha: 0.18)
+                                                            .withValues(
+                                                                alpha: 0.18)
                                                         : AppColors.greenSoft,
                                                     borderRadius:
-                                                        BorderRadius.circular(8),
+                                                        BorderRadius.circular(
+                                                            8),
                                                   ),
                                                   child: Text(
                                                     'AI: +${qty(item.recommendedQty)} ${item.product.unit}',
                                                     style: TextStyle(
                                                       fontSize: 11,
-                                                      fontWeight: FontWeight.w900,
+                                                      fontWeight:
+                                                          FontWeight.w900,
                                                       color: ctx.isDark
                                                           ? AppColors.neonLime
-                                                          : const Color(0xFF065F46),
+                                                          : const Color(
+                                                              0xFF065F46),
                                                     ),
                                                   ),
                                                 ),
@@ -2906,22 +2914,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                         ? AppColors.danger
                                                         : (ctx.isDark
                                                             ? AppColors.neonLime
-                                                            : AppColors.darkCard),
+                                                            : AppColors
+                                                                .darkCard),
                                                     foregroundColor: isCrit
                                                         ? Colors.white
                                                         : (ctx.isDark
                                                             ? AppColors.ink
                                                             : Colors.white),
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                            horizontal: 14,
-                                                            vertical: 8),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 8),
                                                     visualDensity:
                                                         VisualDensity.compact,
-                                                    shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                                10)),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
                                                   ),
                                                   child: const Text('Kirim',
                                                       style: TextStyle(
@@ -2997,11 +3008,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   Icons.precision_manufacturing_rounded,
                                   size: 16),
                               label: const Text('Sexga topshiriq ochish',
-                                  style: TextStyle(fontWeight: FontWeight.w700)),
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w700)),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: ctx.inkColor,
                                 side: BorderSide(color: ctx.borderColor),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14)),
                               ),
@@ -3017,11 +3030,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               icon: const Icon(Icons.shopping_bag_rounded,
                                   size: 16),
                               label: const Text('+ Xarid Kirim Qilish',
-                                  style: TextStyle(fontWeight: FontWeight.w800)),
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w800)),
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.neonLime,
                                 foregroundColor: AppColors.ink,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14)),
                               ),

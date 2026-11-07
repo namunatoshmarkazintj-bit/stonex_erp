@@ -8,10 +8,12 @@ import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
+import '../state/app_lock_controller.dart';
 import '../state/auth_controller.dart';
 import '../state/theme_controller.dart';
 import 'common.dart';
 import 'currency_badge.dart';
+import 'pin_lock_screen.dart';
 import 'customers_screen.dart';
 import 'dashboard_screen.dart';
 import 'debts_screen.dart';
@@ -165,10 +167,51 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadNotifications());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNotifications();
+      _checkPinSetup();
+    });
     _notifTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) _loadNotifications();
     });
+  }
+
+  void _checkPinSetup() {
+    AppLockController? appLock;
+    try {
+      appLock = Provider.of<AppLockController>(context, listen: false);
+    } catch (_) {}
+    if (appLock == null) return;
+    if (!appLock.hasPin && mounted) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: context.isDark ? const Color(0xFF161F2E) : const Color(0xFF1E293B),
+            content: const Row(
+              children: [
+                Icon(Icons.shield_outlined, color: AppColors.neonLime, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Xavfsizlik: Har gal kirganda so‘raladigan shaxsiy PIN kod (ilova qulfi) o‘rnating',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            action: SnackBarAction(
+              label: 'O‘rnatish',
+              textColor: AppColors.neonLime,
+              onPressed: () => PinSetupDialog.show(context, widget.user),
+            ),
+            duration: const Duration(seconds: 8),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      });
+    }
   }
 
   bool _handleKeyEvent(KeyEvent event) {
@@ -1519,6 +1562,23 @@ class _VaultSidebar extends StatelessWidget {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Ilovani qulflash',
+                  icon: const Icon(Icons.lock_outline_rounded,
+                      color: Color(0xFF8E959E), size: 18),
+                  onPressed: () {
+                    AppLockController? appLock;
+                    try {
+                      appLock = Provider.of<AppLockController>(context, listen: false);
+                    } catch (_) {}
+                    if (appLock == null) return;
+                    if (!appLock.hasPin) {
+                      PinSetupDialog.show(context, user);
+                    } else {
+                      appLock.lockNow();
+                    }
+                  },
+                ),
+                IconButton(
                   tooltip: 'Sozlamalar',
                   icon: const Icon(Icons.settings_outlined,
                       color: Color(0xFF8E959E), size: 18),
@@ -2359,6 +2419,135 @@ class _SettingsBottomSheet extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Xavfsizlik va Ilova qulfi (PIN kod)
+          Text(
+            'XAVFSIZLIK VA ILOVA QULFI (PIN)',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+              color: context.mutedColor,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          Builder(
+            builder: (ctx) {
+              AppLockController? appLock;
+              try {
+                appLock = Provider.of<AppLockController>(ctx);
+              } catch (_) {}
+              if (appLock == null) return const SizedBox.shrink();
+              final lockCtrl = appLock;
+
+              final hasPin = lockCtrl.hasPin;
+              final isEnabled = lockCtrl.isLockEnabled;
+
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.cardSubtle,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderColor),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: (hasPin && isEnabled)
+                                ? AppColors.green.withValues(alpha: 0.15)
+                                : AppColors.muted.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            hasPin && isEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
+                            color: hasPin && isEnabled ? AppColors.green : context.mutedColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ilova qulfi (PIN kod)',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.5,
+                                  color: context.inkColor,
+                                ),
+                              ),
+                              Text(
+                                !hasPin
+                                    ? 'Hali o‘rnatilmagan'
+                                    : (isEnabled ? 'Faol (Har safar kirganda so‘raladi)' : 'O‘chirilgan'),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: hasPin && isEnabled ? AppColors.green : context.mutedColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (hasPin)
+                          Switch(
+                            value: isEnabled,
+                            activeColor: AppColors.neonLime,
+                            onChanged: (val) => lockCtrl.setLockEnabled(val),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: Icon(hasPin ? Icons.edit_rounded : Icons.add_moderator_rounded, size: 16),
+                            label: Text(
+                              hasPin ? 'PIN kodni tahrirlash' : 'PIN kod o‘rnatish',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              PinSetupDialog.show(context, user);
+                            },
+                          ),
+                        ),
+                        if (hasPin) ...[
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.neonLime,
+                              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.lock_clock_rounded, size: 16),
+                            label: const Text('Qulflash', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              lockCtrl.lockNow();
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
 

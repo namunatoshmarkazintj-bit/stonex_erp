@@ -248,71 +248,25 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
 
-          // 3. Asosiy responsiv kontent
+          // 3. Asosiy responsiv kontent (Markaziy toza kirish kartasi)
           SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth >= 960;
-
-                if (isDesktop) {
-                  return Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1160),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Chap tomondagi brend va imkoniyatlar paneli
-                            Expanded(
-                              flex: 6,
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 48),
-                                child: _buildBrandingShowcase(),
-                              ),
-                            ),
-
-                            // O'ng tomondagi kirish kartasi
-                            Expanded(
-                              flex: 5,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 440),
-                                  child: _buildAuthCard(auth),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                // Mobil va planshet ekrani: To'liq xatosiz vertikal oqim (Overflow-Proof)
-                return Center(
-                  child: SingleChildScrollView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                    physics: const ClampingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: constraints.maxWidth < 420 ? 16 : 24,
-                      vertical: 20,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 460),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildMobileHeader(),
-                          const SizedBox(height: 20),
-                          _buildAuthCard(auth),
-                        ],
-                      ),
-                    ),
+            child: Center(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 20),
+                      _buildAuthCard(auth),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
         ],
@@ -320,253 +274,51 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Desktop uchun Chap Brend Paneli
-  // ---------------------------------------------------------------------------
 
-  Widget _buildBrandingShowcase() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Brend logotipi va Versiya nishoni
-        Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/app_icon.png',
-                width: 52,
-                height: 52,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.neonLime,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(Icons.token_rounded, color: Color(0xFF090D14), size: 28),
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'NTJ',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2.2,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  'NAMUNA TOSH JILO · v2.5',
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.neonLime.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 28),
-
-        // Asosiy chaqiruv sarlavhasi
-        const Text(
-          'Tosh va Tabiiy Granit\nIshlab Chiqarishni Boshqarish',
-          style: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            height: 1.18,
-            letterSpacing: -0.6,
-          ),
-        ),
-        const SizedBox(height: 14),
-        const Text(
-          'Ombor zaxirasi, sexlararo topshiriqlar, QR-kodli yorliqlar, tezkor savdo va moliyaviy oqimlar yagona avtomatlashgan tizimda.',
-          style: TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 14,
-            height: 1.5,
-          ),
-        ),
-
-        const SizedBox(height: 32),
-
-        // 4 ta ustunlik kartasi
-        _buildFeatureItem(
-          icon: Icons.warehouse_rounded,
-          iconColor: AppColors.neonLime,
-          title: 'Aqlli Ombor & Partiyalar',
-          desc: 'Xomashyo va tayyor plitalar qoldig‘i, kirim-chiqimlar real-vaqtda',
-        ),
-        const SizedBox(height: 14),
-        _buildFeatureItem(
-          icon: Icons.qr_code_scanner_rounded,
-          iconColor: const Color(0xFF38BDF8),
-          title: 'Smart QR-Kod & Tezkor Savdo',
-          desc: 'Har bir mahsulotga avtomatik QR-yorliq va kassa skaneri',
-        ),
-        const SizedBox(height: 14),
-        _buildFeatureItem(
-          icon: Icons.precision_manufacturing_rounded,
-          iconColor: const Color(0xFFFBBF24),
-          title: 'Ishlab Chiqarish & Sexlar',
-          desc: 'Kesish, arralash, silliqlash buyurtmalari va xodimlar nazorati',
-        ),
-        const SizedBox(height: 14),
-        _buildFeatureItem(
-          icon: Icons.account_balance_wallet_rounded,
-          iconColor: const Color(0xFF4ADE80),
-          title: 'Moliyaviy Oqim & Nasiyalar',
-          desc: 'Mijozlar qarzdorligi, kassa tushumi va avtomatik qarz daftari',
-        ),
-
-        const SizedBox(height: 28),
-
-        // Tizim holati indikatori
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F1724),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Flexible(
-                child: Text(
-                  'Barcha xizmatlar barqaror ishlamoqda (Cloud Sync Online)',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: Color(0xFFCBD5E1), fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String desc,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1420).withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  desc,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 11.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ---------------------------------------------------------------------------
-  // Mobil uchun Ixcham Header
+  // Markaziy Brend Header (Logo va Nom)
   // ---------------------------------------------------------------------------
 
-  Widget _buildMobileHeader() {
+  Widget _buildHeader() {
     return Column(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Image.asset(
             'assets/app_icon.png',
-            width: 58,
-            height: 58,
+            width: 72,
+            height: 72,
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
-              width: 58,
-              height: 58,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 color: AppColors.neonLime,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.token_rounded, color: Color(0xFF090D14), size: 30),
+              child: const Icon(Icons.token_rounded, color: Color(0xFF090D14), size: 36),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         const Text(
           'NTJ',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 26,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2.0,
+            letterSpacing: 2.2,
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 3),
-        const Text(
-          'Namuna Tosh Jilo — Korxona Boshqaruv Tizimi',
-          textAlign: TextAlign.center,
+        const SizedBox(height: 4),
+        Text(
+          'NAMUNA TOSH JILO',
           style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF94A3B8),
-            fontWeight: FontWeight.w600,
+            fontSize: 12.5,
+            letterSpacing: 1.6,
+            fontWeight: FontWeight.w700,
+            color: AppColors.neonLime.withValues(alpha: 0.9),
           ),
         ),
       ],
