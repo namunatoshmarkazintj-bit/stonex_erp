@@ -4,10 +4,9 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
-import 'package:zxing2/qrcode.dart';
 
+import '../core/barcode_decoder.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/repositories.dart';
@@ -19,24 +18,7 @@ import 'receipt_dialog.dart';
 String _u(String unit) => unit == 'm2' ? 'm²' : unit;
 
 String? _decodeQrFromBytes(Uint8List bytes) {
-  try {
-    var image = img.decodeImage(bytes);
-    if (image == null) return null;
-    if (image.width > 640) {
-      image = img.copyResize(image, width: 480);
-    }
-    final width = image.width;
-    final height = image.height;
-    final rgba = image.convert(numChannels: 4).getBytes(order: img.ChannelOrder.rgba);
-    final int32List = rgba.buffer.asInt32List();
-    final source = RGBLuminanceSource(width, height, int32List);
-    final bitmap = BinaryBitmap(HybridBinarizer(source));
-    final reader = QRCodeReader();
-    final result = reader.decode(bitmap);
-    return result.text;
-  } catch (_) {
-    return null;
-  }
+  return BarcodeDecoder.decode(bytes);
 }
 
 class _ScannerHolePainter extends CustomPainter {
@@ -367,10 +349,11 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           _lastQty = 1.0;
         });
       } else {
+        _currentLockedCode = code;
         HapticFeedback.vibrate();
         setState(() {
           _isError = true;
-          _statusMessage = 'Mahsulot topilmadi: "$code"';
+          _statusMessage = 'Kod o‘qildi: "$code" (Bazada bu kodga ega mahsulot topilmadi)';
         });
       }
     } catch (e) {
@@ -787,7 +770,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       Icon(Icons.qr_code_scanner_rounded, size: 16, color: AppColors.neonLime),
                       SizedBox(width: 8),
                       Text(
-                        'QR kodni ramka ichiga to‘g‘rilang',
+                        'QR yoki shtrix-kodni ramkaga to‘g‘rilang',
                         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                     ],

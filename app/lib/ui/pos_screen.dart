@@ -2702,7 +2702,7 @@ class _DesktopQrScannerDialogState extends State<_DesktopQrScannerDialog> {
         HapticFeedback.vibrate();
         setState(() {
           _isError = true;
-          _statusMessage = 'Mahsulot topilmadi: "$code"';
+          _statusMessage = 'Kod o‘qildi: "$code" (Bazada bu kodga ega mahsulot topilmadi)';
         });
         _focusNode.requestFocus();
       }
