@@ -354,12 +354,28 @@ class Product {
         tileLength! > 0 &&
         tileWidth! > 0) {
       final single = (tileLength! * tileWidth!) / 10000.0;
-      final pcs = (boxPieces != null && boxPieces! > 0) ? boxPieces! : 2;
+      final pcs = (boxPieces != null && boxPieces! > 0)
+          ? boxPieces!
+          : (tileLength! >= 120 || tileWidth! >= 120 ? 2 : 4);
       return single * pcs;
     }
     if (donaM2 != null && donaM2! > 0) {
       final pcs = (boxPieces != null && boxPieces! > 0) ? boxPieces! : 2;
       return donaM2! * pcs;
+    }
+    // Avtomatik tovar nomi yoki sortidan razmerni aniqlash (masalan: 120/60, 60x60, 80x80, 30x90)
+    final match =
+        RegExp(r'(\d{2,3})\s*[/x*X×]\s*(\d{2,3})').firstMatch('$name $sort');
+    if (match != null) {
+      final l = double.tryParse(match.group(1)!);
+      final w = double.tryParse(match.group(2)!);
+      if (l != null && w != null && l > 0 && w > 0) {
+        final single = (l * w) / 10000.0;
+        final pcs = (boxPieces != null && boxPieces! > 0)
+            ? boxPieces!
+            : (l >= 120 || w >= 120 ? 2 : 4);
+        return single * pcs;
+      }
     }
     if (unit == 'm2' || unit == 'm²') {
       return 1.44;

@@ -1574,7 +1574,6 @@ class _CartLineTile extends StatelessWidget {
     final cart = context.watch<CartController>();
     final l = line;
     final p = l.product;
-    final unit = l.inPachka ? 'pachka' : (l.inDona ? 'dona' : _u(p.unit));
     final short = l.baseQty > p.stock;
     final sub = l.inPachka
         ? '${money(l.unitPrice)} / ${_u(p.unit)}  ·  ${qty(l.baseQty)} ${_u(p.unit)} (${qty(l.quantity)} pachka)'
@@ -1785,8 +1784,8 @@ class _CartLineTile extends StatelessWidget {
                 InkWell(
                   onTap: onEdit,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Text('${qty(l.quantity)} $unit', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: context.inkColor)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Text(qty(l.quantity), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: context.inkColor)),
                   ),
                 ),
                 _StepBtn(icon: Icons.add_rounded, onTap: () => cart.update(l, quantity: l.quantity + 1)),
