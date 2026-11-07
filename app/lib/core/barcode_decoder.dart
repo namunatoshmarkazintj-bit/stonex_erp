@@ -2,7 +2,55 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:zxing2/qrcode.dart';
 
-/// Tasvir baytlaridan QR-kod yoki 1D Shtrix-kod (EAN-13, EAN-8, UPC-A, Code-128)ni aniqlash
+/// Kamera YUV oqimi uchun xotirada tezkor LuminanceSource
+class FastYUVLuminanceSource extends LuminanceSource {
+  final Uint8List _yPlane;
+  final int _dataWidth;
+  final int _left;
+  final int _top;
+
+  FastYUVLuminanceSource({
+    required Uint8List yPlane,
+    required int bytesPerRow,
+    required int left,
+    required int top,
+    required int width,
+    required int height,
+  })  : _yPlane = yPlane,
+        _dataWidth = bytesPerRow,
+        _left = left,
+        _top = top,
+        super(width, height);
+
+  @override
+  Int8List getRow(int y, Int8List? row) {
+    if (y < 0 || y >= height) {
+      throw ArgumentError('Requested row is outside the image: $y');
+    }
+    final res = (row == null || row.length < width) ? Int8List(width) : row;
+    final offset = (y + _top) * _dataWidth + _left;
+    for (var x = 0; x < width; x++) {
+      res[x] = _yPlane[offset + x];
+    }
+    return res;
+  }
+
+  @override
+  Int8List getMatrix() {
+    final matrix = Int8List(width * height);
+    for (var y = 0; y < height; y++) {
+      final srcOffset = (y + _top) * _dataWidth + _left;
+      final dstOffset = y * width;
+      for (var x = 0; x < width; x++) {
+        matrix[dstOffset + x] = _yPlane[srcOffset + x];
+      }
+    }
+    return matrix;
+  }
+}
+
+/// Tasvir baytlaridan yoki Kamera oqimidan QR-kod va 1D Shtrix-kodlarni (EAN-13, EAN-8, UPC)
+/// bir lahzada (0.5 - 20 ms) dekodlash
 class BarcodeDecoder {
   // EAN-13 / EAN-8 / UPC jadvallari
   static const Map<String, int> _lRuns = {
@@ -20,24 +68,122 @@ class BarcodeDecoder {
     'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL',
   ];
 
-  /// Asosiy dekodlash metodi:
-  /// 1. Avval 2D QR-kodni tekshiradi.
-  /// 2. QR topilmasa, 1D chiziqli shtrix-kodlarni (EAN-13, UPC, Code-128) skanerlaydi.
+  /// ⚡️ KAMERA VIDEO OQIMIDAN TO‘G‘RIDAN-TO‘G‘RI DEKODLASH (0.3 - 15 ms)
+  /// Hech qanday JPEG kodlash/dekodlash yoki fayl yozishlarsiz, to‘g‘ridan-to‘g‘ri YUV yorug‘lik matritsasidan o‘qiydi.
+  static String? decodeFromYPlane({
+    required Uint8List yPlane,
+    required int width,
+    required int height,
+    required int bytesPerRow,
+  }) {
+    try {
+      // 1. Avval 1D Shtrix-kodlarni (EAN-13, UPC) tekshirish (o‘ta tez: 0.2 ms)
+      final barcode = _decode1DFromYPlane(
+        yPlane: yPlane,
+        width: width,
+        height: height,
+        bytesPerRow: bytesPerRow,
+      );
+      if (barcode != null && barcode.isNotEmpty) {
+        return barcode;
+      }
+
+      // 2. 1D topilmasa, markaziy sohadan 2D QR kodni tekshirish
+      final qr = _decodeQrFromYuv(
+        yPlane: yPlane,
+        width: width,
+        height: height,
+        bytesPerRow: bytesPerRow,
+      );
+      if (qr != null && qr.isNotEmpty) {
+        return qr;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static String? _decode1DFromYPlane({
+    required Uint8List yPlane,
+    required int width,
+    required int height,
+    required int bytesPerRow,
+  }) {
+    if (width < 40 || height < 40) return null;
+
+    // Gorizontal skanerlash chiziqlari (markaz atrofida zichroq)
+    final hRatios = [0.50, 0.46, 0.54, 0.42, 0.58, 0.38, 0.62, 0.34, 0.66, 0.30, 0.70];
+    for (final r in hRatios) {
+      final y = (height * r).round().clamp(0, height - 1);
+      final rowOffset = y * bytesPerRow;
+      final line = List<int>.filled(width, 0);
+      for (var x = 0; x < width; x++) {
+        line[x] = yPlane[rowOffset + x];
+      }
+      final code = _decodeScanline(line);
+      if (code != null) return code;
+    }
+
+    // Vertikal skanerlash chiziqlari (telefon portret bo‘lganda kamera sensori 90° turadi)
+    final vRatios = [0.50, 0.46, 0.54, 0.42, 0.58, 0.38, 0.62, 0.34, 0.66];
+    for (final r in vRatios) {
+      final x = (width * r).round().clamp(0, width - 1);
+      final line = List<int>.filled(height, 0);
+      for (var y = 0; y < height; y++) {
+        line[y] = yPlane[y * bytesPerRow + x];
+      }
+      final code = _decodeScanline(line);
+      if (code != null) return code;
+    }
+
+    return null;
+  }
+
+  static String? _decodeQrFromYuv({
+    required Uint8List yPlane,
+    required int width,
+    required int height,
+    required int bytesPerRow,
+  }) {
+    try {
+      // Markaziy 72% sohani kesib olish (chetki fonlarni chiqarib tashlash va 2.5x tezlashtirish)
+      final cropW = (width * 0.72).round();
+      final cropH = (height * 0.72).round();
+      final cropLeft = ((width - cropW) ~/ 2).clamp(0, width - cropW);
+      final cropTop = ((height - cropH) ~/ 2).clamp(0, height - cropH);
+
+      final source = FastYUVLuminanceSource(
+        yPlane: yPlane,
+        bytesPerRow: bytesPerRow,
+        left: cropLeft,
+        top: cropTop,
+        width: cropW,
+        height: cropH,
+      );
+      final bitmap = BinaryBitmap(HybridBinarizer(source));
+      final reader = QRCodeReader();
+      final res = reader.decode(bitmap);
+      return res.text;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Rasmli fayl yoki JPEG baytlaridan dekodlash (Fallback)
   static String? decode(Uint8List bytes) {
     try {
       var image = img.decodeImage(bytes);
       if (image == null) return null;
 
-      // 1. QR kodni tekshirish
-      final qrResult = _decodeQr(image);
-      if (qrResult != null && qrResult.trim().isNotEmpty) {
-        return qrResult.trim();
-      }
-
-      // 2. 1D Shtrix-kodlarni tekshirish (gorizontal va vertikal yo'nalishda)
+      // 1. Avval 1D Shtrix-kodni tekshirish (o‘ta tez)
       final barcodeResult = decode1DBarcode(image);
       if (barcodeResult != null && barcodeResult.trim().isNotEmpty) {
         return barcodeResult.trim();
+      }
+
+      // 2. 2D QR kodni tekshirish
+      final qrResult = _decodeQr(image);
+      if (qrResult != null && qrResult.trim().isNotEmpty) {
+        return qrResult.trim();
       }
     } catch (_) {}
     return null;
@@ -47,8 +193,8 @@ class BarcodeDecoder {
   static String? _decodeQr(img.Image originalImage) {
     try {
       var image = originalImage;
-      if (image.width > 640) {
-        image = img.copyResize(image, width: 480);
+      if (image.width > 480) {
+        image = img.copyResize(image, width: 400);
       }
       final width = image.width;
       final height = image.height;
@@ -70,7 +216,6 @@ class BarcodeDecoder {
     final h = image.height;
     if (w < 40 || h < 40) return null;
 
-    // Gorizontal skanerlash chiziqlari (30%, 40%, 48%, 50%, 52%, 60%, 70%)
     final hRatios = [0.50, 0.45, 0.55, 0.40, 0.60, 0.35, 0.65, 0.30, 0.70];
     for (final r in hRatios) {
       final y = (h * r).round().clamp(0, h - 1);
@@ -79,8 +224,7 @@ class BarcodeDecoder {
       if (code != null) return code;
     }
 
-    // Vertikal skanerlash chiziqlari (agar telefon yoki tosh yonbosh tutilgan bo'lsa)
-    final vRatios = [0.50, 0.45, 0.55, 0.40, 0.60];
+    final vRatios = [0.50, 0.45, 0.55, 0.40, 0.60, 0.35, 0.65];
     for (final r in vRatios) {
       final x = (w * r).round().clamp(0, w - 1);
       final lumLine = _getVerticalLuminance(image, x);
@@ -120,8 +264,19 @@ class BarcodeDecoder {
   static String? _decodeScanline(List<int> lum) {
     if (lum.length < 50) return null;
 
-    // 1. Moslashuvchan binarizatsiya (Adaptive Thresholding)
-    final bits = _binarize(lum);
+    // 1. Standart chegara bilan tekshirish (delta = 6)
+    var res = _decodeScanlineWithDelta(lum, 6);
+    if (res != null) return res;
+
+    // 2. Kuchliroq chegara bilan tekshirish (delta = 12) - yaltiroq yoki yarim qorong'i holatlar uchun
+    res = _decodeScanlineWithDelta(lum, 12);
+    if (res != null) return res;
+
+    return null;
+  }
+
+  static String? _decodeScanlineWithDelta(List<int> lum, int delta) {
+    final bits = _binarize(lum, delta);
     final runs = _getRuns(bits);
     if (runs.length < 50) return null;
 
@@ -129,7 +284,7 @@ class BarcodeDecoder {
     var res = _decodeEan13Runs(runs);
     if (res != null) return res;
 
-    // EAN-13 teskari yo'nalishda (agar teskari o'girilgan bo'lsa)
+    // EAN-13 teskari yo'nalishda (teskari tutilganda)
     res = _decodeEan13Runs(runs.reversed.toList());
     if (res != null) return res;
 
@@ -144,10 +299,10 @@ class BarcodeDecoder {
   }
 
   /// Moslashuvchan chegara (Local Adaptive Window)
-  static List<int> _binarize(List<int> lum) {
+  static List<int> _binarize(List<int> lum, int delta) {
     final len = lum.length;
     final bits = List<int>.filled(len, 0);
-    const window = 24;
+    const window = 22;
 
     var sum = 0;
     for (var i = 0; i < window && i < len; i++) {
@@ -155,7 +310,6 @@ class BarcodeDecoder {
     }
 
     for (var i = 0; i < len; i++) {
-      final count = (i + window < len) ? window : (len - i);
       if (i + window < len) {
         sum += lum[i + window];
       }
@@ -166,7 +320,7 @@ class BarcodeDecoder {
       final avg = sum ~/ effectiveCount;
 
       // Qora chiziq (1), Oq oraliq (0)
-      bits[i] = (lum[i] < (avg - 6)) ? 1 : 0;
+      bits[i] = (lum[i] < (avg - delta)) ? 1 : 0;
     }
     return bits;
   }

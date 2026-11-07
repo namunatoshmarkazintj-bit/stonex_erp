@@ -191,9 +191,17 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     });
   }
 
+  int _lastFrameTime = 0;
+
   @override
   void dispose() {
     _scanTimer?.cancel();
+    try {
+      if (_cameraController != null &&
+          _cameraController!.value.isStreamingImages) {
+        _cameraController!.stopImageStream();
+      }
+    } catch (_) {}
     _cameraController?.dispose();
     _laserCtrl.dispose();
     super.dispose();
@@ -232,23 +240,80 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   Future<void> _setupController(CameraDescription camera) async {
     try {
       _scanTimer?.cancel();
-      await _cameraController?.dispose();
+      if (_cameraController != null) {
+        try {
+          if (_cameraController!.value.isStreamingImages) {
+            await _cameraController!.stopImageStream();
+          }
+        } catch (_) {}
+        await _cameraController?.dispose();
+      }
+
       final controller = CameraController(
         camera,
         ResolutionPreset.medium,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
+        imageFormatGroup:
+            Platform.isAndroid ? ImageFormatGroup.yuv420 : ImageFormatGroup.jpeg,
       );
       _cameraController = controller;
       await controller.initialize();
       if (!mounted) return;
+
+      try {
+        await controller.setFocusMode(FocusMode.auto);
+      } catch (_) {}
+
       setState(() {
         _hasCamera = true;
         _torchOn = false;
       });
-      _startPeriodicScanning();
+
+      // Avval real-vaqt video oqimidan to'g'ridan-to'g'ri o'qish (<50ms)
+      try {
+        await controller.startImageStream(_onCameraFrame);
+      } catch (_) {
+        // startImageStream qo'llab-quvvatlanmasa (masalan ba'zi desktoplarda) fallback taymer
+        _startPeriodicScanning();
+      }
     } catch (_) {
       if (mounted) setState(() => _hasCamera = false);
+    }
+  }
+
+  void _onCameraFrame(CameraImage image) {
+    if (_isScanningFrame || !mounted) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    // Har ~50ms da bir marta kadrni tahlil qilish (~20 FPS)
+    if (now - _lastFrameTime < 50) return;
+    _lastFrameTime = now;
+    _isScanningFrame = true;
+
+    try {
+      if (image.planes.isNotEmpty) {
+        final plane = image.planes[0];
+        final code = BarcodeDecoder.decodeFromYPlane(
+          yPlane: plane.bytes,
+          width: image.width,
+          height: image.height,
+          bytesPerRow: plane.bytesPerRow,
+        );
+
+        if (code != null && code.isNotEmpty) {
+          _emptyFramesCount = 0;
+          if (mounted) {
+            _processCode(code);
+          }
+        } else {
+          _emptyFramesCount++;
+          if (_emptyFramesCount >= 3) {
+            _currentLockedCode = null;
+          }
+        }
+      }
+    } catch (_) {
+    } finally {
+      _isScanningFrame = false;
     }
   }
 
@@ -265,13 +330,19 @@ class _QrScannerScreenState extends State<QrScannerScreen>
 
   Future<void> _switchCamera() async {
     if (_cameras.length <= 1) return;
+    try {
+      if (_cameraController != null &&
+          _cameraController!.value.isStreamingImages) {
+        await _cameraController!.stopImageStream();
+      }
+    } catch (_) {}
     _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
     await _setupController(_cameras[_currentCameraIndex]);
   }
 
   void _startPeriodicScanning() {
     _scanTimer?.cancel();
-    _scanTimer = Timer.periodic(const Duration(milliseconds: 600), (_) async {
+    _scanTimer = Timer.periodic(const Duration(milliseconds: 250), (_) async {
       if (!_hasCamera ||
           _cameraController == null ||
           !_cameraController!.value.isInitialized) return;
