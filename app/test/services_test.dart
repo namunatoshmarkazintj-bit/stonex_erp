@@ -630,6 +630,63 @@ void main() {
       expect(find.textContaining('0.72 m²'), findsWidgets);
     });
 
+    testWidgets('Savatdagi 5 m² tosh avtomatik kvadrat metr (m²) maydoniga to‘ldiriladi va kesish o‘lchami bo‘sh qoladi', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final adminUser = const AppUser(
+        id: 1,
+        username: 'admin',
+        fullName: 'Admin Boshliq',
+        role: Role.admin,
+      );
+
+      final testCart = CartController(repos.sales);
+      // Savatga 5 m² tosh qo'shamiz
+      final prods = await repos.products.list();
+      final stone = prods.firstWhere((p) => p.isCuttableStone);
+      testCart.add(stone, quantity: 5.0);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            Provider<AppRepositories>.value(value: repos),
+            ChangeNotifierProvider(create: (_) => AuthController(repos.auth)),
+            ChangeNotifierProvider.value(value: testCart),
+            ChangeNotifierProvider(create: (_) => CurrencyController()),
+            ChangeNotifierProvider(create: (_) => ThemeController()),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => Center(
+                  child: ElevatedButton(
+                    onPressed: () => StoneServicesDialog.show(ctx, user: adminUser, product: stone, initialM2: 5.0),
+                    child: const Text('Ochish'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Ochish'));
+      await tester.pumpAndSettle();
+
+      // Kvadrat metr (m²) joyiga avtomatik 5 m² to'ldirilgan bo'lishi kerak
+      expect(find.text('5'), findsOneWidget);
+      expect(find.textContaining('5.00 m²'), findsWidgets);
+      // Jami xizmat puli: 5 * 25 000 = 125 000 so'm
+      expect(find.textContaining('125 000'), findsWidgets);
+
+      // Kesish o'lchami avtomatik yozib qo'yilmagan (bo'sh boshlangan)
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(textFields.any((tf) => tf.controller?.text == '15'), false);
+      expect(textFields.any((tf) => tf.controller?.text == '4.8'), false);
+    });
+
     testWidgets('TaskCreateDialog: Topshiriq berishda toshni kesish va silliqlash xizmatlarini qo‘shish', (tester) async {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1.0;

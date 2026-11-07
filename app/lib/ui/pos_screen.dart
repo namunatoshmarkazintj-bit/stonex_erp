@@ -990,7 +990,7 @@ class _CartPanel extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(ctx, false);
-                    _openStoneService(context, l.product);
+                    _openStoneService(context, l.product, initialM2: l.quantity);
                   },
                   icon: const Icon(Icons.design_services_rounded, size: 16),
                   label: const Text('✂️ Toshga ishlov berish xizmatlari'),
@@ -1245,10 +1245,10 @@ class _CartPanel extends StatelessWidget {
     }
   }
 
-  Future<void> _openStoneService(BuildContext context, Product p) async {
+  Future<void> _openStoneService(BuildContext context, Product p, {double? initialM2}) async {
     final user = context.read<AuthController>().user;
     if (user != null) {
-      await StoneServicesDialog.show(context, user: user, product: p);
+      await StoneServicesDialog.show(context, user: user, product: p, initialM2: initialM2);
     }
   }
 
@@ -1488,7 +1488,7 @@ class _CartPanel extends StatelessWidget {
                       line: l,
                       onEdit: () => _editQty(context, l),
                       onCutCalculator: () => _openCutCalculator(context, l),
-                      onStoneService: () => _openStoneService(context, l.product),
+                      onStoneService: () => _openStoneService(context, l.product, initialM2: l.quantity),
                     ),
                 ]),
         ),

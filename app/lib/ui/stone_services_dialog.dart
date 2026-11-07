@@ -248,19 +248,21 @@ class StoneCuttingResult {
 
 /// Kassada xizmatlarni tanlash va savatga qo'shish oynasi
 class StoneServicesDialog extends StatefulWidget {
-  const StoneServicesDialog({super.key, required this.user, this.product});
+  const StoneServicesDialog({super.key, required this.user, this.product, this.initialM2});
   final AppUser user;
   final Product? product;
+  final double? initialM2;
 
   static Future<void> show(
     BuildContext context, {
     required AppUser user,
     Product? product,
+    double? initialM2,
   }) async {
     final msg = await showDialog<String>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => StoneServicesDialog(user: user, product: product),
+      builder: (_) => StoneServicesDialog(user: user, product: product, initialM2: initialM2),
     );
     if (msg != null && context.mounted) {
       showMessage(context, msg);
@@ -280,12 +282,10 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   bool _includeStoneInCart = true;
 
   // Kesish va o'lchamlar uchun controllerlar
-  // Bo'yi metr kvadratda (m2) metrda (m), metrda (meter) esa santimetrda (sm) kiritiladi.
-  // Eni esa har doim metrda (m) kiritiladi va hisoblanadi.
-  // Kesiladigan mahsulot o'lchamlari (Kenglik sm va jami Uzunlik metr)
-  final _cutWidthCtrl = TextEditingController(text: '15'); // Kesiladigan kenglik (sm)
-  final _cutLengthCtrl = TextEditingController(text: '4.8'); // Kesiladigan jami uzunlik (m)
-  final _m2Ctrl = TextEditingController(text: '0.72'); // Metr kvadrat (m²) kiritish joyi
+  // Kesiladigan mahsulot o'lchamlari (Kenglik sm va jami Uzunlik metr) - avtomatik yozilmaydi, foydalanuvchi/usta o'zi kiritadi
+  final _cutWidthCtrl = TextEditingController(); // Kesiladigan kenglik (sm) - bo'sh boshlanadi
+  final _cutLengthCtrl = TextEditingController(); // Kesiladigan jami uzunlik (m) - bo'sh boshlanadi
+  late final TextEditingController _m2Ctrl; // Metr kvadrat (m²) kiritish joyi
   bool _isSyncingCutDimensions = false;
 
   final _lengthCtrl = TextEditingController(text: '1.2'); // Bo'yi (m) - boshlang'ich m2 uchun
@@ -314,6 +314,16 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   @override
   void initState() {
     super.initState();
+    final initM2 = widget.initialM2;
+    if (initM2 != null && initM2 > 0) {
+      final s = initM2 % 1 == 0
+          ? initM2.toInt().toString()
+          : initM2.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+      _m2Ctrl = TextEditingController(text: s);
+    } else {
+      _m2Ctrl = TextEditingController(text: '0.72');
+    }
+
     _recalcFromCutWidth();
     if (widget.product != null) {
       _applyProduct(widget.product!, initial: true);
@@ -336,16 +346,15 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
           _availableProducts = stones;
           if (_selectedProduct == null && stones.isNotEmpty) {
             final cart = context.read<CartController>();
-            final cartStone = cart.lines
+            final cartStoneLine = cart.lines
                 .where((l) => l.product.isCuttableStone)
-                .map((l) => l.product)
                 .firstOrNull;
-            final preferredStone = cartStone ??
+            final preferredStone = cartStoneLine?.product ??
                 stones.where((p) => p.isTileOrCeramic && (p.tileLength ?? 0) >= 100).firstOrNull ??
                 stones.where((p) => p.isTileOrCeramic).firstOrNull ??
                 stones.firstOrNull;
             if (preferredStone != null) {
-              _applyProduct(preferredStone, initial: true);
+              _applyProduct(preferredStone, initial: true, fallbackM2: cartStoneLine?.quantity);
             }
           }
         });
@@ -354,7 +363,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     if (mounted) setState(() => _syncing = false);
   }
 
-  void _applyProduct(Product p, {bool initial = false}) {
+  void _applyProduct(Product p, {bool initial = false, double? fallbackM2}) {
     if (!p.isCuttableStone) return;
     _selectedProduct = p;
 
@@ -398,15 +407,26 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       _polishStoneType = 'granite';
     }
 
+    double? cartQty = widget.initialM2 ?? fallbackM2;
     try {
       final cart = context.read<CartController>();
-      final alreadyInCart = cart.lines.any((l) => l.product.id == p.id);
-      _includeStoneInCart = !alreadyInCart;
+      final cartLine = cart.lines.where((l) => l.product.id == p.id).firstOrNull;
+      if (cartLine != null && cartLine.quantity > 0) {
+        cartQty ??= cartLine.quantity;
+      }
+      _includeStoneInCart = cartLine == null;
     } catch (_) {
       _includeStoneInCart = true;
     }
 
-    _syncM2FromDimensions();
+    if (cartQty != null && cartQty > 0) {
+      final qStr = cartQty % 1 == 0
+          ? cartQty.toInt().toString()
+          : cartQty.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+      _m2Ctrl.text = qStr;
+    } else {
+      _syncM2FromDimensions();
+    }
     _recalcFromCutWidth();
 
     if (!initial && mounted) {
@@ -1441,7 +1461,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                                 filled: true,
                                                 fillColor: isDark ? const Color(0xFF181F28) : const Color(0xFFF8FAFC),
                                                 isDense: true,
-                                                hintText: '15',
+                                                hintText: 'Masalan: 15',
                                                 suffixText: 'sm',
                                                 suffixStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.mutedColor),
                                                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -1478,7 +1498,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                                 filled: true,
                                                 fillColor: isDark ? const Color(0xFF181F28) : const Color(0xFFF8FAFC),
                                                 isDense: true,
-                                                hintText: '4.8',
+                                                hintText: 'Masalan: 2.0',
                                                 suffixText: 'm',
                                                 suffixStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.mutedColor),
                                                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
