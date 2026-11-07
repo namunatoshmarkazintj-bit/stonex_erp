@@ -1309,13 +1309,14 @@ class _CartPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = context.watch<CartController>();
     final empty = cart.lines.isEmpty;
+    final isCompact = MediaQuery.sizeOf(context).width < 500;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isCompact ? 14 : 20),
       decoration: _cardBox(radius: 24),
       child: Column(children: [
         Row(children: [
           const Text('Savat', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
@@ -1323,37 +1324,71 @@ class _CartPanel extends StatelessWidget {
                 ? const SizedBox.shrink(key: ValueKey('none'))
                 : Container(
                     key: ValueKey(cart.lines.length),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(20)),
                     child: Text('${cart.lines.length}',
-                        style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.darkCard, fontSize: 12)),
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.darkCard, fontSize: 11.5)),
                   ),
           ),
           const Spacer(),
           if (!empty) ...[
-            TextButton.icon(
-              onPressed: () {
-                cart.holdCurrentCart();
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('⏸ 1-mijoz savati kutishga saqlandi. Yangi mijoz uchun savat tayyor!'),
-                    backgroundColor: Color(0xFFD97706),
-                    duration: Duration(seconds: 3),
+            Tooltip(
+              message: 'Kutishga qo‘yish',
+              child: InkWell(
+                onTap: () {
+                  cart.holdCurrentCart();
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('⏸ 1-mijoz savati kutishga saqlandi. Yangi mijoz uchun savat tayyor!'),
+                      backgroundColor: Color(0xFFD97706),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.pause_circle_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                      const SizedBox(width: 4),
+                      Text(
+                        isCompact ? 'Kutish' : 'Kutishga qo‘yish',
+                        style: const TextStyle(color: Color(0xFFD97706), fontWeight: FontWeight.w700, fontSize: 11.5),
+                      ),
+                    ],
                   ),
-                );
-              },
-              icon: const Icon(Icons.pause_circle_outline_rounded, size: 17, color: Color(0xFFD97706)),
-              label: const Text('Kutishga qo‘yish', style: TextStyle(color: Color(0xFFD97706), fontWeight: FontWeight.w700, fontSize: 12)),
-              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                ),
+              ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
           ],
-          TextButton.icon(
-            onPressed: empty ? null : cart.clear,
-            icon: const Icon(Icons.delete_outline_rounded, size: 18),
-            label: const Text('Tozalash'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.muted, visualDensity: VisualDensity.compact),
+          Tooltip(
+            message: 'Savatni tozalash',
+            child: InkWell(
+              onTap: empty ? null : cart.clear,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.delete_outline_rounded, size: 16, color: empty ? context.mutedColor.withValues(alpha: 0.4) : AppColors.muted),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Tozalash',
+                      style: TextStyle(
+                        color: empty ? context.mutedColor.withValues(alpha: 0.4) : AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ]),
         if (cart.heldCarts.isNotEmpty) ...[
@@ -1375,15 +1410,18 @@ class _CartPanel extends StatelessWidget {
                   children: [
                     const Icon(Icons.pause_circle_filled_rounded, size: 15, color: Color(0xFFD97706)),
                     const SizedBox(width: 6),
-                    Text(
-                      'Kutilayotgan mijozlar (${cart.heldCarts.length})',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFD97706),
+                    Flexible(
+                      child: Text(
+                        'Kutilayotgan mijozlar (${cart.heldCarts.length})',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFD97706),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 6),
                     Text(
                       'Tiklash uchun bosing',
                       style: TextStyle(fontSize: 10, color: context.mutedColor),
