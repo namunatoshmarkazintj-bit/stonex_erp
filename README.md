@@ -1,6 +1,8 @@
-# STONEX ERP
+# STONEX ERP (Namuna Tosh Jilo)
 
-Tosh ishlab chiqarish sexi uchun ERP: **Flutter** (Windows/mobil) → **FastAPI** → **MySQL (`stone_erp`)**.
+> 🔐 **Dasturchilar uchun:** Barcha parollar, loginlar, PIN-kodlar, API sozlamalari va arxitektura yo‘riqnomasi to‘liq **[CREDENTIALS_AND_HANDOVER.md](file:///c:/Users/nout.plus/Desktop/stonex_erp/CREDENTIALS_AND_HANDOVER.md)** fayliga yozib qo‘yilgan.
+
+Tosh ishlab chiqarish sexi uchun ERP: **Flutter** (Windows/mobil) → **FastAPI** → **MySQL / SQLite (`stonex.db`)**.
 
 ```
 stonex_erp/
