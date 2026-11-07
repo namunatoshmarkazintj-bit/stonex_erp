@@ -1696,74 +1696,39 @@ class _CartLineTile extends StatelessWidget {
             ),
           ],
 
-          // Variant / Rang va Toshga ishlov (bitta qatorda, "Rang:" so'zisiz)
-          if ((p.availableColors.length > 1) ||
-              (l.color != null && l.color!.isNotEmpty) ||
-              (onStoneService != null && p.category != 'Xizmat')) ...[
+          // Toshga ishlov berish xizmatlari (kesish, faska, silliqlash)
+          if (onStoneService != null && p.category != 'Xizmat') ...[
             const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                // 1. Rang yoki Sort/Variant tanlovi
-                if (p.availableColors.length > 1) ...[
-                  for (final col in p.availableColors)
-                    ChoiceChip(
-                      avatar: Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: getStoneColor(col),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      label: Text(col, style: const TextStyle(fontSize: 10.5)),
-                      selected: (l.color ?? p.availableColors.first) == col,
-                      onSelected: (sel) {
-                        if (sel) cart.update(l, color: col);
-                      },
-                      visualDensity: VisualDensity.compact,
+            InkWell(
+              onTap: onStoneService,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: context.borderColor.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: context.borderColor),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.design_services_rounded,
+                      size: 13,
+                      color: context.subtextColor,
                     ),
-                ] else if (l.color != null && l.color!.isNotEmpty) ...[
-                  StoneColorBadge(colorName: l.color!, fontSize: 10),
-                ],
-
-                // 2. Toshga ishlov berish xizmatlari (kesish, faska, silliqlash)
-                if (onStoneService != null && p.category != 'Xizmat') ...[
-                  InkWell(
-                    onTap: onStoneService,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: context.borderColor.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: context.borderColor),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.design_services_rounded,
-                            size: 13,
-                            color: context.subtextColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '✂️ Toshga ishlov',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: context.subtextColor,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 4),
+                    Text(
+                      '✂️ Toshga ishlov',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: context.subtextColor,
                       ),
                     ),
-                  ),
-                ],
-              ],
+                  ],
+                ),
+              ),
             ),
           ],
 

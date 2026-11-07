@@ -270,6 +270,15 @@ const List<String> standardProductCategories = [
   'Qo‘shimcha',
 ];
 
+String? _cleanColor(String? c) {
+  if (c == null || c.trim().isEmpty) return null;
+  final t = c.trim();
+  if (RegExp(r'sort|\d+\s*[/x*X×]\s*\d+', caseSensitive: false).hasMatch(t)) {
+    return null;
+  }
+  return t;
+}
+
 class Product {
   final int id;
   final String name;
@@ -385,10 +394,14 @@ class Product {
 
   List<String> get availableColors {
     if (color == null || color!.trim().isEmpty) return const [];
-    return color!
-        .split(RegExp(r'[,/•|]'))
+    final c = color!.trim();
+    if (RegExp(r'sort|\d+\s*[/x*X×]\s*\d+', caseSensitive: false).hasMatch(c)) {
+      return const [];
+    }
+    return c
+        .split(RegExp(r'[,•|]'))
         .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
+        .where((s) => s.isNotEmpty && !RegExp(r'^\d+$').hasMatch(s))
         .toList();
   }
 
@@ -495,7 +508,7 @@ class Product {
         boxM2: j['box_m2'] == null ? null : parseNum(j['box_m2']),
         sort: j['sort']?.toString(),
         hasSorts: j['has_sorts'] == true,
-        color: j['color']?.toString(),
+        color: _cleanColor(j['color']?.toString()),
         priceSort1:
             j['price_sort1'] == null ? null : parseNum(j['price_sort1']),
         priceSort1_5:
