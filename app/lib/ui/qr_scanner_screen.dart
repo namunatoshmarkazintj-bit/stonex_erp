@@ -130,12 +130,28 @@ class _FrostedCircleButton extends StatelessWidget {
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({
     super.key,
-    required this.onCartUpdated,
+    this.onCartUpdated,
     this.onGoToCart,
+    this.onScanResult,
+    this.title,
   });
 
-  final VoidCallback onCartUpdated;
+  final VoidCallback? onCartUpdated;
   final VoidCallback? onGoToCart;
+  final ValueChanged<String>? onScanResult;
+  final String? title;
+
+  static Future<String?> scanCode(BuildContext context, {String? title}) {
+    return Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QrScannerScreen(
+          title: title ?? 'Shtrix-kodni skanerlash',
+          onScanResult: (code) {},
+        ),
+      ),
+    );
+  }
 
   @override
   State<QrScannerScreen> createState() => _QrScannerScreenState();
@@ -297,6 +313,18 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       return;
     }
 
+    // Agar mahsulot qo'shish/tahrirlash yoki boshqa joydan faqat kodni skanerlash uchun chaqirilgan bo'lsa:
+    if (widget.onScanResult != null) {
+      _currentLockedCode = code;
+      HapticFeedback.mediumImpact();
+      SystemSound.play(SystemSoundType.click);
+      widget.onScanResult!(code);
+      if (mounted) {
+        Navigator.pop(context, code);
+      }
+      return;
+    }
+
     // 1. Agar skanerlangan kod CHEK (RECEIPT) QR-kodi bo'lsa:
     if (isReceiptQr(code)) {
       _currentLockedCode = code;
@@ -349,7 +377,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         SystemSound.play(SystemSoundType.click);
 
         context.read<CartController>().add(p, quantity: 1);
-        widget.onCartUpdated();
+        widget.onCartUpdated?.call();
 
         setState(() {
           _isError = false;
@@ -408,7 +436,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         }
       }
     }
-    widget.onCartUpdated();
+    widget.onCartUpdated?.call();
   }
 
   void _showManualInputDialog() {
@@ -482,9 +510,18 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   Navigator.pop(bCtx);
                   _processCode(txt);
                 },
-                icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                label: const Text('Savatga qo‘shish',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                icon: Icon(
+                  widget.onScanResult != null
+                      ? Icons.check_circle_rounded
+                      : Icons.add_shopping_cart_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  widget.onScanResult != null
+                      ? 'Kodni kiritish'
+                      : 'Savatga qo‘shish',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.green,
                   foregroundColor: Colors.white,
@@ -923,10 +960,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       tooltip: 'Orqaga',
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'QR Skaner',
-                        style: TextStyle(
+                        widget.title ?? 'QR Skaner',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -1001,13 +1038,45 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                     ),
                   ),
                 ],
-                if (_lastProduct != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                    child: _buildScannedProductCard(_lastProduct!),
+                if (widget.onScanResult == null) ...[
+                  if (_lastProduct != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                      child: _buildScannedProductCard(_lastProduct!),
+                    ),
+                  ],
+                  _buildBottomBar(cart),
+                ] else ...[
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.qr_code_scanner_rounded,
+                                color: AppColors.neonLime, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Shtrix-kodni ramkaga to‘g‘rilang',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-                _buildBottomBar(cart),
               ],
             ),
           ),

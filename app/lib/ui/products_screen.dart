@@ -17,6 +17,7 @@ import '../data/repositories.dart';
 import '../domain/models.dart';
 import '../state/cart_controller.dart';
 import 'common.dart';
+import 'qr_scanner_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -1422,6 +1423,21 @@ class _ProductDialogState extends State<ProductDialog> {
     });
   }
 
+  Future<void> _scanBarcodeWithCamera() async {
+    final scanned = await QrScannerScreen.scanCode(
+      context,
+      title: 'Shtrix-kodni skanerlash',
+    );
+    if (scanned != null && scanned.trim().isNotEmpty) {
+      setState(() {
+        _sku.text = scanned.trim();
+      });
+      if (mounted) {
+        showMessage(context, 'Shtrix-kod kiritildi: ${scanned.trim()}');
+      }
+    }
+  }
+
   void _autoGenerateQr() => _autoGenerateBarcode();
 
   void _previewQrLabel(BuildContext context) {
@@ -2045,14 +2061,41 @@ class _ProductDialogState extends State<ProductDialog> {
                 controller: _sku,
                 decoration: InputDecoration(
                   labelText: 'Shtrix kod (Barcode)',
+                  hintText: 'Kamerada skanerlang yoki yozing',
                   prefixIcon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                    tooltip: 'Avto-kod generatsiya qilish',
-                    onPressed: _autoGenerateBarcode,
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.photo_camera_rounded, size: 20, color: AppColors.green),
+                        tooltip: 'Kamera orqali skanerlash',
+                        onPressed: _scanBarcodeWithCamera,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                        tooltip: 'Avto-kod generatsiya qilish',
+                        onPressed: _autoGenerateBarcode,
+                      ),
+                    ],
                   ),
                 ),
                 onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _scanBarcodeWithCamera,
+                  icon: const Icon(Icons.photo_camera_rounded, size: 16, color: AppColors.green),
+                  label: const Text(
+                    'Kamerada shtrix kodni o‘qish',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.green),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
