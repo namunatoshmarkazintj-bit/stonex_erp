@@ -129,6 +129,123 @@ class StoneServicesStore {
   }
 }
 
+/// Tabiiy tosh va kafel kesish ustaxonasi kalkulyatori
+/// Material sarfi, chiqindi (otxod), brutto maydon va zarez (kerf loss) hisobi
+class StoneCuttingResult {
+  final double itemWidthCm;
+  final double itemLengthM;
+  final double slabWidthCm;
+  final double slabLengthM;
+  final double kerfCm;
+  final double pricePerM2;
+
+  final int nStrips;
+  final int nTotal;
+  final int nLines;
+  final double netM2;
+  final double grossM2;
+  final double wasteM2;
+  final double totalPrice;
+  final bool isValid;
+  final String? errorMessage;
+
+  const StoneCuttingResult({
+    required this.itemWidthCm,
+    required this.itemLengthM,
+    required this.slabWidthCm,
+    required this.slabLengthM,
+    required this.kerfCm,
+    required this.pricePerM2,
+    required this.nStrips,
+    required this.nTotal,
+    required this.nLines,
+    required this.netM2,
+    required this.grossM2,
+    required this.wasteM2,
+    required this.totalPrice,
+    required this.isValid,
+    this.errorMessage,
+  });
+
+  static StoneCuttingResult calculate({
+    required double itemWidthCm,
+    required double itemLengthM,
+    required double slabWidthCm,
+    required double slabLengthM,
+    double kerfCm = 0.0,
+    double pricePerM2 = 0.0,
+  }) {
+    if (itemWidthCm <= 0 || itemLengthM <= 0 || slabWidthCm <= 0 || slabLengthM <= 0) {
+      return StoneCuttingResult(
+        itemWidthCm: itemWidthCm,
+        itemLengthM: itemLengthM,
+        slabWidthCm: slabWidthCm,
+        slabLengthM: slabLengthM,
+        kerfCm: kerfCm,
+        pricePerM2: pricePerM2,
+        nStrips: 0,
+        nTotal: 0,
+        nLines: 0,
+        netM2: 0,
+        grossM2: 0,
+        wasteM2: 0,
+        totalPrice: 0,
+        isValid: false,
+        errorMessage: 'O‘lchamlar 0 dan katta bo‘lishi kerak',
+      );
+    }
+
+    final effectiveWidth = itemWidthCm + (kerfCm > 0 ? kerfCm : 0.0);
+    final nStrips = (slabWidthCm / effectiveWidth).floor();
+
+    if (nStrips <= 0) {
+      return StoneCuttingResult(
+        itemWidthCm: itemWidthCm,
+        itemLengthM: itemLengthM,
+        slabWidthCm: slabWidthCm,
+        slabLengthM: slabLengthM,
+        kerfCm: kerfCm,
+        pricePerM2: pricePerM2,
+        nStrips: 0,
+        nTotal: 0,
+        nLines: 0,
+        netM2: double.parse(((itemWidthCm / 100.0) * itemLengthM).toStringAsFixed(3)),
+        grossM2: 0,
+        wasteM2: 0,
+        totalPrice: 0,
+        isValid: false,
+        errorMessage: 'Plita o‘lchami (${slabWidthCm.toStringAsFixed(1)} sm) kesiladigan kenglik va disk qalinligidan (${effectiveWidth.toStringAsFixed(1)} sm) kichik!',
+      );
+    }
+
+    final nTotal = (itemLengthM / slabLengthM).ceil();
+    final nLines = (nTotal / nStrips).ceil();
+
+    final netM2 = double.parse(((itemWidthCm / 100.0) * itemLengthM).toStringAsFixed(3));
+    final grossM2 = double.parse((nLines * (slabWidthCm / 100.0) * slabLengthM).toStringAsFixed(3));
+    final rawWaste = grossM2 - netM2;
+    final wasteM2 = double.parse((rawWaste > 0 ? rawWaste : 0.0).toStringAsFixed(3));
+    final totalPrice = double.parse((grossM2 * pricePerM2).toStringAsFixed(2));
+
+    return StoneCuttingResult(
+      itemWidthCm: itemWidthCm,
+      itemLengthM: itemLengthM,
+      slabWidthCm: slabWidthCm,
+      slabLengthM: slabLengthM,
+      kerfCm: kerfCm,
+      pricePerM2: pricePerM2,
+      nStrips: nStrips,
+      nTotal: nTotal,
+      nLines: nLines,
+      netM2: netM2,
+      grossM2: grossM2,
+      wasteM2: wasteM2,
+      totalPrice: totalPrice,
+      isValid: true,
+    );
+  }
+}
+
 /// Kassada xizmatlarni tanlash va savatga qo'shish oynasi
 class StoneServicesDialog extends StatefulWidget {
   const StoneServicesDialog({super.key, required this.user, this.product});
@@ -168,6 +285,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   // Kesiladigan mahsulot o'lchamlari (Kenglik sm va jami Uzunlik metr)
   final _cutWidthCtrl = TextEditingController(text: '15'); // Kesiladigan kenglik (sm)
   final _cutLengthCtrl = TextEditingController(text: '4.8'); // Kesiladigan jami uzunlik (m)
+  final _kerfCtrl = TextEditingController(text: '0.0'); // Disk qalinligi (zarez / kerf loss, sm)
   bool _isSyncingCutDimensions = false;
 
   final _lengthCtrl = TextEditingController(text: '1.2'); // Bo'yi (m) - boshlang'ich m2 uchun
@@ -335,6 +453,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   void dispose() {
     _cutWidthCtrl.dispose();
     _cutLengthCtrl.dispose();
+    _kerfCtrl.dispose();
     _lengthCtrl.dispose();
     _widthCtrl.dispose();
     _piecesCtrl.dispose();
@@ -362,8 +481,34 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     return raw < 20 ? (raw * 100.0) : raw;
   }
 
-  /// 1 ta plitadan chiqadigan bo'laklar soni (10-lar xonasigacha yaxlitlangan)
+  /// Ustaxona tabiiy tosh va kafel kesish kalkulyatori (Zarez / Kerf loss va Otxod hisobi bilan)
+  StoneCuttingResult get _currentCuttingCalculation {
+    final cutW = _parseVal(_cutWidthCtrl);
+    final totalLenM = _parseVal(_cutLengthCtrl);
+    final kerf = parseInput(_kerfCtrl.text) ?? 0.0;
+    final widVal = _parseVal(_widthCtrl);
+
+    final slabLenM = widVal < 20 ? widVal : widVal / 100.0;
+    final slabWidCm = _effectiveLengthCm;
+
+    final price = StoneServicesStore.getAllPrices()['cut_m2'] ?? 25000.0;
+
+    return StoneCuttingResult.calculate(
+      itemWidthCm: cutW,
+      itemLengthM: totalLenM,
+      slabWidthCm: slabWidCm,
+      slabLengthM: slabLenM,
+      kerfCm: kerf,
+      pricePerM2: price,
+    );
+  }
+
+  /// 1 ta plitadan chiqadigan bo'laklar soni
   double get _stripsCount {
+    final calc = _currentCuttingCalculation;
+    if (calc.isValid && calc.nStrips > 0) {
+      return calc.nStrips.toDouble();
+    }
     final hSm = _effectiveLengthCm;
     final cutWSm = _parseVal(_cutWidthCtrl);
     if (hSm <= 0 || cutWSm <= 0) return 0.0;
@@ -381,6 +526,10 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
   /// Jami kesiladigan uzunlik uchun kerak bo'ladigan (sarflanadigan) listlar soni
   double get _neededSheetsCount {
+    final calc = _currentCuttingCalculation;
+    if (calc.isValid && calc.nLines > 0) {
+      return calc.nLines.toDouble();
+    }
     final totalLenM = _parseVal(_cutLengthCtrl);
     final oneM = _oneSheetMeters;
     if (totalLenM <= 0 || oneM <= 0) return _parsePieces().toDouble();
@@ -389,6 +538,10 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   }
 
   String get _neededSheetsDisplay {
+    final calc = _currentCuttingCalculation;
+    if (calc.isValid && calc.nLines > 0) {
+      return '${calc.nLines} ta list (${calc.grossM2} m²)';
+    }
     final count = _neededSheetsCount;
     if (count <= 0) return '${_parsePieces()} ta list';
     final ceilVal = count.ceil();
@@ -410,11 +563,13 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       final hSm = _effectiveLengthCm;
       final cutWSm = _parseVal(_cutWidthCtrl);
       final rawW = _parseVal(_widthCtrl);
+      final kerf = parseInput(_kerfCtrl.text) ?? 0.0;
       final pieces = _parsePieces();
 
       if (hSm > 0 && cutWSm > 0 && rawW > 0) {
-        final ratio = (hSm / cutWSm * 10).round() / 10.0;
-        final oneSheetM = ratio * rawW;
+        final effW = cutWSm + (kerf > 0 ? kerf : 0.0);
+        final strips = effW > 0 ? (hSm / effW).floor() : 0;
+        final oneSheetM = strips * (rawW < 20 ? rawW : rawW / 100.0);
         final totalLengthM = oneSheetM * pieces;
         final roundedM = (totalLengthM * 100).round() / 100.0;
         _cutLengthCtrl.text = roundedM % 1 == 0 ? roundedM.toInt().toString() : roundedM.toString();
@@ -428,14 +583,19 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     if (_isSyncingCutDimensions) return;
     _isSyncingCutDimensions = true;
     try {
-      final oneM = _oneSheetMeters;
-      final totalLengthM = _parseVal(_cutLengthCtrl);
+      final calc = _currentCuttingCalculation;
+      if (calc.isValid && calc.nLines > 0) {
+        _piecesCtrl.text = calc.nLines.toString();
+      } else {
+        final oneM = _oneSheetMeters;
+        final totalLengthM = _parseVal(_cutLengthCtrl);
 
-      if (oneM > 0 && totalLengthM > 0) {
-        final needed = totalLengthM / oneM;
-        final sheetsInt = needed.ceil();
-        final effectiveSheets = sheetsInt > 0 ? sheetsInt : 1;
-        _piecesCtrl.text = effectiveSheets.toString();
+        if (oneM > 0 && totalLengthM > 0) {
+          final needed = totalLengthM / oneM;
+          final sheetsInt = needed.ceil();
+          final effectiveSheets = sheetsInt > 0 ? sheetsInt : 1;
+          _piecesCtrl.text = effectiveSheets.toString();
+        }
       }
     } finally {
       _isSyncingCutDimensions = false;
@@ -633,7 +793,12 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     final pStr = pieces > 1 ? ' · $pieces ta list' : ' · 1 ta list';
     if (def.key == 'cut') {
       if (_isTileOrCeramic) {
-        specText = '$lenStr × $widStr$pStr ($qty m²)';
+        final calc = _currentCuttingCalculation;
+        if (calc.isValid) {
+          specText = '$lenStr × $widStr$pStr · Netto: ${calc.netM2} m² · Brutto: ${calc.grossM2} m² (Otxod: ${calc.wasteM2} m²)';
+        } else {
+          specText = '$lenStr × $widStr$pStr ($qty m²)';
+        }
       } else {
         specText = '$qty metr kesish';
       }
@@ -1276,11 +1441,12 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                               ),
                               const SizedBox(height: 10),
 
-                              // 2-Qator: Ishlatiladigan mahsulotning bo'yi va eni (Faqatgina Keramogranit va Kafelda chiqadi!)
+                              // 2-Qator: Ishlatiladigan mahsulotning bo'yi va eni hamda Disk qalinligi (kerf)
                               Row(
                                 children: [
                                   // Bo'yi (har doim metrda)
                                   Expanded(
+                                    flex: 3,
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1323,10 +1489,11 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 8),
 
                                   // Eni (faqat m)
                                   Expanded(
+                                    flex: 3,
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1362,83 +1529,206 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+
+                                  // Disk qalinligi (kerf loss, sm)
+                                  Expanded(
+                                    flex: 3,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Disk (kerf):',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.mutedColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _kerfCtrl,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: context.cardColor,
+                                            isDense: true,
+                                            hintText: '0.5',
+                                            suffixText: 'sm',
+                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                          ),
+                                          onChanged: (_) {
+                                            _recalcFromCutWidth();
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
 
                               const SizedBox(height: 10),
-                              if (_stripsCount > 0)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                              Builder(
+                                builder: (context) {
+                                  final calc = _currentCuttingCalculation;
+                                  if (!calc.isValid) {
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF2F2),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: const Color(0xFFEF4444)),
+                                      ),
+                                      child: Row(
                                         children: [
-                                          const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
-                                          const SizedBox(width: 6),
+                                          const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFEF4444)),
+                                          const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              '1 ta plitadan: ${_effectiveLengthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${_formatNumber(_stripsCount)} ta bo‘lak × Eni (${_parseVal(_widthCtrl)} m) → ${_formatNumber(_oneSheetMeters)} metr',
-                                              style: TextStyle(
-                                                fontSize: 11,
+                                              calc.errorMessage ?? 'Xatolik: Plita o‘lchami yetarli emas!',
+                                              style: const TextStyle(
+                                                fontSize: 11.5,
                                                 fontWeight: FontWeight.w700,
-                                                color: context.inkColor,
+                                                color: Color(0xFFDC2626),
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 5),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF059669)),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: RichText(
-                                              text: TextSpan(
+                                    );
+                                  }
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                '1 ta plitadan: ${calc.slabWidthCm.toInt()} sm ÷ ${_cutWidthCtrl.text}${calc.kerfCm > 0 ? " (+${calc.kerfCm} disk)" : ""} sm = ${calc.nStrips} ta bo‘lak × Eni (${calc.slabLengthM} m) → ${_formatNumber(calc.nStrips * calc.slabLengthM)} metr',
                                                 style: TextStyle(
-                                                  fontSize: 11.5,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
                                                   color: context.inkColor,
                                                 ),
-                                                children: [
-                                                  const TextSpan(
-                                                    text: 'Sarflanadigan list: ',
-                                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF059669)),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: RichText(
+                                                text: TextSpan(
+                                                  style: TextStyle(
+                                                    fontSize: 11.5,
+                                                    color: context.inkColor,
                                                   ),
-                                                  TextSpan(
-                                                    text: '$_neededSheetsDisplay ',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.w900,
-                                                      color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                                  children: [
+                                                    const TextSpan(
+                                                      text: 'Sarflanadigan list: ',
+                                                      style: TextStyle(fontWeight: FontWeight.w600),
                                                     ),
-                                                  ),
-                                                  TextSpan(
-                                                    text: '(${_cutLengthCtrl.text} m ÷ ${_formatNumber(_oneSheetMeters)} m = ${_formatNumber(_neededSheetsCount)} ta)',
+                                                    TextSpan(
+                                                      text: '${calc.nLines} ta list (brutto: ${calc.grossM2} m²) ',
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.w900,
+                                                        color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                                      ),
+                                                    ),
+                                                    TextSpan(
+                                                      text: '(${_cutLengthCtrl.text} m ÷ ${_formatNumber(calc.nStrips * calc.slabLengthM)} m = ${_formatNumber(calc.nTotal / (calc.nStrips > 0 ? calc.nStrips : 1))} ta)',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        color: context.mutedColor,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const Divider(height: 12),
+                                        // Ustaxona aniq hisob-kitob tafsiloti (Netto, Brutto, Chiqindi, Jami narx)
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Netto: ${calc.netM2} m²',
                                                     style: TextStyle(
                                                       fontSize: 11,
+                                                      fontWeight: FontWeight.w600,
                                                       color: context.mutedColor,
-                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Brutto: ${calc.grossM2} m²',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w800,
+                                                      color: isDark ? AppColors.neonLime : const Color(0xFF047857),
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Chiqindi (otxod):',
+                                                    style: TextStyle(
+                                                      fontSize: 10.5,
+                                                      color: context.mutedColor,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${calc.wasteM2} m² (${calc.grossM2 > 0 ? ((calc.wasteM2 / calc.grossM2) * 100).toStringAsFixed(1) : 0}%)',
+                                                    style: const TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Color(0xFFD97706),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
 
                               // Jonli hisob tafsiloti va o‘ng tomonda sonini kiritish qismi (List steppri)
                               Container(
