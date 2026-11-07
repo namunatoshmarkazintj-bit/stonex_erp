@@ -2321,14 +2321,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return true;
             }).toList();
 
+            final isNarrow = MediaQuery.sizeOf(ctx).width < 500;
             return Dialog(
               backgroundColor: ctx.cardColor,
+              insetPadding: EdgeInsets.symmetric(
+                  horizontal: isNarrow ? 12 : 24, vertical: 20),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
               child: Container(
                 constraints:
                     const BoxConstraints(maxWidth: 720, maxHeight: 660),
-                padding: const EdgeInsets.all(22),
+                padding: EdgeInsets.all(isNarrow ? 14 : 22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -2369,18 +2372,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 4,
                                 children: [
                                   Text(
                                     'AI Zaxira va Xarid Prognozi',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
-                                      fontSize: 18,
+                                      fontSize: isNarrow ? 15 : 18,
                                       color: ctx.inkColor,
                                       letterSpacing: -0.3,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 2),
@@ -2812,105 +2817,118 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       const SizedBox(height: 10),
 
                                       // Tafsilotlar paneli va Harakat tugmalari
-                                      Row(
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 6,
+                                        alignment: WrapAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: ctx.isDark
-                                                  ? const Color(0xFF1E2833)
-                                                  : const Color(0xFFF1F5F9),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              'Qoldiq: ${qty(item.currentStock)} ${item.product.unit}',
-                                              style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: ctx.inkColor),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: ctx.isDark
-                                                  ? const Color(0xFF1E2833)
-                                                  : const Color(0xFFF1F5F9),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              'Kunlik: ~${item.dailyBurn.toStringAsFixed(1)} ${item.product.unit}',
-                                              style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: ctx.mutedColor),
-                                            ),
-                                          ),
-                                          const Spacer(),
-                                          if (item.recommendedQty > 0) ...[
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: ctx.isDark
-                                                    ? AppColors.neonLime
-                                                        .withValues(alpha: 0.18)
-                                                    : AppColors.greenSoft,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                'AI: +${qty(item.recommendedQty)} ${item.product.unit}',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w900,
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
                                                   color: ctx.isDark
-                                                      ? AppColors.neonLime
-                                                      : const Color(0xFF065F46),
+                                                      ? const Color(0xFF1E2833)
+                                                      : const Color(0xFFF1F5F9),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Qoldiq: ${qty(item.currentStock)} ${item.product.unit}',
+                                                  style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: ctx.inkColor),
                                                 ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            FilledButton(
-                                              onPressed: () {
-                                                Navigator.pop(ctx);
-                                                _openQuickPurchase();
-                                              },
-                                              style: FilledButton.styleFrom(
-                                                backgroundColor: isCrit
-                                                    ? AppColors.danger
-                                                    : (ctx.isDark
-                                                        ? AppColors.neonLime
-                                                        : AppColors.darkCard),
-                                                foregroundColor: isCrit
-                                                    ? Colors.white
-                                                    : (ctx.isDark
-                                                        ? AppColors.ink
-                                                        : Colors.white),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 14,
-                                                        vertical: 8),
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10)),
-                                              ),
-                                              child: const Text('Kirim',
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: ctx.isDark
+                                                      ? const Color(0xFF1E2833)
+                                                      : const Color(0xFFF1F5F9),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Kunlik: ~${item.dailyBurn.toStringAsFixed(1)} ${item.product.unit}',
                                                   style: TextStyle(
-                                                      fontSize: 11.5,
-                                                      fontWeight:
-                                                          FontWeight.w800)),
+                                                      fontSize: 11,
+                                                      color: ctx.mutedColor),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (item.recommendedQty > 0)
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: ctx.isDark
+                                                        ? AppColors.neonLime
+                                                            .withValues(alpha: 0.18)
+                                                        : AppColors.greenSoft,
+                                                    borderRadius:
+                                                        BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    'AI: +${qty(item.recommendedQty)} ${item.product.unit}',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w900,
+                                                      color: ctx.isDark
+                                                          ? AppColors.neonLime
+                                                          : const Color(0xFF065F46),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                FilledButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(ctx);
+                                                    _openQuickPurchase();
+                                                  },
+                                                  style: FilledButton.styleFrom(
+                                                    backgroundColor: isCrit
+                                                        ? AppColors.danger
+                                                        : (ctx.isDark
+                                                            ? AppColors.neonLime
+                                                            : AppColors.darkCard),
+                                                    foregroundColor: isCrit
+                                                        ? Colors.white
+                                                        : (ctx.isDark
+                                                            ? AppColors.ink
+                                                            : Colors.white),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                            horizontal: 14,
+                                                            vertical: 8),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                10)),
+                                                  ),
+                                                  child: const Text('Kirim',
+                                                      style: TextStyle(
+                                                          fontSize: 11.5,
+                                                          fontWeight:
+                                                              FontWeight.w800)),
+                                                ),
+                                              ],
                                             ),
-                                          ],
                                         ],
                                       ),
                                     ],
@@ -2922,10 +2940,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 14),
 
                     // Pastki umumiy harakat tugmalari
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
+                    if (isNarrow)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _openQuickPurchase();
+                            },
+                            icon: const Icon(Icons.shopping_bag_rounded,
+                                size: 16),
+                            label: const Text('+ Xarid Kirim Qilish',
+                                style: TextStyle(fontWeight: FontWeight.w800)),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.neonLime,
+                              foregroundColor: AppColors.ink,
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
                             onPressed: () {
                               Navigator.pop(ctx);
                               _openQuickProduction();
@@ -2938,34 +2975,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: ctx.inkColor,
                               side: BorderSide(color: ctx.borderColor),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 11),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              _openQuickPurchase();
-                            },
-                            icon: const Icon(Icons.shopping_bag_rounded,
-                                size: 16),
-                            label: const Text('+ Xarid Kirim Qilish',
-                                style: TextStyle(fontWeight: FontWeight.w800)),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.neonLime,
-                              foregroundColor: AppColors.ink,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14)),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _openQuickProduction();
+                              },
+                              icon: const Icon(
+                                  Icons.precision_manufacturing_rounded,
+                                  size: 16),
+                              label: const Text('Sexga topshiriq ochish',
+                                  style: TextStyle(fontWeight: FontWeight.w700)),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: ctx.inkColor,
+                                side: BorderSide(color: ctx.borderColor),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _openQuickPurchase();
+                              },
+                              icon: const Icon(Icons.shopping_bag_rounded,
+                                  size: 16),
+                              label: const Text('+ Xarid Kirim Qilish',
+                                  style: TextStyle(fontWeight: FontWeight.w800)),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.neonLime,
+                                foregroundColor: AppColors.ink,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
