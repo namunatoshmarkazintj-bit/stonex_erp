@@ -573,7 +573,8 @@ class Product {
     if (nm.contains('stol') || nm.contains('demehot') || nm.contains('demhot')) {
       return 'Tayyor mahsulot';
     }
-    return '';
+    // Kategoriya kelmay qolsa yoki aniqlanmasa, avtomatik ravishda "Qo‘shimcha" bo'ladi
+    return 'Qo‘shimcha';
   }
 
   Product copyWith({
@@ -675,7 +676,8 @@ class Product {
           if (nm.contains('stol') || nm.contains('demehot') || nm.contains('demhot')) {
             return 'Tayyor mahsulot';
           }
-          return null;
+          // Kategoriya kelmay qolsa, avtomatik ravishda "Qo‘shimcha" bo'ladi
+          return 'Qo‘shimcha';
         }(),
         sku: (j['sku'] ?? '').toString(),
         qrCode: (j['qr_code'] ?? '').toString(),

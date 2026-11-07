@@ -443,8 +443,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                               WrapCrossAlignment.center,
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6, vertical: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2),
                                               decoration: BoxDecoration(
                                                 color: context.isDark
                                                     ? const Color(0xFF1E2835)

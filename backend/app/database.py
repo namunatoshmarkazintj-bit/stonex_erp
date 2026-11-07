@@ -88,6 +88,8 @@ def ensure_migrations():
             conn.execute(text("UPDATE products SET category = 'Qo‘shimcha' WHERE name IN ('Kley', 'Disk', 'Charx') AND (category IS NULL OR category = '')"))
             conn.execute(text("UPDATE products SET category = 'Xomashyo' WHERE name = 'Sim' AND (category IS NULL OR category = '' OR category = 'Kafel')"))
             conn.execute(text("UPDATE products SET category = 'Marmar' WHERE category = 'Granit'"))
+            # Kategoriya kelmay qolgan yoki bo'sh bo'lgan har qanday mahsulot avtomatik ravishda "Qo‘shimcha" bo'ladi
+            conn.execute(text("UPDATE products SET category = 'Qo‘shimcha' WHERE category IS NULL OR category = ''"))
     if "customers" in table_names:
         c_columns = [c["name"] for c in inspector.get_columns("customers")]
         with engine.begin() as conn:
