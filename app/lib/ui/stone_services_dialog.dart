@@ -482,14 +482,20 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     return raw < 20 ? (raw * 100.0) : raw;
   }
 
-  void _syncM2FromDimensions() {
-    final l = _effectiveLengthM;
-    final w = _effectiveWidthM;
-    final pieces = _parsePieces();
-    if (l > 0 && w > 0) {
-      final area = l * w * pieces;
+  void _syncM2FromCutDimensions() {
+    final cutW = _parseVal(_cutWidthCtrl);
+    final totalLenM = _parseVal(_cutLengthCtrl);
+    if (cutW > 0 && totalLenM > 0) {
+      final area = (cutW / 100.0) * totalLenM;
       final rounded = double.parse(area.toStringAsFixed(3));
       _m2Ctrl.text = rounded % 1 == 0 ? rounded.toInt().toString() : rounded.toString();
+    }
+  }
+
+  void _syncM2FromDimensions() {
+    final m2Val = _parseVal(_m2Ctrl);
+    if (m2Val <= 0) {
+      _syncM2FromCutDimensions();
     }
   }
 
@@ -568,49 +574,11 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   }
 
   void _recalcFromCutWidth() {
-    if (_isSyncingCutDimensions) return;
-    _isSyncingCutDimensions = true;
-    try {
-      final hSm = _effectiveLengthCm;
-      final cutWSm = _parseVal(_cutWidthCtrl);
-      final rawW = _parseVal(_widthCtrl);
-      final pieces = _parsePieces();
-
-      if (hSm > 0 && cutWSm > 0 && rawW > 0) {
-        final strips = (hSm / cutWSm).floor();
-        final oneSheetM = strips * (rawW < 20 ? rawW : rawW / 100.0);
-        final totalLengthM = oneSheetM * pieces;
-        final roundedM = (totalLengthM * 100).round() / 100.0;
-        _cutLengthCtrl.text = roundedM % 1 == 0 ? roundedM.toInt().toString() : roundedM.toString();
-      }
-    } finally {
-      _isSyncingCutDimensions = false;
-    }
+    _syncM2FromCutDimensions();
   }
 
   void _recalcFromCutLength() {
-    if (_isSyncingCutDimensions) return;
-    _isSyncingCutDimensions = true;
-    try {
-      final calc = _currentCuttingCalculation;
-      if (calc.isValid && calc.nLines > 0) {
-        _piecesCtrl.text = calc.nLines.toString();
-        _syncM2FromDimensions();
-      } else {
-        final oneM = _oneSheetMeters;
-        final totalLengthM = _parseVal(_cutLengthCtrl);
-
-        if (oneM > 0 && totalLengthM > 0) {
-          final needed = totalLengthM / oneM;
-          final sheetsInt = needed.ceil();
-          final effectiveSheets = sheetsInt > 0 ? sheetsInt : 1;
-          _piecesCtrl.text = effectiveSheets.toString();
-          _syncM2FromDimensions();
-        }
-      }
-    } finally {
-      _isSyncingCutDimensions = false;
-    }
+    _syncM2FromCutDimensions();
   }
 
   double get _effectiveLengthM {
@@ -1458,333 +1426,144 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                               ),
                               const SizedBox(height: 10),
 
-                              // 2-Qator: Ishlatiladigan mahsulotning bo'yi va eni hamda Disk qalinligi (kerf)
-                              Row(
+                              // 2-Qator: Kvadrat metr (m²) kiritish joyi (Kiritilgan kvadratga qarab summa chiqariladi)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Bo'yi (har doim metrda)
-                                  Expanded(
-                                    flex: 3,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Bo‘yi (m):',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: context.mutedColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        TextField(
-                                          controller: _lengthCtrl,
-                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
-                                          decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: context.cardColor,
-                                            isDense: true,
-                                            hintText: '1.2',
-                                            suffixText: 'm',
-                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          ),
-                                          onChanged: (_) {
-                                            _syncM2FromDimensions();
-                                            _recalcFromCutWidth();
-                                            final lenM = _effectiveLengthM;
-                                            if (lenM > 0) {
-                                              final lenMStr = lenM % 1 == 0 ? lenM.toInt().toString() : lenM.toString();
-                                              _polishMetersCtrl.text = lenMStr;
-                                              _chamferMetersCtrl.text = lenMStr;
-                                              _grooveMetersCtrl.text = lenMStr;
-                                            }
-                                            setState(() {});
-                                          },
-                                        ),
-                                      ],
+                                  Text(
+                                    'Kvadrat metr (m²):',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? AppColors.neonLime : const Color(0xFF047857),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-
-                                  // Eni (faqat m)
-                                  Expanded(
-                                    flex: 3,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Eni (m):',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: context.mutedColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        TextField(
-                                          controller: _widthCtrl,
-                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
-                                          decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: context.cardColor,
-                                            isDense: true,
-                                            hintText: '0.6',
-                                            suffixText: 'm',
-                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          ),
-                                          onChanged: (_) {
-                                            _syncM2FromDimensions();
-                                            _recalcFromCutWidth();
-                                            setState(() {});
-                                          },
-                                        ),
-                                      ],
+                                  const SizedBox(height: 4),
+                                  TextField(
+                                    controller: _m2Ctrl,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: isDark ? AppColors.neonLime : const Color(0xFF047857),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-
-                                  // Metr kvadrat (m²) kiritish joyi
-                                  Expanded(
-                                    flex: 3,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Metr kvadrat (m²):',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: isDark ? AppColors.neonLime : const Color(0xFF047857),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        TextField(
-                                          controller: _m2Ctrl,
-                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w900,
-                                            color: isDark ? AppColors.neonLime : const Color(0xFF047857),
-                                          ),
-                                          decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
-                                            isDense: true,
-                                            hintText: '0.72',
-                                            suffixText: 'm²',
-                                            suffixStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: isDark ? AppColors.neonLime : const Color(0xFF047857),
-                                            ),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                              borderSide: const BorderSide(color: Color(0xFF059669), width: 1.8),
-                                            ),
-                                          ),
-                                          onChanged: (_) {
-                                            setState(() {});
-                                          },
-                                        ),
-                                      ],
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
+                                      isDense: true,
+                                      hintText: '0.72',
+                                      prefixIcon: const Icon(Icons.square_foot_rounded, size: 20, color: Color(0xFF10B981)),
+                                      suffixText: 'm²',
+                                      suffixStyle: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(color: Color(0xFF059669), width: 2.0),
+                                      ),
                                     ),
+                                    onChanged: (_) {
+                                      setState(() {});
+                                    },
                                   ),
                                 ],
                               ),
 
                               const SizedBox(height: 10),
-                              Builder(
-                                builder: (context) {
-                                  final calc = _currentCuttingCalculation;
-                                  if (!calc.isValid) {
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 10),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFEF2F2),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: const Color(0xFFEF4444)),
-                                      ),
-                                      child: Row(
+
+                              // Aniq hisob-kitob tafsiloti (Kiritilgan Metr Kvadrat, Narxi va Jami summa)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFEF4444)),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              calc.errorMessage ?? 'Xatolik: Plita o‘lchami yetarli emas!',
-                                              style: const TextStyle(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFFDC2626),
-                                              ),
+                                          Text(
+                                            'Hisob maydoni:',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: context.mutedColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${_calculatedTotalMeters.toStringAsFixed(2)} m²',
+                                            style: TextStyle(
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: isDark ? AppColors.neonLime : const Color(0xFF047857),
                                             ),
                                           ),
                                         ],
                                       ),
-                                    );
-                                  }
-
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                '1 ta plitadan: ${calc.slabWidthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${calc.nStrips} ta bo‘lak × Eni (${calc.slabLengthM} m) → ${_formatNumber(calc.nStrips * calc.slabLengthM)} metr',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: context.inkColor,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '1 m² narxi:',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: context.mutedColor,
                                             ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF059669)),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: RichText(
-                                                text: TextSpan(
-                                                  style: TextStyle(
-                                                    fontSize: 11.5,
-                                                    color: context.inkColor,
-                                                  ),
-                                                  children: [
-                                                    const TextSpan(
-                                                      text: 'Sarflanadigan list: ',
-                                                      style: TextStyle(fontWeight: FontWeight.w600),
-                                                    ),
-                                                    TextSpan(
-                                                      text: '${calc.nLines} ta list ',
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        color: isDark ? AppColors.neonLime : const Color(0xFF047857),
-                                                      ),
-                                                    ),
-                                                    TextSpan(
-                                                      text: '(${_cutLengthCtrl.text} m ÷ ${_formatNumber(calc.nStrips * calc.slabLengthM)} m = ${_formatNumber(calc.nTotal / (calc.nStrips > 0 ? calc.nStrips : 1))} ta)',
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: context.mutedColor,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            money(_activeUnitPrice),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.inkColor,
                                             ),
-                                          ],
-                                        ),
-                                        const Divider(height: 12),
-                                        // Aniq hisob-kitob tafsiloti (Kiritilgan Metr Kvadrat, Narxi va Jami summa)
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Hisob maydoni:',
-                                                    style: TextStyle(
-                                                      fontSize: 10.5,
-                                                      color: context.mutedColor,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    '${_calculatedTotalMeters.toStringAsFixed(2)} m²',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.w900,
-                                                      color: isDark ? AppColors.neonLime : const Color(0xFF047857),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    '1 m² narxi:',
-                                                    style: TextStyle(
-                                                      fontSize: 10.5,
-                                                      color: context.mutedColor,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    money(_activeUnitPrice),
-                                                    style: TextStyle(
-                                                      fontSize: 11.5,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: context.inkColor,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.end,
-                                                children: [
-                                                  Text(
-                                                    'Jami xizmat puli:',
-                                                    style: TextStyle(
-                                                      fontSize: 10.5,
-                                                      color: context.mutedColor,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    money(_calculatedTotalPrice),
-                                                    style: const TextStyle(
-                                                      fontSize: 12.5,
-                                                      fontWeight: FontWeight.w900,
-                                                      color: Color(0xFF10B981),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  );
-                                },
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            'Jami xizmat puli:',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: context.mutedColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            money(_calculatedTotalPrice),
+                                            style: const TextStyle(
+                                              fontSize: 14.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF10B981),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
 
                               // Jonli hisob tafsiloti va o‘ng tomonda sonini kiritish qismi (List steppri)

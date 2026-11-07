@@ -578,21 +578,13 @@ void main() {
 
 
 
-      // m2 tanlangan holatda Bo'yi (m) ko'rinishi kerak
-
-      expect(find.text('Bo‘yi (m):'), findsOneWidget);
-
-      expect(find.text('Eni (m):'), findsOneWidget);
-
-      expect(find.textContaining('1.2 m × 0.6 m'), findsOneWidget);
-
-      expect(find.textContaining('Maydon: 0.72 m²'), findsOneWidget);
-
+      // m2 tanlangan holatda Kvadrat metr (m²) ko'rinishi va maydon hisoblanishi kerak
+      expect(find.text('Kvadrat metr (m²):'), findsOneWidget);
+      expect(find.textContaining('0.72 m²'), findsWidgets);
       expect(find.text('m² (Kvadrat metr)'), findsOneWidget);
-
     });
 
-    testWidgets('Kesish: Kenglik va Uzunlik proporsional hisobi (Bo‘yi/Kenglik * Eni)', (tester) async {
+    testWidgets('Kesish: Kenglik va Uzunlik proporsional hisobi va Kvadrat metr (m²)', (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -631,15 +623,11 @@ void main() {
       await tester.tap(find.text('Ochish'));
       await tester.pumpAndSettle();
 
-      // Yangi 2 ta input mavjudligi: Kenglik va Uzunlik
+      // Yangi inputlar mavjudligi: Kenglik, Uzunlik va Kvadrat metr (m²)
       expect(find.text('Kenglik (kesiladigan):'), findsOneWidget);
       expect(find.text('Uzunlik (kesiladigan):'), findsOneWidget);
-      expect(find.text('Bo‘yi (m):'), findsOneWidget);
-      expect(find.text('Eni (m):'), findsOneWidget);
-
-      // Jonli hisob formulasini tekshiramiz
-      expect(find.textContaining('1 ta plitadan:'), findsOneWidget);
-      expect(find.textContaining('8 ta bo‘lak'), findsOneWidget);
+      expect(find.text('Kvadrat metr (m²):'), findsOneWidget);
+      expect(find.textContaining('0.72 m²'), findsWidgets);
     });
 
     testWidgets('TaskCreateDialog: Topshiriq berishda toshni kesish va silliqlash xizmatlarini qo‘shish', (tester) async {
