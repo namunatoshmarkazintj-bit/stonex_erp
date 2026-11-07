@@ -203,6 +203,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     _loadPricesAndProducts();
   }
 
+  bool get _isTileOrCeramic => _selectedProduct?.isTileOrCeramic ?? false;
+
   Future<void> _loadPricesAndProducts() async {
     setState(() => _syncing = true);
     try {
@@ -210,16 +212,23 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       await StoneServicesStore.syncFromRepo(repo);
       final prods = await repo.list();
       if (mounted) {
-        final stones = prods.where((p) => p.category != 'Xizmat').toList();
+        // Faqat haqiqiy tosh/kafel mahsulotlarini filtrlaymiz (Akfix, kley, disk va h.k.lar MUTLAQO kiritilmaydi)
+        final stones = prods.where((p) => p.isCuttableStone).toList();
         setState(() {
           _availableProducts = stones;
           if (_selectedProduct == null && stones.isNotEmpty) {
             final cart = context.read<CartController>();
             final cartStone = cart.lines
-                .where((l) => l.product.category != 'Xizmat')
+                .where((l) => l.product.isCuttableStone)
                 .map((l) => l.product)
                 .firstOrNull;
-            _applyProduct(cartStone ?? stones.first, initial: true);
+            final preferredStone = cartStone ??
+                stones.where((p) => p.isTileOrCeramic && (p.tileLength ?? 0) >= 100).firstOrNull ??
+                stones.where((p) => p.isTileOrCeramic).firstOrNull ??
+                stones.firstOrNull;
+            if (preferredStone != null) {
+              _applyProduct(preferredStone, initial: true);
+            }
           }
         });
       }
@@ -228,6 +237,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   }
 
   void _applyProduct(Product p, {bool initial = false}) {
+    if (!p.isCuttableStone) return;
     _selectedProduct = p;
 
     double? len = p.tileLength;
@@ -264,9 +274,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
       _widthCtrl.text = widM % 1 == 0 ? widM.toInt().toString() : widM.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
     }
 
-    final cat = (p.category ?? '').toLowerCase();
-    final nm = p.name.toLowerCase();
-    if (cat.contains('keram') || nm.contains('keram') || cat.contains('kafel') || nm.contains('kafel')) {
+    if (p.isTileOrCeramic) {
       _polishStoneType = 'ceramics';
     } else {
       _polishStoneType = 'granite';
@@ -279,6 +287,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     } catch (_) {
       _includeStoneInCart = true;
     }
+
+    _recalcFromCutWidth();
 
     if (!initial && mounted) {
       setState(() {});
@@ -301,19 +311,21 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   Future<void> _openProductPicker(BuildContext context) async {
     final prods = _availableProducts.isNotEmpty
         ? _availableProducts
-        : await context.read<AppRepositories>().products.list();
+        : (await context.read<AppRepositories>().products.list())
+            .where((p) => p.isCuttableStone)
+            .toList();
     if (!mounted) return;
 
     final picked = await showDialog<Product?>(
       context: context,
       builder: (ctx) => _ProductPickerDialog(
-        products: prods.where((p) => p.category != 'Xizmat').toList(),
+        products: prods.where((p) => p.isCuttableStone).toList(),
         currentProduct: _selectedProduct,
       ),
     );
 
     if (mounted) {
-      if (picked != null) {
+      if (picked != null && picked.isCuttableStone) {
         _applyProduct(picked);
       }
     }
@@ -445,15 +457,20 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   /// Jami hisoblangan metr yoki miqdor
   double get _calculatedTotalMeters {
     final def = kStoneServices[_selectedServiceIdx];
-    final pieces = _parsePieces();
 
     if (def.key == 'cut') {
-      final w = _effectiveWidthM;
-      final l = _effectiveLengthM;
-      final pieces = _parsePieces();
-      // Kesish har doim Metr kvadratda (m2): Bo'yi_m * Eni_m * dona
-      final area = l * w * pieces;
-      return double.parse(area.toStringAsFixed(3));
+      if (_isTileOrCeramic) {
+        final w = _effectiveWidthM;
+        final l = _effectiveLengthM;
+        final pieces = _parsePieces();
+        // Keramogranit va kafel uchun Metr kvadratda (m2): Bo'yi_m * Eni_m * dona
+        final area = l * w * pieces;
+        return double.parse(area.toStringAsFixed(3));
+      } else {
+        // Keramogranit/kafel bo'lmaganda (masalan Granit kesish): kiritilgan metr bo'yicha
+        final cutLen = _parseVal(_cutLengthCtrl);
+        return cutLen > 0 ? cutLen : 1.0;
+      }
     }
 
     final m = _parseVal(_manualMetersCtrl);
@@ -615,7 +632,11 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
     final pStr = pieces > 1 ? ' · $pieces ta list' : ' · 1 ta list';
     if (def.key == 'cut') {
-      specText = '$lenStr × $widStr$pStr ($qty m²)';
+      if (_isTileOrCeramic) {
+        specText = '$lenStr × $widStr$pStr ($qty m²)';
+      } else {
+        specText = '$qty metr kesish';
+      }
     } else {
       specText = '$qty ${def.unit}';
     }
@@ -1169,378 +1190,449 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                             ),
                             const SizedBox(height: 14),
 
-                            // 1-Qator: Kesiladigan mahsulot o'lchamlari (Kenglik bo'yining tepasida, Uzunlik enining tepasida)
-                            Row(
-                              children: [
-                                // Kenglik (kesiladigan mahsulot kengligi, sm da) - Bo'yining tepasida
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Kenglik (kesiladigan):',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.mutedColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      TextField(
-                                        controller: _cutWidthCtrl,
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: context.cardColor,
-                                          isDense: true,
-                                          hintText: '15',
-                                          suffixText: 'sm',
-                                          suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
-                                        ),
-                                        onChanged: (_) {
-                                          _recalcFromCutWidth();
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-
-                                // Uzunlik (kesiladigan mahsulot jami uzunligi, m da) - Enining tepasida
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Uzunlik (kesiladigan):',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.mutedColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      TextField(
-                                        controller: _cutLengthCtrl,
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: context.cardColor,
-                                          isDense: true,
-                                          hintText: '4.8',
-                                          suffixText: 'm',
-                                          suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
-                                        ),
-                                        onChanged: (_) {
-                                          _recalcFromCutLength();
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-
-                            // 2-Qator: Ishlatiladigan mahsulotning bo'yi va eni
-                            Row(
-                              children: [
-                                // Bo'yi (har doim metrda)
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Bo‘yi (m):',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.mutedColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      TextField(
-                                        controller: _lengthCtrl,
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: context.cardColor,
-                                          isDense: true,
-                                          hintText: '1.2',
-                                          suffixText: 'm',
-                                          suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                        ),
-                                        onChanged: (_) {
-                                          _recalcFromCutWidth();
-                                          final lenM = _effectiveLengthM;
-                                          if (lenM > 0) {
-                                            final lenMStr = lenM % 1 == 0 ? lenM.toInt().toString() : lenM.toString();
-                                            _polishMetersCtrl.text = lenMStr;
-                                            _chamferMetersCtrl.text = lenMStr;
-                                            _grooveMetersCtrl.text = lenMStr;
-                                          }
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-
-                                // Eni (faqat m)
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Eni (m):',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.mutedColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      TextField(
-                                        controller: _widthCtrl,
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: context.cardColor,
-                                          isDense: true,
-                                          hintText: '0.6',
-                                          suffixText: 'm',
-                                          suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
-                                        ),
-                                        onChanged: (_) {
-                                          _recalcFromCutWidth();
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 10),
-                            if (_stripsCount > 0)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            '1 ta plitadan: ${_effectiveLengthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${_formatNumber(_stripsCount)} ta bo‘lak × Eni (${_parseVal(_widthCtrl)} m) → ${_formatNumber(_oneSheetMeters)} metr',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: context.inkColor,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF059669)),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: RichText(
-                                            text: TextSpan(
-                                              style: TextStyle(
-                                                fontSize: 11.5,
-                                                color: context.inkColor,
-                                              ),
-                                              children: [
-                                                const TextSpan(
-                                                  text: 'Sarflanadigan list: ',
-                                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                                ),
-                                                TextSpan(
-                                                  text: '$_neededSheetsDisplay ',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w900,
-                                                    color: isDark ? AppColors.neonLime : const Color(0xFF047857),
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: '(${_cutLengthCtrl.text} m ÷ ${_formatNumber(_oneSheetMeters)} m = ${_formatNumber(_neededSheetsCount)} ta)',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: context.mutedColor,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            // Jonli hisob tafsiloti va o‘ng tomonda sonini kiritish qismi
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: context.cardColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: context.borderColor),
-                              ),
-                              child: Row(
+                            if (_isTileOrCeramic) ...[
+                              // 1-Qator: Kesiladigan mahsulot o'lchamlari (Kenglik bo'yining tepasida, Uzunlik enining tepasida)
+                              Row(
                                 children: [
-                                  Icon(Icons.calculate_rounded, size: 18, color: isDark ? AppColors.neonLime : AppColors.ink),
-                                  const SizedBox(width: 8),
+                                  // Kenglik (kesiladigan mahsulot kengligi, sm da) - Bo'yining tepasida
                                   Expanded(
-                                    child: Builder(
-                                      builder: (context) {
-                                        final lenVal = _parseVal(_lengthCtrl);
-                                        final widVal = _parseVal(_widthCtrl);
-                                        final pieces = _parsePieces();
-                                        final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} m';
-                                        final widStr = '${widVal % 1 == 0 ? widVal.toInt() : widVal} m';
-                                        final pStr = ' · $pieces ta list';
-
-                                        return Text(
-                                          'O‘lcham: $lenStr × $widStr$pStr → Maydon: $_calculatedTotalMeters m²',
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Kenglik (kesiladigan):',
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
-                                            color: context.inkColor,
+                                            color: context.mutedColor,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        );
-                                      },
+                                        ),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _cutWidthCtrl,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: context.cardColor,
+                                            isDense: true,
+                                            hintText: '15',
+                                            suffixText: 'sm',
+                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
+                                          ),
+                                          onChanged: (_) {
+                                            _recalcFromCutWidth();
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'List:',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: context.mutedColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 12),
 
-                                  // O‘ng tomonga mahkam yopishtirilgan sonini boshqarish steppri: [-] 1 [+]
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF14181F) : const Color(0xFFEFF2F6),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isDark ? const Color(0xFF2D3748) : const Color(0xFFCBD5E1),
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                  // Uzunlik (kesiladigan mahsulot jami uzunligi, m da) - Enining tepasida
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        InkWell(
-                                          onTap: () => _adjustPieces(-1),
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: Container(
-                                            width: 24,
-                                            height: 24,
-                                            decoration: BoxDecoration(
-                                              color: isDark ? const Color(0xFF21262D) : Colors.white,
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: context.borderColor),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Icon(Icons.remove_rounded, size: 14, color: context.inkColor),
+                                        Text(
+                                          'Uzunlik (kesiladigan):',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.mutedColor,
                                           ),
                                         ),
-                                        SizedBox(
-                                          width: 38,
-                                          child: TextField(
-                                            controller: _piecesCtrl,
-                                            textAlign: TextAlign.center,
-                                            keyboardType: TextInputType.number,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w900,
-                                              color: context.inkColor,
-                                            ),
-                                            decoration: const InputDecoration(
-                                              isDense: true,
-                                              contentPadding: EdgeInsets.symmetric(vertical: 2),
-                                              border: InputBorder.none,
-                                              enabledBorder: InputBorder.none,
-                                              focusedBorder: InputBorder.none,
-                                            ),
-                                            onChanged: (_) {
-                                              _recalcFromCutWidth();
-                                              setState(() {});
-                                            },
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _cutLengthCtrl,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: context.cardColor,
+                                            isDense: true,
+                                            hintText: '4.8',
+                                            suffixText: 'm',
+                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
                                           ),
-                                        ),
-                                        InkWell(
-                                          onTap: () => _adjustPieces(1),
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: Container(
-                                            width: 24,
-                                            height: 24,
-                                            decoration: BoxDecoration(
-                                              color: isDark ? const Color(0xFF21262D) : Colors.white,
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: context.borderColor),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Icon(
-                                              Icons.add_rounded,
-                                              size: 14,
-                                              color: context.inkColor,
-                                            ),
-                                          ),
+                                          onChanged: (_) {
+                                            _recalcFromCutLength();
+                                            setState(() {});
+                                          },
                                         ),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                              const SizedBox(height: 10),
+
+                              // 2-Qator: Ishlatiladigan mahsulotning bo'yi va eni (Faqatgina Keramogranit va Kafelda chiqadi!)
+                              Row(
+                                children: [
+                                  // Bo'yi (har doim metrda)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Bo‘yi (m):',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.mutedColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _lengthCtrl,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: context.cardColor,
+                                            isDense: true,
+                                            hintText: '1.2',
+                                            suffixText: 'm',
+                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                          ),
+                                          onChanged: (_) {
+                                            _recalcFromCutWidth();
+                                            final lenM = _effectiveLengthM;
+                                            if (lenM > 0) {
+                                              final lenMStr = lenM % 1 == 0 ? lenM.toInt().toString() : lenM.toString();
+                                              _polishMetersCtrl.text = lenMStr;
+                                              _chamferMetersCtrl.text = lenMStr;
+                                              _grooveMetersCtrl.text = lenMStr;
+                                            }
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+
+                                  // Eni (faqat m)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Eni (m):',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.mutedColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _widthCtrl,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: context.cardColor,
+                                            isDense: true,
+                                            hintText: '0.6',
+                                            suffixText: 'm',
+                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                          ),
+                                          onChanged: (_) {
+                                            _recalcFromCutWidth();
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 10),
+                              if (_stripsCount > 0)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              '1 ta plitadan: ${_effectiveLengthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${_formatNumber(_stripsCount)} ta bo‘lak × Eni (${_parseVal(_widthCtrl)} m) → ${_formatNumber(_oneSheetMeters)} metr',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: context.inkColor,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF059669)),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: RichText(
+                                              text: TextSpan(
+                                                style: TextStyle(
+                                                  fontSize: 11.5,
+                                                  color: context.inkColor,
+                                                ),
+                                                children: [
+                                                  const TextSpan(
+                                                    text: 'Sarflanadigan list: ',
+                                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                                  ),
+                                                  TextSpan(
+                                                    text: '$_neededSheetsDisplay ',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.w900,
+                                                      color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                                    ),
+                                                  ),
+                                                  TextSpan(
+                                                    text: '(${_cutLengthCtrl.text} m ÷ ${_formatNumber(_oneSheetMeters)} m = ${_formatNumber(_neededSheetsCount)} ta)',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: context.mutedColor,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                              // Jonli hisob tafsiloti va o‘ng tomonda sonini kiritish qismi (List steppri)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: context.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: context.borderColor),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calculate_rounded, size: 18, color: isDark ? AppColors.neonLime : AppColors.ink),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Builder(
+                                        builder: (context) {
+                                          final lenVal = _parseVal(_lengthCtrl);
+                                          final widVal = _parseVal(_widthCtrl);
+                                          final pieces = _parsePieces();
+                                          final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} m';
+                                          final widStr = '${widVal % 1 == 0 ? widVal.toInt() : widVal} m';
+                                          final pStr = ' · $pieces ta list';
+
+                                          return Text(
+                                            'O‘lcham: $lenStr × $widStr$pStr → Maydon: $_calculatedTotalMeters m²',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.inkColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'List:',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.mutedColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+
+                                    // O‘ng tomonga mahkam yopishtirilgan sonini boshqarish steppri: [-] 1 [+]
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF14181F) : const Color(0xFFEFF2F6),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isDark ? const Color(0xFF2D3748) : const Color(0xFFCBD5E1),
+                                          width: 0.8,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          InkWell(
+                                            onTap: () => _adjustPieces(-1),
+                                            borderRadius: BorderRadius.circular(6),
+                                            child: Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color: isDark ? const Color(0xFF21262D) : Colors.white,
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: context.borderColor),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(Icons.remove_rounded, size: 14, color: context.inkColor),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 38,
+                                            child: TextField(
+                                              controller: _piecesCtrl,
+                                              textAlign: TextAlign.center,
+                                              keyboardType: TextInputType.number,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w900,
+                                                color: context.inkColor,
+                                              ),
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.symmetric(vertical: 2),
+                                                border: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                              ),
+                                              onChanged: (_) {
+                                                _recalcFromCutWidth();
+                                                setState(() {});
+                                              },
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () => _adjustPieces(1),
+                                            borderRadius: BorderRadius.circular(6),
+                                            child: Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color: isDark ? const Color(0xFF21262D) : Colors.white,
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: context.borderColor),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.add_rounded,
+                                                size: 14,
+                                                color: context.inkColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              // Granit yoki boshqa toshlar (Keramogranit/kafel bo'lmaganda):
+                              // Bo'yi va Eni plita o'lchami talab qilinmaydi, to'g'ridan-to'g'ri kesiladigan metr kiritiladi!
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Kesiladigan uzunlik (metrda):',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.mutedColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _cutLengthCtrl,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: context.cardColor,
+                                            isDense: true,
+                                            hintText: '1.0',
+                                            suffixText: 'm',
+                                            suffixStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: context.borderColor)),
+                                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
+                                          ),
+                                          onChanged: (_) => setState(() {}),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: context.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: context.borderColor),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calculate_rounded, size: 18, color: isDark ? AppColors.neonLime : AppColors.ink),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Hajmi: ${_parseVal(_cutLengthCtrl)} metr → Jami: ${money(_calculatedTotalPrice)}',
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: context.inkColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1945,16 +2037,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   Widget _buildProductSelector(BuildContext context, bool isDark) {
     final cart = context.watch<CartController>();
     final cartStones = cart.lines
-        .where((l) {
-          final cat = (l.product.category ?? '').toLowerCase();
-          return l.product.category != 'Xizmat' &&
-              (l.product.unit == 'm2' ||
-                  l.product.tileLength != null ||
-                  cat.contains('granit') ||
-                  cat.contains('marmar') ||
-                  cat.contains('kafel') ||
-                  cat.contains('keram'));
-        })
+        .where((l) => l.product.isCuttableStone)
         .toList();
 
     if (_selectedProduct != null) {
@@ -3152,14 +3235,26 @@ class _ProductPickerDialogState extends State<_ProductPickerDialog> {
     final isDark = context.isDark;
     final query = _searchCtrl.text.trim().toLowerCase();
 
-    final categories = ['Barchasi', 'Granit', 'Marmar', 'Keramogranit', 'Kafel', 'Travertin'];
+    final categories = ['Barchasi', 'Keramogranit', 'Kafel', 'Granit', 'Marmar', 'Travertin'];
 
     final filtered = widget.products.where((p) {
+      if (!p.isCuttableStone) return false;
       if (_categoryFilter != 'Barchasi') {
         final cat = (p.category ?? '').toLowerCase();
+        final name = p.name.toLowerCase();
         final filterLow = _categoryFilter.toLowerCase();
-        if (!cat.contains(filterLow) && !p.name.toLowerCase().contains(filterLow)) {
-          return false;
+        if (_categoryFilter == 'Keramogranit') {
+          if (!cat.contains('keram') && !name.contains('keram')) return false;
+        } else if (_categoryFilter == 'Kafel') {
+          if (!cat.contains('kafel') && !name.contains('kafel')) return false;
+        } else if (_categoryFilter == 'Granit') {
+          if (!cat.contains('granit') && !name.contains('granit')) return false;
+        } else if (_categoryFilter == 'Marmar') {
+          if (!cat.contains('marmar') && !name.contains('marmar')) return false;
+        } else if (_categoryFilter == 'Travertin') {
+          if (!cat.contains('travertin') && !name.contains('travertin')) return false;
+        } else {
+          if (!cat.contains(filterLow) && !name.contains(filterLow)) return false;
         }
       }
       if (query.isNotEmpty) {

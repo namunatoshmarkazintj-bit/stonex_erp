@@ -519,21 +519,27 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        icon: const Icon(Icons.receipt_long_rounded, size: 20),
+                                        icon: const Icon(
+                                            Icons.receipt_long_rounded,
+                                            size: 20),
                                         color: AppColors.green,
                                         tooltip: 'Xaridlar tarixi va cheklar',
                                         visualDensity: VisualDensity.compact,
                                         padding: const EdgeInsets.all(6),
-                                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                                        onPressed: () => _openCustomerDetails(c),
+                                        constraints: const BoxConstraints(
+                                            minWidth: 34, minHeight: 34),
+                                        onPressed: () =>
+                                            _openCustomerDetails(c),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.edit_outlined, size: 20),
+                                        icon: const Icon(Icons.edit_outlined,
+                                            size: 20),
                                         color: context.mutedColor,
                                         tooltip: 'Tahrirlash',
                                         visualDensity: VisualDensity.compact,
                                         padding: const EdgeInsets.all(6),
-                                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                        constraints: const BoxConstraints(
+                                            minWidth: 34, minHeight: 34),
                                         onPressed: () => _openCustomerDialog(c),
                                       ),
                                     ],
@@ -568,7 +574,9 @@ class _StatMini extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted), maxLines: 1),
+        Text(label,
+            style: const TextStyle(fontSize: 11, color: AppColors.muted),
+            maxLines: 1),
         const SizedBox(height: 2),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -576,7 +584,8 @@ class _StatMini extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               value,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
+              style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w800, color: color),
               maxLines: 1,
             ),
           ),
@@ -1523,10 +1532,12 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                         child: OutlinedButton.icon(
                           onPressed: widget.onEdit,
                           icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('Tahrirlash', maxLines: 1, overflow: TextOverflow.ellipsis),
+                          label: const Text('Tahrirlash',
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
@@ -1550,7 +1561,8 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                             foregroundColor:
                                 context.isDark ? AppColors.ink : Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
@@ -2086,10 +2098,12 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                     child: OutlinedButton.icon(
                       onPressed: _copyToClipboard,
                       icon: const Icon(Icons.copy_rounded, size: 16),
-                      label: const Text('Nusxalash', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      label: const Text('Nusxalash',
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -2115,7 +2129,8 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                         backgroundColor: const Color(0xFF10B981),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),

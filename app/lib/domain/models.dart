@@ -343,19 +343,95 @@ class Product {
   });
 
   bool get hasDona => donaM2 != null && donaM2! > 0;
-  bool get isTile =>
-      category != null &&
-      (category!.toLowerCase() == 'kafel' ||
-          category!.toLowerCase() == 'kerama granit' ||
-          category!.toLowerCase().contains('granit') ||
-          category!.toLowerCase().contains('marmar'));
-  bool get isStoneOrTile =>
-      category != null &&
-      (category!.toLowerCase().contains('granit') ||
-          category!.toLowerCase().contains('keram') ||
-          category!.toLowerCase().contains('kafel') ||
-          category!.toLowerCase().contains('marmar') ||
-          category!.toLowerCase().contains('tosh'));
+
+  /// Kesish va toshga ishlov berish xizmatlari uchun yaroqli tosh/plita mahsuloti.
+  /// Akfix, kley, disk, sim kabi kesib bo'lmaydigan asbob va yelimlar MUTLAQO kiritilmaydi.
+  bool get isCuttableStone {
+    if (category == 'Xizmat') return false;
+    final cat = (category ?? '').toLowerCase().trim();
+    final nm = name.toLowerCase().trim();
+    final sk = sku.toLowerCase().trim();
+
+    // 1. Kesib bo'lmaydigan qo'shimcha tovarlar, yelimlar, asbob-uskunalar (Akfix, kley, disk, sim va h.k.)
+    const nonCuttableKeywords = [
+      'akfix',
+      'kley',
+      'yelim',
+      'disk',
+      'cherepashka',
+      'sim',
+      'sement',
+      'germetik',
+      'asbob',
+      'instrument',
+      'pistolet',
+      'rizak',
+      'qalam',
+      'esk',
+      'demehot',
+      'demhot',
+      'gul',
+    ];
+    for (final kw in nonCuttableKeywords) {
+      if (nm.contains(kw) || sk.contains(kw)) {
+        return false;
+      }
+    }
+
+    if (cat == 'qo‘shimcha' ||
+        cat == "qo'shimcha" ||
+        cat == 'xomashyo' ||
+        cat == 'tayyor mahsulot') {
+      return false;
+    }
+
+    // 2. Yaroqli tosh/kafel toifalari
+    if (cat.contains('keram') ||
+        cat.contains('kafel') ||
+        cat.contains('granit') ||
+        cat.contains('marmar') ||
+        cat.contains('travertin') ||
+        cat.contains('tosh')) {
+      return true;
+    }
+
+    // 3. Nomida yoki o'lchamlarida tosh/kafel belgilari bo'lsa
+    if (nm.contains('keram') ||
+        nm.contains('kafel') ||
+        nm.contains('granit') ||
+        nm.contains('marmar') ||
+        nm.contains('travertin') ||
+        nm.contains('tosh')) {
+      return true;
+    }
+
+    if (tileLength != null &&
+        tileWidth != null &&
+        tileLength! > 0 &&
+        tileWidth! > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Keramogranit yoki kafel (standart list/plita o'lchami bo'lgan) mahsulot
+  bool get isTileOrCeramic {
+    if (!isCuttableStone) return false;
+    final cat = (category ?? '').toLowerCase();
+    final nm = name.toLowerCase();
+    return cat.contains('keram') ||
+        cat.contains('kafel') ||
+        nm.contains('keram') ||
+        nm.contains('kafel') ||
+        (tileLength != null &&
+            tileWidth != null &&
+            tileLength! > 0 &&
+            tileWidth! > 0);
+  }
+
+  bool get isTile => isTileOrCeramic;
+  bool get isStoneOrTile => isCuttableStone;
   bool get hasPachka =>
       unit == 'm2' ||
       unit == 'm²' ||
