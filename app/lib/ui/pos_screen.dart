@@ -273,33 +273,6 @@ class _PosScreenState extends State<PosScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            SizedBox(
-              height: 44,
-              child: FilledButton.icon(
-                onPressed: () {
-                  final user = context.read<AuthController>().user;
-                  if (user != null) {
-                    StoneServicesDialog.show(context, user: user);
-                  }
-                },
-                icon: const Icon(Icons.design_services_rounded, size: 18),
-                label: Text(
-                  wide ? 'Xizmatlar' : 'Xizmat',
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: context.isDark ? const Color(0xFF232832) : const Color(0xFFF1F5F9),
-                  foregroundColor: context.isDark ? AppColors.neonLime : AppColors.ink,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    side: BorderSide(color: context.borderColor),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: wide ? 16 : 12),
-                  elevation: 0,
-                ),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 10),
