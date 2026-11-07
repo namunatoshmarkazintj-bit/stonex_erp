@@ -890,6 +890,8 @@ class _CartPanel extends StatelessWidget {
     final ctrl = TextEditingController(text: qty(l.quantity));
     var inDona = l.inDona;
     var inPachka = l.inPachka;
+    final canPachka = l.product.hasPachka || l.product.unit == 'm2' || l.product.unit == 'm²';
+    final boxSize = l.product.effectiveBoxM2 ?? 1.44;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -910,28 +912,50 @@ class _CartPanel extends StatelessWidget {
                 ),
                 onChanged: (_) => setS(() {}),
               ),
-              if (l.product.hasPachka) ...[
+              if (canPachka || l.product.hasDona) ...[
                 const SizedBox(height: 12),
                 SegmentedButton<String>(
                   segments: [
-                    ButtonSegment(value: 'm2', label: Text(_u(l.product.unit))),
-                    ButtonSegment(
-                      value: 'pachka',
-                      label: Text('pachka (${qty(l.product.effectiveBoxM2 ?? 1)} m²)'),
-                    ),
+                    ButtonSegment(value: 'base', label: Text(_u(l.product.unit))),
+                    if (canPachka)
+                      ButtonSegment(
+                        value: 'pachka',
+                        label: Text('pachka (${qty(boxSize)} m²)'),
+                      ),
+                    if (l.product.hasDona)
+                      ButtonSegment(
+                        value: 'dona',
+                        label: Text('dona (${qty(l.product.donaM2!)} m²)'),
+                      ),
                   ],
-                  selected: {inPachka ? 'pachka' : 'm2'},
+                  selected: {inPachka ? 'pachka' : (inDona ? 'dona' : 'base')},
                   onSelectionChanged: (s) {
                     setS(() {
                       final cur = parseInput(ctrl.text) ?? 0;
-                      final box = l.product.effectiveBoxM2 ?? 1.0;
-                      if (s.first == 'pachka' && !inPachka) {
+                      final box = boxSize;
+                      final dona = l.product.donaM2 ?? (box / 2.0);
+
+                      // Asosiy m2 ga aylantirish
+                      double currentBase = cur;
+                      if (inPachka) {
+                        currentBase = cur * box;
+                      } else if (inDona) {
+                        currentBase = cur * dona;
+                      }
+
+                      final target = s.first;
+                      if (target == 'pachka') {
                         inPachka = true;
                         inDona = false;
-                        ctrl.text = qty(_roundClean(cur / box));
-                      } else if (s.first == 'm2' && inPachka) {
+                        ctrl.text = qty(_roundClean(currentBase / box));
+                      } else if (target == 'dona') {
                         inPachka = false;
-                        ctrl.text = qty(_roundClean(cur * box));
+                        inDona = true;
+                        ctrl.text = qty(_roundClean(currentBase / dona));
+                      } else {
+                        inPachka = false;
+                        inDona = false;
+                        ctrl.text = qty(_roundClean(currentBase));
                       }
                     });
                   },
@@ -939,10 +963,12 @@ class _CartPanel extends StatelessWidget {
                 const SizedBox(height: 8),
                 Builder(builder: (_) {
                   final cur = parseInput(ctrl.text) ?? 0;
-                  final box = l.product.effectiveBoxM2 ?? 1.0;
+                  final box = boxSize;
                   final propText = inPachka
                       ? '${qty(cur)} pachka = ${qty(_roundClean(cur * box))} m²'
-                      : '${qty(cur)} m² = ${qty(_roundClean(cur / box))} pachka';
+                      : (inDona
+                          ? '${qty(cur)} dona = ${qty(_roundClean(cur * (l.product.donaM2 ?? (box / 2.0))))} m²'
+                          : '${qty(cur)} m² = ${qty(_roundClean(cur / box))} pachka');
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -959,28 +985,9 @@ class _CartPanel extends StatelessWidget {
                     ),
                   );
                 }),
-              ] else if (l.product.hasDona) ...[
-                const SizedBox(height: 12),
-                SegmentedButton<bool>(
-                  segments: [
-                    ButtonSegment(value: false, label: Text(_u(l.product.unit))),
-                    const ButtonSegment(value: true, label: Text('dona')),
-                  ],
-                  selected: {inDona},
-                  onSelectionChanged: (s) => setS(() => inDona = s.first),
-                ),
               ],
-              if (l.product.unit == 'm2') ...[
+              if ((l.product.unit == 'm2' || l.product.unit == 'm²') && l.product.category != 'Xizmat') ...[
                 const SizedBox(height: 14),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx, false);
-                    _openCutCalculator(context, l);
-                  },
-                  icon: const Icon(Icons.straighten_rounded, size: 16),
-                  label: const Text('📐 Razmer kalkulyatorini ochish'),
-                ),
-                const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(ctx, false);
@@ -1690,10 +1697,10 @@ class _CartLineTile extends StatelessWidget {
             ),
           ],
 
-          // Variant / Rang va Razmer bo'yicha kesish (bitta qatorda, "Rang:" so'zisiz)
+          // Variant / Rang va Toshga ishlov (bitta qatorda, "Rang:" so'zisiz)
           if ((p.availableColors.length > 1) ||
               (l.color != null && l.color!.isNotEmpty) ||
-              (p.unit == 'm2')) ...[
+              (onStoneService != null && p.category != 'Xizmat')) ...[
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
@@ -1723,59 +1730,7 @@ class _CartLineTile extends StatelessWidget {
                   StoneColorBadge(colorName: l.color!, fontSize: 10),
                 ],
 
-                // 2. Razmer bo'yicha kesish (variant/rang yonida)
-                if (p.unit == 'm2') ...[
-                  InkWell(
-                    onTap: onCutCalculator,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (l.cutSpec != null)
-                            ? (context.isDark ? AppColors.neonLime.withValues(alpha: 0.18) : AppColors.greenSoft)
-                            : context.borderColor.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: (l.cutSpec != null)
-                              ? (context.isDark ? AppColors.neonLime : AppColors.green)
-                              : context.borderColor,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.straighten_rounded,
-                            size: 13,
-                            color: (l.cutSpec != null)
-                                ? (context.isDark ? AppColors.neonLime : AppColors.ink)
-                                : context.subtextColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            l.cutSpec != null ? '📐 ${l.cutSpec}' : '📐 Razmer kesish',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: (l.cutSpec != null)
-                                  ? (context.isDark ? AppColors.neonLime : AppColors.ink)
-                                  : context.subtextColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (l.cutSpec != null)
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 14),
-                      visualDensity: VisualDensity.compact,
-                      tooltip: 'Razmerni tozalash',
-                      onPressed: () => cart.update(l, cutSpec: '', cutLength: null, cutWidth: null, cutThickness: null, cutPieces: null),
-                    ),
-                ],
-
-                // 3. Toshga ishlov berish xizmatlari (kesish, faska, silliqlash)
+                // 2. Toshga ishlov berish xizmatlari (kesish, faska, silliqlash)
                 if (onStoneService != null && p.category != 'Xizmat') ...[
                   InkWell(
                     onTap: onStoneService,

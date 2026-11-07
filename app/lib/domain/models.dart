@@ -337,15 +337,35 @@ class Product {
   bool get isTile =>
       category != null &&
       (category!.toLowerCase() == 'kafel' ||
-          category!.toLowerCase() == 'kerama granit');
+          category!.toLowerCase() == 'kerama granit' ||
+          category!.toLowerCase().contains('granit') ||
+          category!.toLowerCase().contains('marmar'));
   bool get hasPachka =>
-      (boxM2 != null && boxM2! > 0) ||
-      (donaM2 != null && boxPieces != null && boxPieces! > 0);
-  double? get effectiveBoxM2 =>
-      boxM2 ??
-      ((donaM2 != null && boxPieces != null && boxPieces! > 0)
-          ? donaM2! * boxPieces!
-          : null);
+      unit == 'm2' ||
+      unit == 'm²' ||
+      (effectiveBoxM2 != null && effectiveBoxM2! > 0);
+  double? get effectiveBoxM2 {
+    if (boxM2 != null && boxM2! > 0) return boxM2;
+    if (donaM2 != null && boxPieces != null && boxPieces! > 0) {
+      return donaM2! * boxPieces!;
+    }
+    if (tileLength != null &&
+        tileWidth != null &&
+        tileLength! > 0 &&
+        tileWidth! > 0) {
+      final single = (tileLength! * tileWidth!) / 10000.0;
+      final pcs = (boxPieces != null && boxPieces! > 0) ? boxPieces! : 2;
+      return single * pcs;
+    }
+    if (donaM2 != null && donaM2! > 0) {
+      final pcs = (boxPieces != null && boxPieces! > 0) ? boxPieces! : 2;
+      return donaM2! * pcs;
+    }
+    if (unit == 'm2' || unit == 'm²') {
+      return 1.44;
+    }
+    return null;
+  }
 
   List<String> get availableColors {
     if (color == null || color!.trim().isEmpty) return const [];
