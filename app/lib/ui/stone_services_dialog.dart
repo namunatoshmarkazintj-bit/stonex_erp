@@ -359,6 +359,33 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     return (ratio * 10).round() / 10.0;
   }
 
+  /// 1 ta list (plita)dan chiqadigan jami uzunlik (metrda)
+  double get _oneSheetMeters {
+    final rawW = _parseVal(_widthCtrl);
+    if (_stripsCount <= 0 || rawW <= 0) return 0.0;
+    final m = _stripsCount * rawW;
+    return (m * 100).round() / 100.0;
+  }
+
+  /// Jami kesiladigan uzunlik uchun kerak bo'ladigan (sarflanadigan) listlar soni
+  double get _neededSheetsCount {
+    final totalLenM = _parseVal(_cutLengthCtrl);
+    final oneM = _oneSheetMeters;
+    if (totalLenM <= 0 || oneM <= 0) return _parsePieces().toDouble();
+    final count = totalLenM / oneM;
+    return (count * 10).round() / 10.0;
+  }
+
+  String get _neededSheetsDisplay {
+    final count = _neededSheetsCount;
+    if (count <= 0) return '${_parsePieces()} ta list';
+    final ceilVal = count.ceil();
+    if (count % 1 == 0) {
+      return '${count.toInt()} ta list';
+    }
+    return '$ceilVal ta list (${_formatNumber(count)} ta)';
+  }
+
   String _formatNumber(double val) {
     if (val <= 0) return '0';
     return val % 1 == 0 ? val.toInt().toString() : val.toStringAsFixed(1);
@@ -375,7 +402,8 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
 
       if (hSm > 0 && cutWSm > 0 && rawW > 0) {
         final ratio = (hSm / cutWSm * 10).round() / 10.0;
-        final totalLengthM = ratio * rawW * pieces;
+        final oneSheetM = ratio * rawW;
+        final totalLengthM = oneSheetM * pieces;
         final roundedM = (totalLengthM * 100).round() / 100.0;
         _cutLengthCtrl.text = roundedM % 1 == 0 ? roundedM.toInt().toString() : roundedM.toString();
       }
@@ -388,18 +416,14 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     if (_isSyncingCutDimensions) return;
     _isSyncingCutDimensions = true;
     try {
-      final hSm = _effectiveLengthCm;
-      final rawW = _parseVal(_widthCtrl);
+      final oneM = _oneSheetMeters;
       final totalLengthM = _parseVal(_cutLengthCtrl);
-      final pieces = _parsePieces();
 
-      if (hSm > 0 && rawW > 0 && totalLengthM > 0 && pieces > 0) {
-        final ratioNeeded = totalLengthM / (rawW * pieces);
-        if (ratioNeeded > 0) {
-          final cutWSm = hSm / ratioNeeded;
-          final roundedWSm = (cutWSm * 10).round() / 10.0;
-          _cutWidthCtrl.text = roundedWSm % 1 == 0 ? roundedWSm.toInt().toString() : roundedWSm.toString();
-        }
+      if (oneM > 0 && totalLengthM > 0) {
+        final needed = totalLengthM / oneM;
+        final sheetsInt = needed.ceil();
+        final effectiveSheets = sheetsInt > 0 ? sheetsInt : 1;
+        _piecesCtrl.text = effectiveSheets.toString();
       }
     } finally {
       _isSyncingCutDimensions = false;
@@ -520,10 +544,10 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
   }
 
   void _adjustPieces(int delta) {
-    _recalcFromCutWidth();
     final cur = _parsePieces();
     final next = (cur + delta).clamp(1, 9999);
     _piecesCtrl.text = next.toString();
+    _recalcFromCutWidth();
     setState(() {});
   }
 
@@ -589,7 +613,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
     final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} m';
     final widStr = '${widVal % 1 == 0 ? widVal.toInt() : widVal} m';
 
-    final pStr = pieces > 1 ? ' · $pieces dona' : '';
+    final pStr = pieces > 1 ? ' · $pieces ta list' : ' · 1 ta list';
     if (def.key == 'cut') {
       specText = '$lenStr × $widStr$pStr ($qty m²)';
     } else {
@@ -1323,27 +1347,72 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                             if (_stripsCount > 0)
                               Container(
                                 margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF14181F) : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: context.borderColor.withValues(alpha: 0.8)),
+                                  color: isDark ? const Color(0xFF132018) : const Color(0xFFF0FDF4),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
                                 ),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        '1 ta plitadan: ${_effectiveLengthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${_formatNumber(_stripsCount)} ta bo‘lak × Eni (${_parseVal(_widthCtrl)} m) → ${_cutLengthCtrl.text} metr',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.inkColor,
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.architecture_rounded, size: 15, color: Color(0xFF10B981)),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            '1 ta plitadan: ${_effectiveLengthCm.toInt()} sm ÷ ${_cutWidthCtrl.text} sm = ${_formatNumber(_stripsCount)} ta bo‘lak × Eni (${_parseVal(_widthCtrl)} m) → ${_formatNumber(_oneSheetMeters)} metr',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.inkColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF059669)),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: RichText(
+                                            text: TextSpan(
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                color: context.inkColor,
+                                              ),
+                                              children: [
+                                                const TextSpan(
+                                                  text: 'Sarflanadigan list: ',
+                                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                                ),
+                                                TextSpan(
+                                                  text: '$_neededSheetsDisplay ',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w900,
+                                                    color: isDark ? AppColors.neonLime : const Color(0xFF047857),
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: '(${_cutLengthCtrl.text} m ÷ ${_formatNumber(_oneSheetMeters)} m = ${_formatNumber(_neededSheetsCount)} ta)',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: context.mutedColor,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -1368,7 +1437,7 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                         final pieces = _parsePieces();
                                         final lenStr = '${lenVal % 1 == 0 ? lenVal.toInt() : lenVal} m';
                                         final widStr = '${widVal % 1 == 0 ? widVal.toInt() : widVal} m';
-                                        final pStr = pieces > 1 ? ' · $pieces dona' : '';
+                                        final pStr = ' · $pieces ta list';
 
                                         return Text(
                                           'O‘lcham: $lenStr × $widStr$pStr → Maydon: $_calculatedTotalMeters m²',
@@ -1383,7 +1452,16 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                       },
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'List:',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: context.mutedColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
 
                                   // O‘ng tomonga mahkam yopishtirilgan sonini boshqarish steppri: [-] 1 [+]
                                   Container(
@@ -1432,7 +1510,10 @@ class _StoneServicesDialogState extends State<StoneServicesDialog> {
                                               enabledBorder: InputBorder.none,
                                               focusedBorder: InputBorder.none,
                                             ),
-                                            onChanged: (_) => setState(() {}),
+                                            onChanged: (_) {
+                                              _recalcFromCutWidth();
+                                              setState(() {});
+                                            },
                                           ),
                                         ),
                                         InkWell(

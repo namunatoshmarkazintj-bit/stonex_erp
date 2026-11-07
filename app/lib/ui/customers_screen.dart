@@ -415,48 +415,65 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 4),
-                                        Wrap(
-                                          spacing: 10,
-                                          runSpacing: 4,
-                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                        Row(
                                           children: [
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(Icons.phone_outlined, size: 13, color: context.mutedColor),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  c.phone?.isNotEmpty == true ? c.phone! : 'Telefon kiritilmagan',
-                                                  style: TextStyle(fontSize: 12, color: context.mutedColor),
-                                                ),
-                                              ],
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: context.isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(Icons.receipt_long_outlined, size: 12, color: context.mutedColor),
-                                                  const SizedBox(width: 3),
-                                                  Text(
-                                                    '${c.salesCount} ta savdo',
-                                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.mutedColor),
-                                                  ),
-                                                ],
+                                            Icon(Icons.phone_outlined,
+                                                size: 13,
+                                                color: context.mutedColor),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                c.phone?.isNotEmpty == true
+                                                    ? c.phone!
+                                                    : 'Telefon kiritilmagan',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: context.mutedColor),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 6),
                                         Wrap(
-                                          spacing: 10,
+                                          spacing: 8,
                                           runSpacing: 4,
-                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
                                           children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: context.isDark
+                                                    ? const Color(0xFF1E2835)
+                                                    : const Color(0xFFF1F5F9),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                      Icons
+                                                          .receipt_long_outlined,
+                                                      size: 11,
+                                                      color:
+                                                          context.mutedColor),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    '${c.salesCount} ta savdo',
+                                                    style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            context.mutedColor),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                             Text(
                                               'Xarid: ${money(c.totalSpent)}',
                                               style: TextStyle(
