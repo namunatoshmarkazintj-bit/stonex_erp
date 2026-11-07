@@ -29,7 +29,8 @@ class CustomersScreen extends StatefulWidget {
 class _CustomersScreenState extends State<CustomersScreen> {
   final _searchCtrl = TextEditingController();
   late Future<List<Customer>> _future;
-  String _selectedFilter = 'Barchasi'; // 'Barchasi', 'Qarzdorlar', 'Faol xaridorlar'
+  String _selectedFilter =
+      'Barchasi'; // 'Barchasi', 'Qarzdorlar', 'Faol xaridorlar'
 
   CustomerRepository get _repo => context.read<AppRepositories>().customers;
 
@@ -92,15 +93,21 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   height: 44,
                   child: TextField(
                     controller: _searchCtrl,
-                    style: TextStyle(fontSize: 13, color: context.inkColor, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: context.inkColor,
+                        fontWeight: FontWeight.w500),
                     textAlignVertical: TextAlignVertical.center,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: context.cardColor,
                       isDense: true,
-                      hintText: 'Mijoz ismi, telefoni yoki pasporti bo‘yicha qidirish...',
-                      hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
-                      prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
+                      hintText:
+                          'Mijoz ismi, telefoni yoki pasporti bo‘yicha qidirish...',
+                      hintStyle:
+                          const TextStyle(fontSize: 13, color: AppColors.muted),
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          size: 20, color: AppColors.muted),
                       suffixIcon: _searchCtrl.text.isEmpty
                           ? null
                           : IconButton(
@@ -110,10 +117,21 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                 setState(() {});
                               },
                             ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: context.borderColor)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: context.borderColor)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: context.isDark ? AppColors.neonLime : AppColors.ink, width: 1.5)),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 14),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(color: context.borderColor)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(color: context.borderColor)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(
+                              color: context.isDark
+                                  ? AppColors.neonLime
+                                  : AppColors.ink,
+                              width: 1.5)),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -125,11 +143,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 child: FilledButton.icon(
                   onPressed: () => _openCustomerDialog(),
                   icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                  label: Text(wide ? 'Yangi Mijoz' : '+', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  label: Text(wide ? 'Yangi Mijoz' : '+',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13)),
                   style: FilledButton.styleFrom(
-                    backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
-                    foregroundColor: context.isDark ? AppColors.ink : Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    backgroundColor: context.isDark
+                        ? AppColors.neonLime
+                        : AppColors.darkCard,
+                    foregroundColor:
+                        context.isDark ? AppColors.ink : Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                     padding: EdgeInsets.symmetric(horizontal: wide ? 18 : 14),
                   ),
                 ),
@@ -142,7 +166,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: ['Barchasi', 'Qarzdorlar', 'Faol xaridorlar'].map((cat) {
+              children:
+                  ['Barchasi', 'Qarzdorlar', 'Faol xaridorlar'].map((cat) {
                 final sel = _selectedFilter == cat;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -160,7 +185,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: sel ? AppColors.darkCard : AppColors.border),
+                      side: BorderSide(
+                          color: sel ? AppColors.darkCard : AppColors.border),
                     ),
                     showCheckmark: false,
                     onSelected: (_) => setState(() => _selectedFilter = cat),
@@ -177,7 +203,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
               future: _future,
               builder: (context, snap) {
                 if (snap.hasError) {
-                  return ErrorView(message: snap.error.toString(), onRetry: _reload);
+                  return ErrorView(
+                      message: snap.error.toString(), onRetry: _reload);
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -210,16 +237,25 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.people_outline_rounded, size: 54, color: context.mutedColor),
+                          Icon(Icons.people_outline_rounded,
+                              size: 54, color: context.mutedColor),
                           const SizedBox(height: 12),
                           Text(
-                            q.isNotEmpty ? 'Mijoz topilmadi' : 'Hozircha mijozlar ro‘yxati bo‘sh',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: context.inkColor),
+                            q.isNotEmpty
+                                ? 'Mijoz topilmadi'
+                                : 'Hozircha mijozlar ro‘yxati bo‘sh',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: context.inkColor),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            q.isNotEmpty ? 'Boshqa ism, telefon yoki pasport bilan qidiring' : 'Yangi savdo paytida yoki "+ Yangi Mijoz" tugmasi orqali qo‘shing',
-                            style: TextStyle(color: context.mutedColor, fontSize: 13),
+                            q.isNotEmpty
+                                ? 'Boshqa ism, telefon yoki pasport bilan qidiring'
+                                : 'Yangi savdo paytida yoki "+ Yangi Mijoz" tugmasi orqali qo‘shing',
+                            style: TextStyle(
+                                color: context.mutedColor, fontSize: 13),
                           ),
                         ],
                       ),
@@ -228,8 +264,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 }
 
                 // Statistika hisoblash
-                final totalDebtSum = list.fold<double>(0, (sum, c) => sum + c.totalDebt);
-                final totalSpentSum = list.fold<double>(0, (sum, c) => sum + c.totalSpent);
+                final totalDebtSum =
+                    list.fold<double>(0, (sum, c) => sum + c.totalDebt);
+                final totalSpentSum =
+                    list.fold<double>(0, (sum, c) => sum + c.totalSpent);
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -252,7 +290,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
                               color: context.inkColor,
                             ),
                           ),
-                          Container(width: 1, height: 28, color: context.borderColor),
+                          Container(
+                              width: 1, height: 28, color: context.borderColor),
                           Expanded(
                             child: _StatMini(
                               label: 'Umumiy xarid',
@@ -260,12 +299,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
                               color: AppColors.green,
                             ),
                           ),
-                          Container(width: 1, height: 28, color: context.borderColor),
+                          Container(
+                              width: 1, height: 28, color: context.borderColor),
                           Expanded(
                             child: _StatMini(
                               label: 'Umumiy nasiya',
                               value: money(totalDebtSum),
-                              color: totalDebtSum > 0 ? AppColors.danger : AppColors.muted,
+                              color: totalDebtSum > 0
+                                  ? AppColors.danger
+                                  : AppColors.muted,
                             ),
                           ),
                         ],
@@ -289,18 +331,24 @@ class _CustomersScreenState extends State<CustomersScreen> {
                               decoration: BoxDecoration(
                                 color: context.cardColor,
                                 borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: hasDebt ? AppColors.danger.withValues(alpha: 0.3) : context.borderColor),
+                                border: Border.all(
+                                    color: hasDebt
+                                        ? AppColors.danger
+                                            .withValues(alpha: 0.3)
+                                        : context.borderColor),
                               ),
                               child: Row(
                                 children: [
                                   // Mijoz / Pasport rasmi
                                   GestureDetector(
-                                    onTap: (c.photoUrl != null && c.photoUrl!.isNotEmpty)
+                                    onTap: (c.photoUrl != null &&
+                                            c.photoUrl!.isNotEmpty)
                                         ? () => showProductImagePreview(
                                               context,
                                               imageUrl: c.photoUrl,
                                               name: c.name,
-                                              subtitle: 'Pasport: ${c.passport ?? 'Kiritilmagan'} • Telefon: ${c.phone ?? 'Yo‘q'}',
+                                              subtitle:
+                                                  'Pasport: ${c.passport ?? 'Kiritilmagan'} • Telefon: ${c.phone ?? 'Yo‘q'}',
                                             )
                                         : null,
                                     child: ProductThumbnail(
@@ -315,33 +363,51 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                   // Ismi, telefoni, pasporti
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Expanded(
                                               child: Text(
                                                 c.name,
-                                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: context.inkColor),
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 15,
+                                                    color: context.inkColor),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            if (c.passport != null && c.passport!.isNotEmpty) ...[
+                                            if (c.passport != null &&
+                                                c.passport!.isNotEmpty) ...[
                                               const SizedBox(width: 8),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 3),
                                                 decoration: BoxDecoration(
-                                                  color: context.isDark ? const Color(0xFF21262D) : const Color(0xFFEFF6FF),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  border: Border.all(color: context.isDark ? AppColors.border : const Color(0xFFBFDBFE)),
+                                                  color: context.isDark
+                                                      ? const Color(0xFF21262D)
+                                                      : const Color(0xFFEFF6FF),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                      color: context.isDark
+                                                          ? AppColors.border
+                                                          : const Color(
+                                                              0xFFBFDBFE)),
                                                 ),
                                                 child: Text(
                                                   c.passport!,
                                                   style: TextStyle(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w700,
-                                                    color: context.isDark ? Colors.white : const Color(0xFF1D4ED8),
+                                                    color: context.isDark
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF1D4ED8),
                                                   ),
                                                 ),
                                               ),
@@ -349,44 +415,77 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 4),
-                                        Row(
+                                        Wrap(
+                                          spacing: 10,
+                                          runSpacing: 4,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
                                           children: [
-                                            Icon(Icons.phone_outlined, size: 13, color: context.mutedColor),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              c.phone?.isNotEmpty == true ? c.phone! : 'Telefon kiritilmagan',
-                                              style: TextStyle(fontSize: 12, color: context.mutedColor),
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.phone_outlined, size: 13, color: context.mutedColor),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  c.phone?.isNotEmpty == true ? c.phone! : 'Telefon kiritilmagan',
+                                                  style: TextStyle(fontSize: 12, color: context.mutedColor),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(width: 12),
-                                            Icon(Icons.receipt_long_outlined, size: 13, color: context.mutedColor),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '${c.salesCount} ta savdo',
-                                              style: TextStyle(fontSize: 12, color: context.mutedColor),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: context.isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.receipt_long_outlined, size: 12, color: context.mutedColor),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    '${c.salesCount} ta savdo',
+                                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.mutedColor),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 6),
                                         Wrap(
-                                          spacing: 12,
+                                          spacing: 10,
                                           runSpacing: 4,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
                                           children: [
                                             Text(
                                               'Xarid: ${money(c.totalSpent)}',
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.inkColor),
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: context.inkColor),
                                             ),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
                                               decoration: BoxDecoration(
-                                                color: hasDebt ? const Color(0xFFFCE4E3) : AppColors.greenSoft,
-                                                borderRadius: BorderRadius.circular(10),
+                                                color: hasDebt
+                                                    ? const Color(0xFFFCE4E3)
+                                                    : AppColors.greenSoft,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                               ),
                                               child: Text(
-                                                hasDebt ? 'Nasiya: ${money(c.totalDebt)}' : 'Qarzi yo‘q',
+                                                hasDebt
+                                                    ? 'Nasiya: ${money(c.totalDebt)}'
+                                                    : 'Qarzi yo‘q',
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.w700,
-                                                  color: hasDebt ? AppColors.danger : AppColors.darkCard,
+                                                  color: hasDebt
+                                                      ? AppColors.danger
+                                                      : AppColors.darkCard,
                                                 ),
                                               ),
                                             ),
@@ -396,20 +495,31 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                     ),
                                   ),
 
-                                  // Xaridlar va cheklar
-                                  IconButton(
-                                    icon: const Icon(Icons.receipt_long_rounded, size: 20),
-                                    color: AppColors.green,
-                                    tooltip: 'Xaridlar tarixi va cheklar',
-                                    onPressed: () => _openCustomerDetails(c),
-                                  ),
+                                  const SizedBox(width: 6),
 
-                                  // Tahrirlash tugmasi
-                                  IconButton(
-                                    icon: const Icon(Icons.edit_outlined, size: 20),
-                                    color: context.mutedColor,
-                                    tooltip: 'Tahrirlash',
-                                    onPressed: () => _openCustomerDialog(c),
+                                  // Xaridlar va cheklar hamda tahrirlash
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.receipt_long_rounded, size: 20),
+                                        color: AppColors.green,
+                                        tooltip: 'Xaridlar tarixi va cheklar',
+                                        visualDensity: VisualDensity.compact,
+                                        padding: const EdgeInsets.all(6),
+                                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                        onPressed: () => _openCustomerDetails(c),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, size: 20),
+                                        color: context.mutedColor,
+                                        tooltip: 'Tahrirlash',
+                                        visualDensity: VisualDensity.compact,
+                                        padding: const EdgeInsets.all(6),
+                                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                        onPressed: () => _openCustomerDialog(c),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -430,7 +540,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
 }
 
 class _StatMini extends StatelessWidget {
-  const _StatMini({required this.label, required this.value, required this.color});
+  const _StatMini(
+      {required this.label, required this.value, required this.color});
   final String label;
   final String value;
   final Color color;
@@ -440,9 +551,19 @@ class _StatMini extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted), maxLines: 1),
         const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color), maxLines: 1, overflow: TextOverflow.ellipsis),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
+              maxLines: 1,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -471,10 +592,16 @@ class _CustomerItemSummary {
 
   String get unit {
     final lower = productName.toLowerCase();
-    if (lower.contains('kesish') || lower.contains('silliqlash') || lower.contains('faska') || lower.contains('ariqcha')) {
+    if (lower.contains('kesish') ||
+        lower.contains('silliqlash') ||
+        lower.contains('faska') ||
+        lower.contains('ariqcha')) {
       return 'metr';
     }
-    if (lower.contains('dona') || lower.contains('kley') || lower.contains('disk') || lower.contains('sim')) {
+    if (lower.contains('dona') ||
+        lower.contains('kley') ||
+        lower.contains('disk') ||
+        lower.contains('sim')) {
       return 'dona';
     }
     return 'm²';
@@ -492,7 +619,8 @@ class _CustomerDetailsDialog extends StatefulWidget {
 
 class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
   late Future<List<SaleResult>> _salesFuture;
-  int _currentTab = 0; // 0: Nimalar xarid qilgan (Tovarlar), 1: Savdolar va Cheklar
+  int _currentTab =
+      0; // 0: Nimalar xarid qilgan (Tovarlar), 1: Savdolar va Cheklar
 
   @override
   void initState() {
@@ -503,20 +631,23 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
   Future<List<SaleResult>> _fetchCustomerSales() async {
     final repos = context.read<AppRepositories>();
     try {
-      var list = await repos.sales.listSales(limit: 500, customerId: widget.customer.id);
+      var list = await repos.sales
+          .listSales(limit: 500, customerId: widget.customer.id);
       if (list.isEmpty) {
         // Fallback: mijoz ismi yoki telefoni bo'yicha mos keluvchi savdolarni ham topish
         final all = await repos.sales.listSales(limit: 500);
         list = all.where((s) {
           if (s.customerId == widget.customer.id) return true;
           if (s.customerName != null &&
-              s.customerName!.trim().toLowerCase() == widget.customer.name.trim().toLowerCase()) {
+              s.customerName!.trim().toLowerCase() ==
+                  widget.customer.name.trim().toLowerCase()) {
             return true;
           }
           if (widget.customer.phone != null &&
               widget.customer.phone!.isNotEmpty &&
               s.customerPhone != null &&
-              s.customerPhone!.replaceAll(RegExp(r'\s+'), '') == widget.customer.phone!.replaceAll(RegExp(r'\s+'), '')) {
+              s.customerPhone!.replaceAll(RegExp(r'\s+'), '') ==
+                  widget.customer.phone!.replaceAll(RegExp(r'\s+'), '')) {
             return true;
           }
           return false;
@@ -529,11 +660,21 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
   }
 
   List<_CustomerItemSummary> _aggregateItems(List<SaleResult> sales) {
-    final Map<String, ({double qty, double amount, int count, double lastPrice, DateTime? lastDate})> map = {};
+    final Map<
+        String,
+        ({
+          double qty,
+          double amount,
+          int count,
+          double lastPrice,
+          DateTime? lastDate
+        })> map = {};
 
     for (final sale in sales) {
       for (final item in sale.items) {
-        final name = item.productName.trim().isEmpty ? 'Mahsulot #${item.productId}' : item.productName.trim();
+        final name = item.productName.trim().isEmpty
+            ? 'Mahsulot #${item.productId}'
+            : item.productName.trim();
         final cur = map[name];
         if (cur == null) {
           map[name] = (
@@ -549,7 +690,9 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
             amount: cur.amount + item.lineTotal,
             count: cur.count + 1,
             lastPrice: item.unitPrice,
-            lastDate: (cur.lastDate == null || (sale.createdAt != null && sale.createdAt!.isAfter(cur.lastDate!)))
+            lastDate: (cur.lastDate == null ||
+                    (sale.createdAt != null &&
+                        sale.createdAt!.isAfter(cur.lastDate!)))
                 ? sale.createdAt
                 : cur.lastDate,
           );
@@ -557,20 +700,23 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
       }
     }
 
-    final list = map.entries.map((e) => _CustomerItemSummary(
-      productName: e.key,
-      totalQuantity: e.value.qty,
-      totalAmount: e.value.amount,
-      purchaseCount: e.value.count,
-      lastUnitPrice: e.value.lastPrice,
-      lastPurchasedAt: e.value.lastDate,
-    )).toList();
+    final list = map.entries
+        .map((e) => _CustomerItemSummary(
+              productName: e.key,
+              totalQuantity: e.value.qty,
+              totalAmount: e.value.amount,
+              purchaseCount: e.value.count,
+              lastUnitPrice: e.value.lastPrice,
+              lastPurchasedAt: e.value.lastDate,
+            ))
+        .toList();
 
     list.sort((a, b) => b.totalAmount.compareTo(a.totalAmount));
     return list;
   }
 
-  void _openStatement(List<SaleResult> sales, List<_CustomerItemSummary> items) {
+  void _openStatement(
+      List<SaleResult> sales, List<_CustomerItemSummary> items) {
     showDialog<void>(
       context: context,
       builder: (_) => _CustomerStatementDialog(
@@ -585,16 +731,22 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
   Widget build(BuildContext context) {
     final c = widget.customer;
     final isDark = context.isDark;
-    final wide = MediaQuery.sizeOf(context).width >= 650;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final screenH = MediaQuery.sizeOf(context).height;
+    final isMobile = screenW < 650;
 
     return Dialog(
       backgroundColor: context.cardColor,
       surfaceTintColor: Colors.transparent,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 36,
+        vertical: isMobile ? 20 : 36,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: wide ? 680 : 480,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+          maxWidth: isMobile ? 520 : 680,
+          maxHeight: screenH * 0.90,
         ),
         child: FutureBuilder<List<SaleResult>>(
           future: _salesFuture,
@@ -633,7 +785,8 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                           color: AppColors.greenSoft,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.person_pin_rounded, color: AppColors.darkCard, size: 22),
+                        child: const Icon(Icons.person_pin_rounded,
+                            color: AppColors.darkCard, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -653,7 +806,8 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                             if (c.phone != null && c.phone!.isNotEmpty)
                               Text(
                                 c.phone!,
-                                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppColors.muted),
                               ),
                           ],
                         ),
@@ -680,14 +834,16 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                         Row(
                           children: [
                             GestureDetector(
-                              onTap: (c.photoUrl != null && c.photoUrl!.isNotEmpty)
-                                  ? () => showProductImagePreview(
-                                        context,
-                                        imageUrl: c.photoUrl,
-                                        name: c.name,
-                                        subtitle: 'Pasport: ${c.passport ?? 'Yo‘q'}',
-                                      )
-                                  : null,
+                              onTap:
+                                  (c.photoUrl != null && c.photoUrl!.isNotEmpty)
+                                      ? () => showProductImagePreview(
+                                            context,
+                                            imageUrl: c.photoUrl,
+                                            name: c.name,
+                                            subtitle:
+                                                'Pasport: ${c.passport ?? 'Yo‘q'}',
+                                          )
+                                      : null,
                               child: ProductThumbnail(
                                 imageUrl: c.photoUrl,
                                 name: c.name,
@@ -704,40 +860,59 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                     spacing: 8,
                                     runSpacing: 4,
                                     children: [
-                                      if (c.passport != null && c.passport!.isNotEmpty)
+                                      if (c.passport != null &&
+                                          c.passport!.isNotEmpty)
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
-                                            borderRadius: BorderRadius.circular(8),
+                                            color: isDark
+                                                ? const Color(0xFF1E2835)
+                                                : const Color(0xFFF1F5F9),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(Icons.badge_outlined, size: 13, color: AppColors.muted),
+                                              const Icon(Icons.badge_outlined,
+                                                  size: 13,
+                                                  color: AppColors.muted),
                                               const SizedBox(width: 4),
                                               Text(
                                                 'Pasport: ${c.passport!}',
-                                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                                style: const TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight:
+                                                        FontWeight.w600),
                                               ),
                                             ],
                                           ),
                                         ),
                                       if (c.createdAt != null)
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
-                                            borderRadius: BorderRadius.circular(8),
+                                            color: isDark
+                                                ? const Color(0xFF1E2835)
+                                                : const Color(0xFFF1F5F9),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.muted),
+                                              const Icon(
+                                                  Icons.calendar_today_rounded,
+                                                  size: 12,
+                                                  color: AppColors.muted),
                                               const SizedBox(width: 4),
                                               Text(
                                                 'Ro‘yxat: ${formatDateTime(c.createdAt!)}',
-                                                style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                                style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: AppColors.muted),
                                               ),
                                             ],
                                           ),
@@ -750,11 +925,17 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                     spacing: 8,
                                     children: [
                                       FilledButton.tonalIcon(
-                                        onPressed: () => _openStatement(sales, aggregatedItems),
-                                        icon: const Icon(Icons.receipt_long_rounded, size: 16),
-                                        label: const Text('Hisobot Cheki (Akt-sverka)', style: TextStyle(fontSize: 12)),
+                                        onPressed: () => _openStatement(
+                                            sales, aggregatedItems),
+                                        icon: const Icon(
+                                            Icons.receipt_long_rounded,
+                                            size: 16),
+                                        label: const Text(
+                                            'Hisobot Cheki (Akt-sverka)',
+                                            style: TextStyle(fontSize: 12)),
                                         style: FilledButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
                                           visualDensity: VisualDensity.compact,
                                         ),
                                       ),
@@ -772,7 +953,9 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                            color: isDark
+                                ? const Color(0xFF1E2822)
+                                : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: context.borderColor),
                           ),
@@ -781,37 +964,60 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                             children: [
                               Column(
                                 children: [
-                                  const Text('Jami xarid', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                  const Text('Jami xarid',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.muted)),
                                   const SizedBox(height: 3),
                                   Text(
                                     money(totalSpent),
-                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: context.inkColor),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13.5,
+                                        color: context.inkColor),
                                   ),
                                 ],
                               ),
-                              Container(width: 1, height: 28, color: context.borderColor),
+                              Container(
+                                  width: 1,
+                                  height: 28,
+                                  color: context.borderColor),
                               Column(
                                 children: [
-                                  const Text('Nasiya / Qarz', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                  const Text('Nasiya / Qarz',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.muted)),
                                   const SizedBox(height: 3),
                                   Text(
                                     money(totalDebt),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 13.5,
-                                      color: hasDebt ? AppColors.danger : AppColors.green,
+                                      color: hasDebt
+                                          ? AppColors.danger
+                                          : AppColors.green,
                                     ),
                                   ),
                                 ],
                               ),
-                              Container(width: 1, height: 28, color: context.borderColor),
+                              Container(
+                                  width: 1,
+                                  height: 28,
+                                  color: context.borderColor),
                               Column(
                                 children: [
-                                  const Text('Savdolar soni', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                  const Text('Savdolar soni',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.muted)),
                                   const SizedBox(height: 3),
                                   Text(
                                     '$salesCount ta',
-                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: context.inkColor),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13.5,
+                                        color: context.inkColor),
                                   ),
                                 ],
                               ),
@@ -825,7 +1031,9 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                         Container(
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
+                            color: isDark
+                                ? const Color(0xFF1E2835)
+                                : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -835,14 +1043,22 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                   borderRadius: BorderRadius.circular(10),
                                   onTap: () => setState(() => _currentTab = 0),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8),
                                     decoration: BoxDecoration(
                                       color: _currentTab == 0
-                                          ? (isDark ? AppColors.darkCard : Colors.white)
+                                          ? (isDark
+                                              ? AppColors.darkCard
+                                              : Colors.white)
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(10),
                                       boxShadow: _currentTab == 0
-                                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)]
+                                          ? [
+                                              BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.06),
+                                                  blurRadius: 4)
+                                            ]
                                           : null,
                                     ),
                                     child: Center(
@@ -850,8 +1066,12 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                         '📦 Nimalar olgan (${aggregatedItems.length})',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          fontWeight: _currentTab == 0 ? FontWeight.w800 : FontWeight.w600,
-                                          color: _currentTab == 0 ? context.inkColor : AppColors.muted,
+                                          fontWeight: _currentTab == 0
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          color: _currentTab == 0
+                                              ? context.inkColor
+                                              : AppColors.muted,
                                         ),
                                       ),
                                     ),
@@ -863,14 +1083,22 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                   borderRadius: BorderRadius.circular(10),
                                   onTap: () => setState(() => _currentTab = 1),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8),
                                     decoration: BoxDecoration(
                                       color: _currentTab == 1
-                                          ? (isDark ? AppColors.darkCard : Colors.white)
+                                          ? (isDark
+                                              ? AppColors.darkCard
+                                              : Colors.white)
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(10),
                                       boxShadow: _currentTab == 1
-                                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)]
+                                          ? [
+                                              BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.06),
+                                                  blurRadius: 4)
+                                            ]
                                           : null,
                                     ),
                                     child: Center(
@@ -878,8 +1106,12 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                         '🧾 Cheklar tarixi (${sales.length})',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          fontWeight: _currentTab == 1 ? FontWeight.w800 : FontWeight.w600,
-                                          color: _currentTab == 1 ? context.inkColor : AppColors.muted,
+                                          fontWeight: _currentTab == 1
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          color: _currentTab == 1
+                                              ? context.inkColor
+                                              : AppColors.muted,
                                         ),
                                       ),
                                     ),
@@ -902,18 +1134,23 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                           // 1-Tab: Nimalar xarid qilgan (Aggregated items)
                           if (aggregatedItems.isEmpty) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 24, horizontal: 16),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                                color: isDark
+                                    ? const Color(0xFF1E2822)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Column(
                                 children: [
-                                  Icon(Icons.shopping_bag_outlined, size: 36, color: AppColors.muted),
+                                  Icon(Icons.shopping_bag_outlined,
+                                      size: 36, color: AppColors.muted),
                                   SizedBox(height: 8),
                                   Text(
                                     'Ushbu mijoz hali tovar xarid qilmagan',
-                                    style: TextStyle(color: AppColors.muted, fontSize: 13),
+                                    style: TextStyle(
+                                        color: AppColors.muted, fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -923,15 +1160,20 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: aggregatedItems.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
                               itemBuilder: (_, idx) {
                                 final item = aggregatedItems[idx];
                                 return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                                    color: isDark
+                                        ? const Color(0xFF1E2822)
+                                        : const Color(0xFFF8FAFC),
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: context.borderColor),
+                                    border:
+                                        Border.all(color: context.borderColor),
                                   ),
                                   child: Row(
                                     children: [
@@ -939,8 +1181,11 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                         width: 36,
                                         height: 36,
                                         decoration: BoxDecoration(
-                                          color: context.isDark ? const Color(0xFF2B3830) : const Color(0xFFE2E8F0),
-                                          borderRadius: BorderRadius.circular(10),
+                                          color: context.isDark
+                                              ? const Color(0xFF2B3830)
+                                              : const Color(0xFFE2E8F0),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                         ),
                                         child: Center(
                                           child: Text(
@@ -956,7 +1201,8 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               item.productName,
@@ -969,13 +1215,16 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                             const SizedBox(height: 2),
                                             Text(
                                               '${qty(item.totalQuantity)} ${item.unit} • ${item.purchaseCount} ta savdoda olingan',
-                                              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                              style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: AppColors.muted),
                                             ),
                                           ],
                                         ),
                                       ),
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
                                           Text(
                                             money(item.totalAmount),
@@ -988,7 +1237,9 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                           const SizedBox(height: 2),
                                           Text(
                                             '~${money(item.lastUnitPrice)}/${item.unit}',
-                                            style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                                            style: const TextStyle(
+                                                fontSize: 10.5,
+                                                color: AppColors.muted),
                                           ),
                                         ],
                                       ),
@@ -1002,18 +1253,23 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                           // 2-Tab: Cheklar tarixi
                           if (sales.isEmpty) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 24, horizontal: 16),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                                color: isDark
+                                    ? const Color(0xFF1E2822)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Column(
                                 children: [
-                                  Icon(Icons.receipt_long_outlined, size: 36, color: AppColors.muted),
+                                  Icon(Icons.receipt_long_outlined,
+                                      size: 36, color: AppColors.muted),
                                   SizedBox(height: 8),
                                   Text(
                                     'Ushbu mijozga biriktirilgan savdolar mavjud emas',
-                                    style: TextStyle(color: AppColors.muted, fontSize: 13),
+                                    style: TextStyle(
+                                        color: AppColors.muted, fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -1023,7 +1279,8 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: sales.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 10),
                               itemBuilder: (_, idx) {
                                 final s = sales[idx];
                                 final hasSaleDebt = s.debt > 0.5;
@@ -1031,25 +1288,32 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                 return Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1E2822) : Colors.white,
+                                    color: isDark
+                                        ? const Color(0xFF1E2822)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: hasSaleDebt
-                                          ? AppColors.danger.withValues(alpha: 0.35)
+                                          ? AppColors.danger
+                                              .withValues(alpha: 0.35)
                                           : context.borderColor,
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       // Chek sarlavhasi va sana
                                       Row(
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: const Color(0xFF2563EB)
+                                                  .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               'Chek #${s.id}',
@@ -1063,24 +1327,34 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
-                                              formatDateTime(s.createdAt ?? DateTime.now()),
-                                              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                              formatDateTime(s.createdAt ??
+                                                  DateTime.now()),
+                                              style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: AppColors.muted),
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
                                               color: s.isOrder
-                                                  ? Colors.amber.withValues(alpha: 0.15)
+                                                  ? Colors.amber
+                                                      .withValues(alpha: 0.15)
                                                   : AppColors.greenSoft,
-                                              borderRadius: BorderRadius.circular(6),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
                                             ),
                                             child: Text(
-                                              s.isOrder ? 'Buyurtma' : 'Bajarildi',
+                                              s.isOrder
+                                                  ? 'Buyurtma'
+                                                  : 'Bajarildi',
                                               style: TextStyle(
                                                 fontSize: 10.5,
                                                 fontWeight: FontWeight.w700,
-                                                color: s.isOrder ? Colors.amber.shade800 : AppColors.darkCard,
+                                                color: s.isOrder
+                                                    ? Colors.amber.shade800
+                                                    : AppColors.darkCard,
                                               ),
                                             ),
                                           ),
@@ -1094,38 +1368,57 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                         Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF141C16) : const Color(0xFFF8FAFC),
-                                            borderRadius: BorderRadius.circular(10),
+                                            color: isDark
+                                                ? const Color(0xFF141C16)
+                                                : const Color(0xFFF8FAFC),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
                                             children: [
-                                              for (final item in s.items.take(3))
+                                              for (final item
+                                                  in s.items.take(3))
                                                 Padding(
-                                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 2),
                                                   child: Row(
                                                     children: [
                                                       Expanded(
                                                         child: Text(
                                                           '• ${item.productName}',
-                                                          style: TextStyle(fontSize: 11.5, color: context.inkColor),
+                                                          style: TextStyle(
+                                                              fontSize: 11.5,
+                                                              color: context
+                                                                  .inkColor),
                                                           maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                         ),
                                                       ),
                                                       Text(
                                                         '${qty(item.quantity)} × ${money(item.unitPrice)}',
-                                                        style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                                        style: const TextStyle(
+                                                            fontSize: 11,
+                                                            color: AppColors
+                                                                .muted),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                               if (s.items.length > 3)
                                                 Padding(
-                                                  padding: const EdgeInsets.only(top: 2),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 2),
                                                   child: Text(
                                                     '+ yana ${s.items.length - 3} ta tovar...',
-                                                    style: const TextStyle(fontSize: 11, color: AppColors.muted, fontStyle: FontStyle.italic),
+                                                    style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: AppColors.muted,
+                                                        fontStyle:
+                                                            FontStyle.italic),
                                                   ),
                                                 ),
                                             ],
@@ -1139,7 +1432,8 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                         children: [
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   'Jami: ${money(s.total)}',
@@ -1154,22 +1448,36 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
                                                   '${hasSaleDebt ? ' • Nasiya: ${money(s.debt)}' : ''}',
                                                   style: TextStyle(
                                                     fontSize: 11,
-                                                    fontWeight: hasSaleDebt ? FontWeight.w700 : FontWeight.w500,
-                                                    color: hasSaleDebt ? AppColors.danger : AppColors.muted,
+                                                    fontWeight: hasSaleDebt
+                                                        ? FontWeight.w700
+                                                        : FontWeight.w500,
+                                                    color: hasSaleDebt
+                                                        ? AppColors.danger
+                                                        : AppColors.muted,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
                                           FilledButton.icon(
-                                            onPressed: () => ReceiptDialog.show(context, s),
-                                            icon: const Icon(Icons.receipt_rounded, size: 15),
-                                            label: const Text('Chekni ko‘rish / chiqarish', style: TextStyle(fontSize: 11.5)),
+                                            onPressed: () =>
+                                                ReceiptDialog.show(context, s),
+                                            icon: const Icon(
+                                                Icons.receipt_rounded,
+                                                size: 15),
+                                            label: const Text(
+                                                'Chekni ko‘rish / chiqarish',
+                                                style:
+                                                    TextStyle(fontSize: 11.5)),
                                             style: FilledButton.styleFrom(
                                               backgroundColor: AppColors.green,
                                               foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              visualDensity: VisualDensity.compact,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              visualDensity:
+                                                  VisualDensity.compact,
                                             ),
                                           ),
                                         ],
@@ -1188,33 +1496,46 @@ class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
 
                 const Divider(height: 1),
 
-                // 3. Pastki boshqaruv tugmalari
+                // 3. Pastki boshqaruv tugmalari (Mobil va Desktopda toza sig'uvchan)
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: Row(
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: widget.onEdit,
-                        icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text('Tahrirlash'),
-                      ),
-                      const SizedBox(width: 8),
                       Expanded(
-                        child: FilledButton.icon(
-                          onPressed: () => _openStatement(sales, aggregatedItems),
-                          icon: const Icon(Icons.print_rounded, size: 16),
-                          label: const Text('Mijoz Hisobot Cheki (Akt-sverka)'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: context.isDark ? AppColors.neonLime : const Color(0xFF10B981),
-                            foregroundColor: context.isDark ? AppColors.ink : Colors.white,
+                        flex: 2,
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onEdit,
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Tahrirlash', maxLines: 1, overflow: TextOverflow.ellipsis),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded),
-                        tooltip: 'Yopish',
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 3,
+                        child: FilledButton.icon(
+                          onPressed: () =>
+                              _openStatement(sales, aggregatedItems),
+                          icon: const Icon(Icons.print_rounded, size: 16),
+                          label: const Text(
+                            'Hisobot Cheki',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: context.isDark
+                                ? AppColors.neonLime
+                                : const Color(0xFF10B981),
+                            foregroundColor:
+                                context.isDark ? AppColors.ink : Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1244,7 +1565,8 @@ class _CustomerStatementDialog extends StatefulWidget {
   final List<_CustomerItemSummary> items;
 
   @override
-  State<_CustomerStatementDialog> createState() => _CustomerStatementDialogState();
+  State<_CustomerStatementDialog> createState() =>
+      _CustomerStatementDialogState();
 }
 
 class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
@@ -1277,7 +1599,8 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
     sb.writeln('    MIJOZ HISOBOT CHEKI (AKT-SVERKA)    ');
     sb.writeln('Mijoz: ${c.name}');
     if (c.phone != null && c.phone!.isNotEmpty) sb.writeln('Tel: ${c.phone}');
-    if (c.passport != null && c.passport!.isNotEmpty) sb.writeln('Pasport: ${c.passport}');
+    if (c.passport != null && c.passport!.isNotEmpty)
+      sb.writeln('Pasport: ${c.passport}');
     sb.writeln('Hisobot sanasi: ${formatDateTime(DateTime.now())}');
     sb.writeln('Jami savdolar soni: ${widget.sales.length} ta');
     sb.writeln('----------------------------------------');
@@ -1285,7 +1608,8 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
     sb.writeln('----------------------------------------');
     for (final it in widget.items) {
       sb.writeln('• ${it.productName}');
-      sb.writeln('  ${qty(it.totalQuantity)} ${it.unit} | Jami: ${money(it.totalAmount)}');
+      sb.writeln(
+          '  ${qty(it.totalQuantity)} ${it.unit} | Jami: ${money(it.totalAmount)}');
     }
     sb.writeln('----------------------------------------');
     sb.writeln('SAVDOLAR VA CHEKLAR RO‘YXATI:');
@@ -1293,7 +1617,8 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
     for (final s in widget.sales) {
       final dt = formatDateTime(s.createdAt ?? DateTime.now());
       sb.writeln('Chek #${s.id} ($dt):');
-      sb.writeln('  Jami: ${money(s.total)} | To‘landi: ${money(s.paid)} | Nasiya: ${money(s.debt)}');
+      sb.writeln(
+          '  Jami: ${money(s.total)} | To‘landi: ${money(s.paid)} | Nasiya: ${money(s.debt)}');
     }
     sb.writeln('========================================');
     sb.writeln('MOLIYAVIY YAKUNIY BALANS:');
@@ -1320,11 +1645,18 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
             pw.Center(
               child: pw.Column(
                 children: [
-                  pw.Text('NTJ — NAMUNA TOSH JILO', style: pw.TextStyle(font: fontBold, fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.Text('NTJ — NAMUNA TOSH JILO',
+                      style: pw.TextStyle(
+                          font: fontBold,
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(height: 3),
-                  pw.Text('Tabiiy tosh va granit markazi • Tel: +998 (90) 123-45-67', style: pw.TextStyle(font: font, fontSize: 10)),
+                  pw.Text(
+                      'Tabiiy tosh va granit markazi • Tel: +998 (90) 123-45-67',
+                      style: pw.TextStyle(font: font, fontSize: 10)),
                   pw.SizedBox(height: 6),
-                  pw.Text('MIJOZ SAVDOLARI VA TO‘LOVLAR HISOBOTI (AKT-SVERKA)', style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                  pw.Text('MIJOZ SAVDOLARI VA TO‘LOVLAR HISOBOTI (AKT-SVERKA)',
+                      style: pw.TextStyle(font: fontBold, fontSize: 13)),
                   pw.Divider(thickness: 1),
                 ],
               ),
@@ -1333,17 +1665,28 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Mijoz: ${widget.customer.name}', style: pw.TextStyle(font: fontBold, fontSize: 11)),
-                pw.Text('Sana: ${formatDateTime(DateTime.now())}', style: pw.TextStyle(font: font, fontSize: 10)),
+                pw.Text('Mijoz: ${widget.customer.name}',
+                    style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                pw.Text('Sana: ${formatDateTime(DateTime.now())}',
+                    style: pw.TextStyle(font: font, fontSize: 10)),
               ],
             ),
-            if (widget.customer.phone != null && widget.customer.phone!.isNotEmpty)
-              pw.Text('Tel: ${widget.customer.phone}', style: pw.TextStyle(font: font, fontSize: 10)),
+            if (widget.customer.phone != null &&
+                widget.customer.phone!.isNotEmpty)
+              pw.Text('Tel: ${widget.customer.phone}',
+                  style: pw.TextStyle(font: font, fontSize: 10)),
             pw.SizedBox(height: 12),
-            pw.Text('1. Xarid qilingan barcha mahsulotlar:', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+            pw.Text('1. Xarid qilingan barcha mahsulotlar:',
+                style: pw.TextStyle(font: fontBold, fontSize: 11)),
             pw.SizedBox(height: 6),
             pw.TableHelper.fromTextArray(
-              headers: ['№', 'Mahsulot / Xizmat', 'Miqdori', 'O‘rtacha narxi', 'Jami summa'],
+              headers: [
+                '№',
+                'Mahsulot / Xizmat',
+                'Miqdori',
+                'O‘rtacha narxi',
+                'Jami summa'
+              ],
               data: [
                 for (var i = 0; i < widget.items.length; i++)
                   [
@@ -1354,15 +1697,24 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                     money(widget.items[i].totalAmount),
                   ],
               ],
-              headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, fontWeight: pw.FontWeight.bold),
+              headerStyle: pw.TextStyle(
+                  font: fontBold, fontSize: 9, fontWeight: pw.FontWeight.bold),
               cellStyle: pw.TextStyle(font: font, fontSize: 8.5),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              headerDecoration:
+                  const pw.BoxDecoration(color: PdfColors.grey200),
             ),
             pw.SizedBox(height: 14),
-            pw.Text('2. Savdolar va cheklar tarixi:', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+            pw.Text('2. Savdolar va cheklar tarixi:',
+                style: pw.TextStyle(font: fontBold, fontSize: 11)),
             pw.SizedBox(height: 6),
             pw.TableHelper.fromTextArray(
-              headers: ['Chek №', 'Sana', 'Jami summa', 'To‘langan', 'Nasiya / Qarz'],
+              headers: [
+                'Chek №',
+                'Sana',
+                'Jami summa',
+                'To‘langan',
+                'Nasiya / Qarz'
+              ],
               data: [
                 for (final s in widget.sales)
                   [
@@ -1373,9 +1725,11 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                     money(s.debt),
                   ],
               ],
-              headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, fontWeight: pw.FontWeight.bold),
+              headerStyle: pw.TextStyle(
+                  font: fontBold, fontSize: 9, fontWeight: pw.FontWeight.bold),
               cellStyle: pw.TextStyle(font: font, fontSize: 8.5),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              headerDecoration:
+                  const pw.BoxDecoration(color: PdfColors.grey200),
             ),
             pw.SizedBox(height: 16),
             pw.Divider(thickness: 1),
@@ -1385,9 +1739,17 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text('Jami xaridlar summasi: ${money(_totalSpent)}', style: pw.TextStyle(font: fontBold, fontSize: 11)),
-                    pw.Text('Jami to‘langan summa: ${money(_totalPaid)}', style: pw.TextStyle(font: font, fontSize: 10)),
-                    pw.Text('Hozirgi nasiya / qarz: ${money(_totalDebt)}', style: pw.TextStyle(font: fontBold, fontSize: 12, color: _totalDebt > 0 ? PdfColors.red : PdfColors.green)),
+                    pw.Text('Jami xaridlar summasi: ${money(_totalSpent)}',
+                        style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                    pw.Text('Jami to‘langan summa: ${money(_totalPaid)}',
+                        style: pw.TextStyle(font: font, fontSize: 10)),
+                    pw.Text('Hozirgi nasiya / qarz: ${money(_totalDebt)}',
+                        style: pw.TextStyle(
+                            font: fontBold,
+                            fontSize: 12,
+                            color: _totalDebt > 0
+                                ? PdfColors.red
+                                : PdfColors.green)),
                   ],
                 ),
               ],
@@ -1412,20 +1774,27 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
   void _copyToClipboard() {
     final text = _buildPlainText();
     Clipboard.setData(ClipboardData(text: text));
-    showMessage(context, 'Hisobot nusxalandi! Telegram orqali mijozga yuborishingiz mumkin.');
+    showMessage(context,
+        'Hisobot nusxalandi! Telegram orqali mijozga yuborishingiz mumkin.');
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
     final c = widget.customer;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isMobile = screenW < 600;
 
     return Dialog(
       backgroundColor: context.cardColor,
       surfaceTintColor: Colors.transparent,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 32,
+        vertical: isMobile ? 20 : 36,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 680),
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 680),
         child: Column(
           children: [
             // Sarlavha
@@ -1433,12 +1802,16 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
               padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
               child: Row(
                 children: [
-                  const Icon(Icons.receipt_long_rounded, color: AppColors.green, size: 22),
+                  const Icon(Icons.receipt_long_rounded,
+                      color: AppColors.green, size: 22),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Mijoz Akt-sverkasi • ${c.name}',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.inkColor),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: context.inkColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1459,7 +1832,9 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                 child: Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF141C16) : const Color(0xFFFAFAFA),
+                    color: isDark
+                        ? const Color(0xFF141C16)
+                        : const Color(0xFFFAFAFA),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: context.borderColor),
                     boxShadow: [
@@ -1476,20 +1851,25 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                       const Center(
                         child: Text(
                           'NTJ — NAMUNA TOSH JILO',
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              letterSpacing: 0.5),
                         ),
                       ),
                       const Center(
                         child: Text(
                           'Tabiiy tosh va granit markazi',
-                          style: TextStyle(fontSize: 10.5, color: AppColors.muted),
+                          style:
+                              TextStyle(fontSize: 10.5, color: AppColors.muted),
                         ),
                       ),
                       const SizedBox(height: 6),
                       const Center(
                         child: Text(
                           'MIJOZ SAVDOLAR HISOBOTI (AKT-SVERKA)',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 12),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -1501,12 +1881,18 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Mijoz: ${c.name}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                          Text(formatDateTime(DateTime.now()), style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+                          Text('Mijoz: ${c.name}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 12)),
+                          Text(formatDateTime(DateTime.now()),
+                              style: const TextStyle(
+                                  fontSize: 10, color: AppColors.muted)),
                         ],
                       ),
                       if (c.phone != null && c.phone!.isNotEmpty)
-                        Text('Tel: ${c.phone}', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+                        Text('Tel: ${c.phone}',
+                            style: const TextStyle(
+                                fontSize: 11, color: AppColors.muted)),
                       const Text(
                         '--------------------------------------------------',
                         style: TextStyle(color: AppColors.muted, fontSize: 11),
@@ -1515,7 +1901,9 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                       const SizedBox(height: 4),
 
                       // Tovarlar jadvali
-                      const Text('OLINGAN TOVARLAR XULOSASI:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+                      const Text('OLINGAN TOVARLAR XULOSASI:',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 11.5)),
                       const SizedBox(height: 6),
                       for (final it in widget.items) ...[
                         Row(
@@ -1527,18 +1915,22 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                                 children: [
                                   Text(
                                     it.productName,
-                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12),
                                   ),
                                   Text(
                                     '${qty(it.totalQuantity)} ${it.unit} (~${money(it.lastUnitPrice)})',
-                                    style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                                    style: const TextStyle(
+                                        fontSize: 10.5, color: AppColors.muted),
                                   ),
                                 ],
                               ),
                             ),
                             Text(
                               money(it.totalAmount),
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 12),
                             ),
                           ],
                         ),
@@ -1551,20 +1943,29 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                         style: TextStyle(color: AppColors.muted, fontSize: 11),
                         textAlign: TextAlign.center,
                       ),
-                      const Text('SAVDOLAR (CHEKLAR) RO‘YXATI:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+                      const Text('SAVDOLAR (CHEKLAR) RO‘YXATI:',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 11.5)),
                       const SizedBox(height: 6),
                       for (final s in widget.sales) ...[
                         Row(
                           children: [
-                            Text('Chek #${s.id}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
+                            Text('Chek #${s.id}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11.5)),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 formatDateTime(s.createdAt ?? DateTime.now()),
-                                style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                                style: const TextStyle(
+                                    fontSize: 10, color: AppColors.muted),
                               ),
                             ),
-                            Text(money(s.total), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
+                            Text(money(s.total),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11.5)),
                           ],
                         ),
                         Padding(
@@ -1573,8 +1974,12 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                             'To‘landi: ${money(s.paid)}${s.debt > 0 ? ' • Nasiya: ${money(s.debt)}' : ''}',
                             style: TextStyle(
                               fontSize: 10,
-                              color: s.debt > 0 ? AppColors.danger : AppColors.muted,
-                              fontWeight: s.debt > 0 ? FontWeight.w700 : FontWeight.normal,
+                              color: s.debt > 0
+                                  ? AppColors.danger
+                                  : AppColors.muted,
+                              fontWeight: s.debt > 0
+                                  ? FontWeight.w700
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
@@ -1591,16 +1996,24 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('JAMI XARIDLAR:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                          Text(money(_totalSpent), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                          const Text('JAMI XARIDLAR:',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 12)),
+                          Text(money(_totalSpent),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w900, fontSize: 13)),
                         ],
                       ),
                       const SizedBox(height: 3),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('JAMI TO‘LANGAN:', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
-                          Text(money(_totalPaid), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                          const Text('JAMI TO‘LANGAN:',
+                              style: TextStyle(
+                                  fontSize: 11.5, color: AppColors.muted)),
+                          Text(money(_totalPaid),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 12)),
                         ],
                       ),
                       const SizedBox(height: 3),
@@ -1612,7 +2025,9 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
-                              color: _totalDebt > 0 ? AppColors.danger : AppColors.green,
+                              color: _totalDebt > 0
+                                  ? AppColors.danger
+                                  : AppColors.green,
                             ),
                           ),
                           Text(
@@ -1620,7 +2035,9 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
-                              color: _totalDebt > 0 ? AppColors.danger : AppColors.green,
+                              color: _totalDebt > 0
+                                  ? AppColors.danger
+                                  : AppColors.green,
                             ),
                           ),
                         ],
@@ -1629,7 +2046,10 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                       const Center(
                         child: Text(
                           'Xaridingiz va hamkorligingiz uchun rahmat!',
-                          style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: AppColors.muted),
+                          style: TextStyle(
+                              fontSize: 10.5,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.muted),
                         ),
                       ),
                     ],
@@ -1640,27 +2060,45 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
 
             const Divider(height: 1),
 
-            // Tugmalar: Chop etish, Nusxalash, Yopish
+            // Tugmalar: Chop etish, Nusxalash
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Row(
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: _copyToClipboard,
-                    icon: const Icon(Icons.copy_rounded, size: 16),
-                    label: const Text('Telegramga nusxalash'),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _copyToClipboard,
+                      icon: const Icon(Icons.copy_rounded, size: 16),
+                      label: const Text('Nusxalash', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
                     child: FilledButton.icon(
                       onPressed: _isPrinting ? null : () => _printPdf(context),
                       icon: _isPrinting
-                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.print_rounded, size: 16),
-                      label: Text(_isPrinting ? 'Tayyorlanmoqda...' : 'Chop etish (Print / PDF)'),
+                      label: Text(
+                        _isPrinting ? 'Tayyorlanmoqda...' : 'Chop etish (PDF)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -1688,9 +2126,12 @@ class CustomerDialog extends StatefulWidget {
 
 class _CustomerDialogState extends State<CustomerDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final _nameCtrl = TextEditingController(text: widget.customer?.name ?? '');
-  late final _phoneCtrl = TextEditingController(text: widget.customer?.phone ?? '');
-  late final _passportCtrl = TextEditingController(text: widget.customer?.passport ?? '');
+  late final _nameCtrl =
+      TextEditingController(text: widget.customer?.name ?? '');
+  late final _phoneCtrl =
+      TextEditingController(text: widget.customer?.phone ?? '');
+  late final _passportCtrl =
+      TextEditingController(text: widget.customer?.passport ?? '');
   String? _photoUrl;
   bool _saving = false;
   String? _error;
@@ -1720,7 +2161,9 @@ class _CustomerDialogState extends State<CustomerDialog> {
         final decoded = img.decodeImage(Uint8List.fromList(bytes));
         if (decoded != null) {
           final resized = (decoded.width > 480 || decoded.height > 480)
-              ? img.copyResize(decoded, width: decoded.width >= decoded.height ? 480 : null, height: decoded.height > decoded.width ? 480 : null)
+              ? img.copyResize(decoded,
+                  width: decoded.width >= decoded.height ? 480 : null,
+                  height: decoded.height > decoded.width ? 480 : null)
               : decoded;
           final jpg = img.encodeJpg(resized, quality: 78);
           finalUrl = 'data:image/jpeg;base64,${base64Encode(jpg)}';
@@ -1731,7 +2174,8 @@ class _CustomerDialogState extends State<CustomerDialog> {
         finalUrl = 'data:image/jpeg;base64,${base64Encode(bytes)}';
       }
 
-      LocalImageStore.saveCustomerImage(widget.customer?.id, finalUrl, _phoneCtrl.text, _nameCtrl.text);
+      LocalImageStore.saveCustomerImage(
+          widget.customer?.id, finalUrl, _phoneCtrl.text, _nameCtrl.text);
 
       if (mounted) {
         setState(() {
@@ -1813,7 +2257,8 @@ class _CustomerDialogState extends State<CustomerDialog> {
                   children: [
                     Text(
                       isEdit ? 'Mijozni tahrirlash' : 'Yangi mijoz qo‘shish',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 18),
                     ),
                     const Spacer(),
                     IconButton(
@@ -1834,7 +2279,9 @@ class _CustomerDialogState extends State<CustomerDialog> {
                           children: [
                             ProductThumbnail(
                               imageUrl: _photoUrl,
-                              name: _nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'Mijoz',
+                              name: _nameCtrl.text.isNotEmpty
+                                  ? _nameCtrl.text
+                                  : 'Mijoz',
                               size: 88,
                               borderRadius: 22,
                             ),
@@ -1847,7 +2294,8 @@ class _CustomerDialogState extends State<CustomerDialog> {
                                   color: AppColors.darkCard,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                                child: const Icon(Icons.camera_alt_rounded,
+                                    size: 16, color: Colors.white),
                               ),
                             ),
                           ],
@@ -1859,20 +2307,25 @@ class _CustomerDialogState extends State<CustomerDialog> {
                         children: [
                           TextButton.icon(
                             onPressed: () => _pickImage(ImageSource.camera),
-                            icon: const Icon(Icons.photo_camera_rounded, size: 16),
-                            label: const Text('Kamera', style: TextStyle(fontSize: 12)),
+                            icon: const Icon(Icons.photo_camera_rounded,
+                                size: 16),
+                            label: const Text('Kamera',
+                                style: TextStyle(fontSize: 12)),
                           ),
                           const SizedBox(width: 8),
                           TextButton.icon(
                             onPressed: () => _pickImage(ImageSource.gallery),
-                            icon: const Icon(Icons.photo_library_rounded, size: 16),
-                            label: const Text('Galereya', style: TextStyle(fontSize: 12)),
+                            icon: const Icon(Icons.photo_library_rounded,
+                                size: 16),
+                            label: const Text('Galereya',
+                                style: TextStyle(fontSize: 12)),
                           ),
                           if (_photoUrl != null) ...[
                             const SizedBox(width: 8),
                             IconButton(
                               onPressed: () => setState(() => _photoUrl = null),
-                              icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.danger),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  size: 18, color: AppColors.danger),
                               tooltip: 'Rasmni o‘chirish',
                             ),
                           ],
@@ -1891,7 +2344,9 @@ class _CustomerDialogState extends State<CustomerDialog> {
                     hintText: 'Masalan: Rustam Karimov',
                     prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Ism kiritilishi shart' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Ism kiritilishi shart'
+                      : null,
                 ),
                 const SizedBox(height: 12),
 
@@ -1920,7 +2375,9 @@ class _CustomerDialogState extends State<CustomerDialog> {
 
                 if (_error != null) ...[
                   const SizedBox(height: 12),
-                  Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
+                  Text(_error!,
+                      style: const TextStyle(
+                          color: AppColors.danger, fontSize: 12)),
                 ],
 
                 const SizedBox(height: 20),
@@ -1928,7 +2385,8 @@ class _CustomerDialogState extends State<CustomerDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: _saving ? null : () => Navigator.pop(context),
+                        onPressed:
+                            _saving ? null : () => Navigator.pop(context),
                         child: const Text('Bekor'),
                       ),
                     ),
@@ -1937,8 +2395,14 @@ class _CustomerDialogState extends State<CustomerDialog> {
                       child: FilledButton(
                         onPressed: _saving ? null : _save,
                         child: _saving
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : Text(isEdit ? 'Saqlash' : 'Qo‘shish', style: const TextStyle(fontWeight: FontWeight.w700)),
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : Text(isEdit ? 'Saqlash' : 'Qo‘shish',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],
