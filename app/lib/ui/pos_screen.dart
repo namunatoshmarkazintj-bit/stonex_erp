@@ -986,7 +986,7 @@ class _CartPanel extends StatelessWidget {
                   );
                 }),
               ],
-              if ((l.product.unit == 'm2' || l.product.unit == 'm²') && l.product.category != 'Xizmat') ...[
+              if (l.product.isStoneOrTile) ...[
                 const SizedBox(height: 14),
                 OutlinedButton.icon(
                   onPressed: () {
@@ -1696,8 +1696,8 @@ class _CartLineTile extends StatelessWidget {
             ),
           ],
 
-          // Toshga ishlov berish xizmatlari (kesish, faska, silliqlash)
-          if (onStoneService != null && p.category != 'Xizmat') ...[
+          // Toshga ishlov berish xizmatlari (faqat granit, keramogranit, kafel, marmar uchun)
+          if (onStoneService != null && p.isStoneOrTile) ...[
             const SizedBox(height: 6),
             InkWell(
               onTap: onStoneService,

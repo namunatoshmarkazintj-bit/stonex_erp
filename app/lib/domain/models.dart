@@ -349,6 +349,13 @@ class Product {
           category!.toLowerCase() == 'kerama granit' ||
           category!.toLowerCase().contains('granit') ||
           category!.toLowerCase().contains('marmar'));
+  bool get isStoneOrTile =>
+      category != null &&
+      (category!.toLowerCase().contains('granit') ||
+          category!.toLowerCase().contains('keram') ||
+          category!.toLowerCase().contains('kafel') ||
+          category!.toLowerCase().contains('marmar') ||
+          category!.toLowerCase().contains('tosh'));
   bool get hasPachka =>
       unit == 'm2' ||
       unit == 'm²' ||
