@@ -29,9 +29,11 @@ class _ScannerHolePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.black.withValues(alpha: 0.58);
-    final bgPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final bgPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final holePath = Path()
-      ..addRRect(RRect.fromRectAndRadius(holeRect, Radius.circular(borderRadius)));
+      ..addRRect(
+          RRect.fromRectAndRadius(holeRect, Radius.circular(borderRadius)));
     final combined = Path.combine(PathOperation.difference, bgPath, holePath);
     canvas.drawPath(combined, paint);
   }
@@ -197,7 +199,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     try {
       _cameras = await availableCameras();
       if (_cameras.isNotEmpty && mounted) {
-        final backIdx = _cameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
+        final backIdx = _cameras
+            .indexWhere((c) => c.lensDirection == CameraLensDirection.back);
         _currentCameraIndex = backIdx >= 0 ? backIdx : 0;
         await _setupController(_cameras[_currentCameraIndex]);
       } else {
@@ -234,10 +237,12 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   }
 
   Future<void> _toggleTorch() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    if (_cameraController == null || !_cameraController!.value.isInitialized)
+      return;
     try {
       _torchOn = !_torchOn;
-      await _cameraController!.setFlashMode(_torchOn ? FlashMode.torch : FlashMode.off);
+      await _cameraController!
+          .setFlashMode(_torchOn ? FlashMode.torch : FlashMode.off);
       if (mounted) setState(() {});
     } catch (_) {}
   }
@@ -251,7 +256,9 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   void _startPeriodicScanning() {
     _scanTimer?.cancel();
     _scanTimer = Timer.periodic(const Duration(milliseconds: 600), (_) async {
-      if (!_hasCamera || _cameraController == null || !_cameraController!.value.isInitialized) return;
+      if (!_hasCamera ||
+          _cameraController == null ||
+          !_cameraController!.value.isInitialized) return;
       if (_isScanningFrame) return;
       _isScanningFrame = true;
       try {
@@ -304,7 +311,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             SystemSound.play(SystemSoundType.click);
             setState(() {
               _isError = false;
-              _statusMessage = 'Chek #${matched.id} rasmi va ma‘lumotlari ochildi';
+              _statusMessage =
+                  'Chek #${matched.id} rasmi va ma‘lumotlari ochildi';
             });
             await ReceiptDialog.show(context, matched);
             return;
@@ -334,7 +342,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       if (!mounted) return;
 
       if (p != null) {
-        _currentLockedCode = code; // Qulflanadi: kamera ushbu kod ustida turganda faqat 1 marta qo'shiladi
+        _currentLockedCode =
+            code; // Qulflanadi: kamera ushbu kod ustida turganda faqat 1 marta qo'shiladi
 
         HapticFeedback.mediumImpact();
         SystemSound.play(SystemSoundType.click);
@@ -353,7 +362,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         HapticFeedback.vibrate();
         setState(() {
           _isError = true;
-          _statusMessage = 'Kod o‘qildi: "$code" (Bazada bu kodga ega mahsulot topilmadi)';
+          _statusMessage =
+              'Kod o‘qildi: "$code" (Bazada bu kodga ega mahsulot topilmadi)';
         });
       }
     } catch (e) {
@@ -385,7 +395,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           cart.update(l, quantity: l.quantity + delta);
           setState(() {
             _lastQty += delta;
-            _statusMessage = '“${p.name}” miqdori: ${qty(_lastQty)} ${_u(p.unit)}';
+            _statusMessage =
+                '“${p.name}” miqdori: ${qty(_lastQty)} ${_u(p.unit)}';
           });
         } else {
           cart.remove(l);
@@ -412,7 +423,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       builder: (bCtx) {
         return Padding(
           padding: EdgeInsets.fromLTRB(
-            20, 20, 20, MediaQuery.of(bCtx).viewInsets.bottom + 20,
+            20,
+            20,
+            20,
+            MediaQuery.of(bCtx).viewInsets.bottom + 20,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -420,12 +434,14 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             children: [
               Row(
                 children: [
-                  const Icon(Icons.keyboard_alt_outlined, color: AppColors.green),
+                  const Icon(Icons.keyboard_alt_outlined,
+                      color: AppColors.green),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'Kodni qo‘lda kiritish',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ),
                   IconButton(
@@ -439,10 +455,14 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                 controller: textCtrl,
                 autofocus: true,
                 textInputAction: TextInputAction.done,
-                style: TextStyle(fontSize: 14, color: bCtx.inkColor, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: bCtx.inkColor,
+                    fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: 'Masalan: STX-ANGOLA yoki raqam...',
-                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
+                  hintStyle:
+                      const TextStyle(fontSize: 13, color: AppColors.muted),
                   filled: true,
                   fillColor: bCtx.cardColor,
                   border: OutlineInputBorder(
@@ -463,12 +483,14 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   _processCode(txt);
                 },
                 icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                label: const Text('Savatga qo‘shish', style: TextStyle(fontWeight: FontWeight.w700)),
+                label: const Text('Savatga qo‘shish',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
               ),
             ],
@@ -502,7 +524,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         children: [
           const Row(
             children: [
-              Icon(Icons.check_circle_rounded, size: 14, color: AppColors.green),
+              Icon(Icons.check_circle_rounded,
+                  size: 14, color: AppColors.green),
               SizedBox(width: 5),
               Expanded(
                 child: Text(
@@ -526,7 +549,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   context,
                   imageUrl: p.imageUrl,
                   name: p.name,
-                  subtitle: '${money(p.price)} / ${p.unit} • Qoldiq: ${qty(p.stock)} ${p.unit}',
+                  subtitle:
+                      '${money(p.price)} / ${p.unit} • Qoldiq: ${qty(p.stock)} ${p.unit}',
                 ),
                 child: ProductThumbnail(
                   imageUrl: p.imageUrl,
@@ -554,7 +578,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                     const SizedBox(height: 2),
                     Text(
                       '${money(p.price)} / ${_u(p.unit)} • Qoldiq: ${qty(p.stock)} ${_u(p.unit)}',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFFA9BDB0)),
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFFA9BDB0)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -573,7 +598,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.remove_rounded, size: 16, color: Colors.white),
+                      icon: const Icon(Icons.remove_rounded,
+                          size: 16, color: Colors.white),
                       padding: const EdgeInsets.all(4),
                       constraints: const BoxConstraints(),
                       splashRadius: 14,
@@ -591,7 +617,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                      icon: const Icon(Icons.add_rounded,
+                          size: 16, color: Colors.white),
                       padding: const EdgeInsets.all(4),
                       constraints: const BoxConstraints(),
                       splashRadius: 14,
@@ -621,7 +648,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             Expanded(
               child: Row(
                 children: [
-                  const Icon(Icons.shopping_bag_outlined, color: AppColors.green, size: 20),
+                  const Icon(Icons.shopping_bag_outlined,
+                      color: AppColors.green, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -629,14 +657,22 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          cart.lines.isNotEmpty ? '${cart.lines.length} ta tovar' : 'Savat bo‘sh',
-                          style: const TextStyle(color: Color(0xFFA9BDB0), fontSize: 11, fontWeight: FontWeight.w600),
+                          cart.lines.isNotEmpty
+                              ? '${cart.lines.length} ta tovar'
+                              : 'Savat bo‘sh',
+                          style: const TextStyle(
+                              color: Color(0xFFA9BDB0),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           money(cart.total),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -652,11 +688,14 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.neonLime,
                 foregroundColor: AppColors.ink,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               icon: const Icon(Icons.check_rounded, size: 17),
-              label: const Text('Tayyor (Yopish)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              label: const Text('Tayyor (Yopish)',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
             ),
           ],
         ),
@@ -682,13 +721,17 @@ class _QrScannerScreenState extends State<QrScannerScreen>
         fit: StackFit.expand,
         children: [
           // 1. Kamera tasviri yoki holat
-          if (_hasCamera && _cameraController != null && _cameraController!.value.isInitialized) ...[
+          if (_hasCamera &&
+              _cameraController != null &&
+              _cameraController!.value.isInitialized) ...[
             SizedBox.expand(
               child: FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
-                  width: _cameraController!.value.previewSize?.height ?? size.width,
-                  height: _cameraController!.value.previewSize?.width ?? size.height,
+                  width: _cameraController!.value.previewSize?.height ??
+                      size.width,
+                  height: _cameraController!.value.previewSize?.width ??
+                      size.height,
                   child: CameraPreview(_cameraController!),
                 ),
               ),
@@ -696,7 +739,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             // Qoraytirilgan oyna va o'rtadagi shaffof tuynuk
             CustomPaint(
               size: size,
-              painter: _ScannerHolePainter(holeRect: holeRect, borderRadius: 24),
+              painter:
+                  _ScannerHolePainter(holeRect: holeRect, borderRadius: 24),
             ),
             // 4 ta burchak mo‘ljali
             Positioned(
@@ -726,7 +770,9 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                 return Positioned(
                   left: holeRect.left + 10,
                   width: holeRect.width - 20,
-                  top: holeRect.top + 8 + (_laserCtrl.value * (holeRect.height - 20)),
+                  top: holeRect.top +
+                      8 +
+                      (_laserCtrl.value * (holeRect.height - 20)),
                   child: Container(
                     height: 2.8,
                     decoration: BoxDecoration(
@@ -758,7 +804,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               right: 20,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(20),
@@ -767,11 +814,15 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.qr_code_scanner_rounded, size: 16, color: AppColors.neonLime),
+                      Icon(Icons.qr_code_scanner_rounded,
+                          size: 16, color: AppColors.neonLime),
                       SizedBox(width: 8),
                       Text(
                         'QR yoki shtrix-kodni ramkaga to‘g‘rilang',
-                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -806,12 +857,16 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                         color: const Color(0xFF1E2835),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Icon(Icons.videocam_off_rounded, size: 36, color: AppColors.muted),
+                      child: const Icon(Icons.videocam_off_rounded,
+                          size: 36, color: AppColors.muted),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Kamera topilmadi yoki ruxsat yo‘q',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
@@ -837,9 +892,11 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                         ),
                         OutlinedButton.icon(
                           onPressed: _showManualInputDialog,
-                          icon: const Icon(Icons.keyboard_alt_outlined, size: 18),
+                          icon:
+                              const Icon(Icons.keyboard_alt_outlined, size: 18),
                           label: const Text('Qo‘lda kiritish'),
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
+                          style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white),
                         ),
                       ],
                     ),
@@ -856,7 +913,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     _FrostedCircleButton(
@@ -883,7 +941,9 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                     if (_hasCamera) ...[
                       const SizedBox(width: 8),
                       _FrostedCircleButton(
-                        icon: _torchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                        icon: _torchOn
+                            ? Icons.flash_on_rounded
+                            : Icons.flash_off_rounded,
                         color: _torchOn ? AppColors.neonLime : Colors.white,
                         onPressed: _toggleTorch,
                         tooltip: 'Chiroq (Fonarik)',
@@ -915,7 +975,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF3B1515),
                         borderRadius: BorderRadius.circular(14),
@@ -923,12 +984,16 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 18),
+                          const Icon(Icons.error_outline_rounded,
+                              color: AppColors.danger, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _statusMessage!,
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -936,14 +1001,12 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                     ),
                   ),
                 ],
-
                 if (_lastProduct != null) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                     child: _buildScannedProductCard(_lastProduct!),
                   ),
                 ],
-
                 _buildBottomBar(cart),
               ],
             ),

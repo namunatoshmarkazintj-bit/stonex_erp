@@ -32,7 +32,7 @@ abstract class SalesRepository {
     String status = 'completed',
     String? note,
   });
-  Future<List<SaleResult>> listSales({int limit = 50, String? status});
+  Future<List<SaleResult>> listSales({int limit = 50, String? status, int? customerId});
   Future<List<SaleResult>> listDebts();
   Future<SaleResult> payDebt(int saleId, double amount, {String method = 'cash'});
   Future<SaleResult> fulfillOrder(

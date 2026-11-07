@@ -173,9 +173,10 @@ class ApiSalesRepository implements SalesRepository {
   }
 
   @override
-  Future<List<SaleResult>> listSales({int limit = 50, String? status}) async {
+  Future<List<SaleResult>> listSales({int limit = 50, String? status, int? customerId}) async {
     final q = {'limit': '$limit'};
     if (status != null && status.isNotEmpty) q['status'] = status;
+    if (customerId != null) q['customer_id'] = '$customerId';
     final j = await _api.get('/sales', query: q) as List;
     return j.map((e) => SaleResult.fromJson(e as Map<String, dynamic>)).toList();
   }

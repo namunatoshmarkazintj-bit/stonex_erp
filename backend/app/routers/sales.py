@@ -49,7 +49,7 @@ def create(data: SaleIn, db: Session = Depends(get_db), user: m.User = Depends(_
 
 
 @router.get("", response_model=list[SaleOut])
-def list_sales(limit: int = 200, status: str | None = None, db: Session = Depends(get_db), user: m.User = Depends(_sellers)):
+def list_sales(limit: int = 200, status: str | None = None, customer_id: int | None = None, db: Session = Depends(get_db), user: m.User = Depends(_sellers)):
     stmt = (
         select(m.Sale)
         .options(
@@ -63,7 +63,9 @@ def list_sales(limit: int = 200, status: str | None = None, db: Session = Depend
     )
     if status is not None:
         stmt = stmt.where(m.Sale.status == status)
-    if user.role == roles.CASHIER:  # faqat kassir o'z savdolarini ko'radi (boshqaruvchi, haydovchi va admin buyurtmalarni ko'radi)
+    if customer_id is not None:
+        stmt = stmt.where(m.Sale.customer_id == customer_id)
+    elif user.role == roles.CASHIER:  # faqat kassir o'z savdolarini ko'radi (boshqaruvchi, haydovchi va admin buyurtmalarni ko'radi)
         stmt = stmt.where(m.Sale.cashier_id == user.id)
     return [to_out(s) for s in db.scalars(stmt).all()]
 

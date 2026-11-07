@@ -75,14 +75,29 @@ def create_sale(db: Session, cashier: m.User, data: SaleIn) -> m.Sale:
     if customer_id is not None and db.get(m.Customer, customer_id) is None:
         raise HTTPException(404, "Mijoz topilmadi")
     if customer_id is None and data.customer_name:
-        c = m.Customer(
-            name=data.customer_name.strip(),
-            phone=data.customer_phone,
-            passport=data.customer_passport,
-            photo_url=data.customer_photo_url,
-        )
-        db.add(c)
-        db.flush()
+        c = None
+        clean_phone = (data.customer_phone or "").strip()
+        clean_name = data.customer_name.strip()
+        if clean_phone:
+            c = db.query(m.Customer).filter(m.Customer.phone == clean_phone).first()
+        if not c and clean_name:
+            c = db.query(m.Customer).filter(func.lower(m.Customer.name) == clean_name.lower()).first()
+        if not c:
+            c = m.Customer(
+                name=clean_name,
+                phone=data.customer_phone,
+                passport=data.customer_passport,
+                photo_url=data.customer_photo_url,
+            )
+            db.add(c)
+            db.flush()
+        else:
+            if data.customer_passport and not c.passport:
+                c.passport = data.customer_passport
+            if data.customer_photo_url and not c.photo_url:
+                c.photo_url = data.customer_photo_url
+            if data.customer_phone and not c.phone:
+                c.phone = data.customer_phone
         customer_id = c.id
     elif customer_id is not None:
         c = db.get(m.Customer, customer_id)

@@ -2415,35 +2415,78 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
             ),
             const SizedBox(height: 6),
 
-            // Doimiy mijozlarni tezkor tanlash
-            if (_existingCustomers.isNotEmpty && _selectedCustomerId == null) ...[
-              SizedBox(
-                height: 34,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _existingCustomers.take(5).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (_, i) {
-                    final c = _existingCustomers[i];
-                    return ActionChip(
-                      avatar: const Icon(Icons.history_rounded, size: 14),
-                      label: Text(c.name, style: const TextStyle(fontSize: 11)),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      onPressed: () => _selectCustomer(c),
-                    );
-                  },
+            // Tanlangan doimiy mijoz kartasi
+            if (_selectedCustomerId != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.green.withValues(alpha: 0.35)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _name.text,
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: context.inkColor),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Tanlangan mijoz • Xaridlar va chek ushbu mijozga saqlanadi',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      tooltip: 'Boshqa mijoz tanlash',
+                      onPressed: _clearCustomer,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
+            ] else ...[
+              // Doimiy mijozlarni tezkor tanlash
+              if (_existingCustomers.isNotEmpty) ...[
+                SizedBox(
+                  height: 34,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _existingCustomers.take(6).length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (_, i) {
+                      final c = _existingCustomers[i];
+                      return ActionChip(
+                        avatar: const Icon(Icons.person_outline_rounded, size: 14),
+                        label: Text(c.name, style: const TextStyle(fontSize: 11)),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        onPressed: () => _selectCustomer(c),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
             ],
 
             // Ism
             TextField(
               controller: _name,
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: hasDebt ? 'Mijoz Ism-Familiyasi * (Nasiya uchun majburiy)' : 'Mijoz Ism-Familiyasi',
                 hintText: 'Masalan: Rustam Karimov',
                 prefixIcon: const Icon(Icons.person_rounded, size: 18),
+                helperText: 'Mijoz nomi kiritilsa, xaridlar uning profiliga avtomatik saqlanadi',
+                helperStyle: const TextStyle(fontSize: 10.5, color: AppColors.muted),
               ),
             ),
             const SizedBox(height: 10),
@@ -2452,6 +2495,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
             TextField(
               controller: _phone,
               keyboardType: TextInputType.phone,
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Telefon raqami',
                 hintText: '+998 90 123 45 67',

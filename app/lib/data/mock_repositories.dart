@@ -17,7 +17,7 @@ class MockSaleEntry {
 /// kamaytiradi, ishlab chiqarish qoldiqni oshiradi — xuddi haqiqiy backend kabi.
 class MockStore {
   int nextProductId = 100;
-  int nextId = 100;
+  int nextId = 200;
   int nextUserId = 10;
   int nextAttendanceId = 100;
   final Map<String, double> paidSalaries = {}; // "userId_YYYY-MM" -> to'langan jami summa
@@ -147,6 +147,7 @@ class MockStore {
         total: 1800000,
         paid: 1800000,
         debt: 0,
+        customerId: 1,
         customerName: 'Sardor Qodirov',
         customerPhone: '+998 90 999 11 22',
         cashierName: 'Alisher (Kassir)',
@@ -164,6 +165,7 @@ class MockStore {
         total: 900000,
         paid: 900000,
         debt: 0,
+        customerId: 2,
         customerName: 'Farhod Usta',
         customerPhone: '+998 91 888 22 33',
         cashierName: 'Alisher (Kassir)',
@@ -181,6 +183,7 @@ class MockStore {
         total: 1500000,
         paid: 1000000,
         debt: 500000,
+        customerId: 3,
         customerName: 'Javohir Toshkent',
         customerPhone: '+998 93 777 33 44',
         createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -235,6 +238,25 @@ class MockStore {
         ],
       ),
       cost: 1300000,
+    ),
+    MockSaleEntry(
+      result: SaleResult(
+        id: 101,
+        total: 3800000,
+        paid: 3800000,
+        debt: 0,
+        customerId: 1,
+        customerName: 'Sardor Qodirov',
+        customerPhone: '+998 90 999 11 22',
+        cashierName: 'Alisher (Kassir)',
+        paymentMethod: 'cash',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+        items: const [
+          SaleItemRecord(productId: 3, productName: 'Tan Brown', quantity: 15, unitPrice: 220000, lineTotal: 3300000),
+          SaleItemRecord(productId: 998, productName: 'Eni va bo‘yiga kesish xizmati', quantity: 10, unitPrice: 50000, lineTotal: 500000),
+        ],
+      ),
+      cost: 2600000,
     ),
   ];
 
@@ -782,10 +804,13 @@ class MockSalesRepository implements SalesRepository {
   }
 
   @override
-  Future<List<SaleResult>> listSales({int limit = 50, String? status}) async {
+  Future<List<SaleResult>> listSales({int limit = 50, String? status, int? customerId}) async {
     Iterable<MockSaleEntry> entries = _s.sales;
     if (status != null && status.isNotEmpty) {
       entries = entries.where((e) => e.result.status == status);
+    }
+    if (customerId != null) {
+      entries = entries.where((e) => e.result.customerId == customerId);
     }
     final all = entries.map((e) => e.result).toList().reversed.toList();
     if (all.length > limit) return all.sublist(0, limit);

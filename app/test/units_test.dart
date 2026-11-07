@@ -535,4 +535,65 @@ void main() {
     final att = await attRepo.checkIn(worker.id, time: DateTime.now());
     expect(att.userId, worker.id);
   });
+
+  test('Mijozlar bo‘limida savdolar tarixi, xarid qilingan tovarlar va hisobot cheki (Akt-sverka)', () async {
+    final s = MockStore();
+    final custRepo = MockCustomerRepository(s);
+    final salesRepo = MockSalesRepository(s);
+
+    // 1. Yangi mijoz yaratish
+    final cust = await custRepo.createCustomer(const Customer(
+      id: 0,
+      name: 'Sherzodbek Quruvchi',
+      phone: '+998 90 777 88 99',
+    ));
+    expect(cust.id, greaterThan(0));
+
+    // 2. Ushbu mijoz nomiga 2 ta alohida savdo qilish
+    final p1 = s.products.first; // Plita
+    final p2 = s.products[1];
+
+    final sale1 = await salesRepo.createSale(
+      lines: [CartLine(p1, quantity: 15)],
+      paidAmount: 15 * p1.price,
+      customerId: cust.id,
+      customerName: cust.name,
+      customerPhone: cust.phone,
+    );
+    expect(sale1.customerId, cust.id);
+
+    final sale2 = await salesRepo.createSale(
+      lines: [
+        CartLine(p1, quantity: 5),
+        CartLine(p2, quantity: 8),
+      ],
+      paidAmount: (5 * p1.price) + (8 * p2.price) - 200000, // 200 000 nasiya
+      customerId: cust.id,
+      customerName: cust.name,
+      customerPhone: cust.phone,
+    );
+    expect(sale2.debt, 200000);
+
+    // 3. Mijozning savdolari ro'yxatini olish
+    final custSales = await salesRepo.listSales(limit: 100, customerId: cust.id);
+    expect(custSales.length, 2);
+    expect(custSales.any((s) => s.id == sale1.id), true);
+    expect(custSales.any((s) => s.id == sale2.id), true);
+
+    // 4. Tovarlar bo'yicha jamlash
+    double totalP1Qty = 0;
+    for (final sale in custSales) {
+      for (final item in sale.items) {
+        if (item.productId == p1.id) {
+          totalP1Qty += item.quantity;
+        }
+      }
+    }
+    // 15 + 5 = 20 dona/m²
+    expect(totalP1Qty, 20);
+
+    // Jami nasiya
+    final totalCustDebt = custSales.fold<double>(0, (sum, s) => sum + s.debt);
+    expect(totalCustDebt, 200000);
+  });
 }

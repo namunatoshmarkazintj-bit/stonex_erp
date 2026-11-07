@@ -2,8 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../core/format.dart';
@@ -13,6 +17,7 @@ import '../data/repositories.dart';
 import '../domain/models.dart';
 import 'camera_capture_dialog.dart';
 import 'common.dart';
+import 'receipt_dialog.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -391,6 +396,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
                                     ),
                                   ),
 
+                                  // Xaridlar va cheklar
+                                  IconButton(
+                                    icon: const Icon(Icons.receipt_long_rounded, size: 20),
+                                    color: AppColors.green,
+                                    tooltip: 'Xaridlar tarixi va cheklar',
+                                    onPressed: () => _openCustomerDetails(c),
+                                  ),
+
                                   // Tahrirlash tugmasi
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined, size: 20),
@@ -436,161 +449,1225 @@ class _StatMini extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Mijoz ma'lumotlarini to'liq ko'rish dialogi
+// Mijoz ma'lumotlarini to'liq ko'rish dialogi (Xarid qilingan tovarlar va Cheklar)
 // ---------------------------------------------------------------------------
 
-class _CustomerDetailsDialog extends StatelessWidget {
+class _CustomerItemSummary {
+  final String productName;
+  final double totalQuantity;
+  final double totalAmount;
+  final int purchaseCount;
+  final double lastUnitPrice;
+  final DateTime? lastPurchasedAt;
+
+  const _CustomerItemSummary({
+    required this.productName,
+    required this.totalQuantity,
+    required this.totalAmount,
+    required this.purchaseCount,
+    required this.lastUnitPrice,
+    this.lastPurchasedAt,
+  });
+
+  String get unit {
+    final lower = productName.toLowerCase();
+    if (lower.contains('kesish') || lower.contains('silliqlash') || lower.contains('faska') || lower.contains('ariqcha')) {
+      return 'metr';
+    }
+    if (lower.contains('dona') || lower.contains('kley') || lower.contains('disk') || lower.contains('sim')) {
+      return 'dona';
+    }
+    return 'm²';
+  }
+}
+
+class _CustomerDetailsDialog extends StatefulWidget {
   const _CustomerDetailsDialog({required this.customer, required this.onEdit});
   final Customer customer;
   final VoidCallback onEdit;
 
   @override
+  State<_CustomerDetailsDialog> createState() => _CustomerDetailsDialogState();
+}
+
+class _CustomerDetailsDialogState extends State<_CustomerDetailsDialog> {
+  late Future<List<SaleResult>> _salesFuture;
+  int _currentTab = 0; // 0: Nimalar xarid qilgan (Tovarlar), 1: Savdolar va Cheklar
+
+  @override
+  void initState() {
+    super.initState();
+    _salesFuture = _fetchCustomerSales();
+  }
+
+  Future<List<SaleResult>> _fetchCustomerSales() async {
+    final repos = context.read<AppRepositories>();
+    try {
+      var list = await repos.sales.listSales(limit: 500, customerId: widget.customer.id);
+      if (list.isEmpty) {
+        // Fallback: mijoz ismi yoki telefoni bo'yicha mos keluvchi savdolarni ham topish
+        final all = await repos.sales.listSales(limit: 500);
+        list = all.where((s) {
+          if (s.customerId == widget.customer.id) return true;
+          if (s.customerName != null &&
+              s.customerName!.trim().toLowerCase() == widget.customer.name.trim().toLowerCase()) {
+            return true;
+          }
+          if (widget.customer.phone != null &&
+              widget.customer.phone!.isNotEmpty &&
+              s.customerPhone != null &&
+              s.customerPhone!.replaceAll(RegExp(r'\s+'), '') == widget.customer.phone!.replaceAll(RegExp(r'\s+'), '')) {
+            return true;
+          }
+          return false;
+        }).toList();
+      }
+      return list;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  List<_CustomerItemSummary> _aggregateItems(List<SaleResult> sales) {
+    final Map<String, ({double qty, double amount, int count, double lastPrice, DateTime? lastDate})> map = {};
+
+    for (final sale in sales) {
+      for (final item in sale.items) {
+        final name = item.productName.trim().isEmpty ? 'Mahsulot #${item.productId}' : item.productName.trim();
+        final cur = map[name];
+        if (cur == null) {
+          map[name] = (
+            qty: item.quantity,
+            amount: item.lineTotal,
+            count: 1,
+            lastPrice: item.unitPrice,
+            lastDate: sale.createdAt,
+          );
+        } else {
+          map[name] = (
+            qty: cur.qty + item.quantity,
+            amount: cur.amount + item.lineTotal,
+            count: cur.count + 1,
+            lastPrice: item.unitPrice,
+            lastDate: (cur.lastDate == null || (sale.createdAt != null && sale.createdAt!.isAfter(cur.lastDate!)))
+                ? sale.createdAt
+                : cur.lastDate,
+          );
+        }
+      }
+    }
+
+    final list = map.entries.map((e) => _CustomerItemSummary(
+      productName: e.key,
+      totalQuantity: e.value.qty,
+      totalAmount: e.value.amount,
+      purchaseCount: e.value.count,
+      lastUnitPrice: e.value.lastPrice,
+      lastPurchasedAt: e.value.lastDate,
+    )).toList();
+
+    list.sort((a, b) => b.totalAmount.compareTo(a.totalAmount));
+    return list;
+  }
+
+  void _openStatement(List<SaleResult> sales, List<_CustomerItemSummary> items) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _CustomerStatementDialog(
+        customer: widget.customer,
+        sales: sales,
+        items: items,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final c = customer;
-    final hasDebt = c.totalDebt > 0.5;
+    final c = widget.customer;
+    final isDark = context.isDark;
+    final wide = MediaQuery.sizeOf(context).width >= 650;
 
     return Dialog(
       backgroundColor: context.cardColor,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 480),
-        padding: const EdgeInsets.all(22),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Yuqori sarlavha va yopish
-              Row(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: wide ? 680 : 480,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        ),
+        child: FutureBuilder<List<SaleResult>>(
+          future: _salesFuture,
+          builder: (context, snapshot) {
+            final loading = snapshot.connectionState == ConnectionState.waiting;
+            final sales = snapshot.data ?? [];
+            final aggregatedItems = _aggregateItems(sales);
+
+            // Aniq moliyaviy hisob-kitob
+            double calcSpent = 0;
+            double calcPaid = 0;
+            for (final s in sales) {
+              calcSpent += s.total;
+              calcPaid += s.paid;
+            }
+            final totalSpent = sales.isNotEmpty ? calcSpent : c.totalSpent;
+            final totalDebt = sales.isNotEmpty
+                ? (calcSpent - calcPaid).clamp(0, double.infinity).toDouble()
+                : c.totalDebt;
+            final hasDebt = totalDebt > 0.5;
+            final salesCount = sales.isNotEmpty ? sales.length : c.salesCount;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Yuqori sarlavha paneli
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.greenSoft,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.person_pin_rounded, color: AppColors.darkCard, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              c.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 17,
+                                color: context.inkColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (c.phone != null && c.phone!.isNotEmpty)
+                              Text(
+                                c.phone!,
+                                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        tooltip: 'Yopish',
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // 2. Kontent qismi (Scrollable)
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Mijoz rasmi va batafsil qismi
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: (c.photoUrl != null && c.photoUrl!.isNotEmpty)
+                                  ? () => showProductImagePreview(
+                                        context,
+                                        imageUrl: c.photoUrl,
+                                        name: c.name,
+                                        subtitle: 'Pasport: ${c.passport ?? 'Yo‘q'}',
+                                      )
+                                  : null,
+                              child: ProductThumbnail(
+                                imageUrl: c.photoUrl,
+                                name: c.name,
+                                size: 66,
+                                borderRadius: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (c.passport != null && c.passport!.isNotEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.badge_outlined, size: 13, color: AppColors.muted),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Pasport: ${c.passport!}',
+                                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      if (c.createdAt != null)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.muted),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Ro‘yxat: ${formatDateTime(c.createdAt!)}',
+                                                style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Tezkor harakat: Hisobot cheki (Akt-sverka)
+                                  Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      FilledButton.tonalIcon(
+                                        onPressed: () => _openStatement(sales, aggregatedItems),
+                                        icon: const Icon(Icons.receipt_long_rounded, size: 16),
+                                        label: const Text('Hisobot Cheki (Akt-sverka)', style: TextStyle(fontSize: 12)),
+                                        style: FilledButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Moliyaviy xulosa kartochkalari
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: context.borderColor),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Column(
+                                children: [
+                                  const Text('Jami xarid', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    money(totalSpent),
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: context.inkColor),
+                                  ),
+                                ],
+                              ),
+                              Container(width: 1, height: 28, color: context.borderColor),
+                              Column(
+                                children: [
+                                  const Text('Nasiya / Qarz', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    money(totalDebt),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13.5,
+                                      color: hasDebt ? AppColors.danger : AppColors.green,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(width: 1, height: 28, color: context.borderColor),
+                              Column(
+                                children: [
+                                  const Text('Savdolar soni', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '$salesCount ta',
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: context.inkColor),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // Tab selektor: Tovarlar vs Savdolar/Cheklar
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () => setState(() => _currentTab = 0),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: _currentTab == 0
+                                          ? (isDark ? AppColors.darkCard : Colors.white)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: _currentTab == 0
+                                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)]
+                                          : null,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '📦 Nimalar olgan (${aggregatedItems.length})',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: _currentTab == 0 ? FontWeight.w800 : FontWeight.w600,
+                                          color: _currentTab == 0 ? context.inkColor : AppColors.muted,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () => setState(() => _currentTab = 1),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: _currentTab == 1
+                                          ? (isDark ? AppColors.darkCard : Colors.white)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: _currentTab == 1
+                                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)]
+                                          : null,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '🧾 Cheklar tarixi (${sales.length})',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: _currentTab == 1 ? FontWeight.w800 : FontWeight.w600,
+                                          color: _currentTab == 1 ? context.inkColor : AppColors.muted,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Kontent: Tab 0 (Tovarlar xulosasi) yoki Tab 1 (Cheklar ro'yxati)
+                        if (loading) ...[
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 28),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        ] else if (_currentTab == 0) ...[
+                          // 1-Tab: Nimalar xarid qilgan (Aggregated items)
+                          if (aggregatedItems.isEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Icon(Icons.shopping_bag_outlined, size: 36, color: AppColors.muted),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Ushbu mijoz hali tovar xarid qilmagan',
+                                    style: TextStyle(color: AppColors.muted, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: aggregatedItems.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (_, idx) {
+                                final item = aggregatedItems[idx];
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: context.borderColor),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: context.isDark ? const Color(0xFF2B3830) : const Color(0xFFE2E8F0),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${idx + 1}',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                              color: context.inkColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.productName,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 13,
+                                                color: context.inkColor,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${qty(item.totalQuantity)} ${item.unit} • ${item.purchaseCount} ta savdoda olingan',
+                                              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            money(item.totalAmount),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 13,
+                                              color: context.inkColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '~${money(item.lastUnitPrice)}/${item.unit}',
+                                            style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ] else ...[
+                          // 2-Tab: Cheklar tarixi
+                          if (sales.isEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Icon(Icons.receipt_long_outlined, size: 36, color: AppColors.muted),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Ushbu mijozga biriktirilgan savdolar mavjud emas',
+                                    style: TextStyle(color: AppColors.muted, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: sales.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              itemBuilder: (_, idx) {
+                                final s = sales[idx];
+                                final hasSaleDebt = s.debt > 0.5;
+
+                                return Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E2822) : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: hasSaleDebt
+                                          ? AppColors.danger.withValues(alpha: 0.35)
+                                          : context.borderColor,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Chek sarlavhasi va sana
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              'Chek #${s.id}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF2563EB),
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              formatDateTime(s.createdAt ?? DateTime.now()),
+                                              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: s.isOrder
+                                                  ? Colors.amber.withValues(alpha: 0.15)
+                                                  : AppColors.greenSoft,
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              s.isOrder ? 'Buyurtma' : 'Bajarildi',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: s.isOrder ? Colors.amber.shade800 : AppColors.darkCard,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 10),
+
+                                      // Chekdagi tovarlar qisqartmasi
+                                      if (s.items.isNotEmpty) ...[
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF141C16) : const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              for (final item in s.items.take(3))
+                                                Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          '• ${item.productName}',
+                                                          style: TextStyle(fontSize: 11.5, color: context.inkColor),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '${qty(item.quantity)} × ${money(item.unitPrice)}',
+                                                        style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              if (s.items.length > 3)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 2),
+                                                  child: Text(
+                                                    '+ yana ${s.items.length - 3} ta tovar...',
+                                                    style: const TextStyle(fontSize: 11, color: AppColors.muted, fontStyle: FontStyle.italic),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                      ],
+
+                                      // Chek summalari va Chekni chiqarish tugmasi
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Jami: ${money(s.total)}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 13,
+                                                    color: context.inkColor,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'To‘landi: ${money(s.paid)}'
+                                                  '${hasSaleDebt ? ' • Nasiya: ${money(s.debt)}' : ''}',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: hasSaleDebt ? FontWeight.w700 : FontWeight.w500,
+                                                    color: hasSaleDebt ? AppColors.danger : AppColors.muted,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          FilledButton.icon(
+                                            onPressed: () => ReceiptDialog.show(context, s),
+                                            icon: const Icon(Icons.receipt_rounded, size: 15),
+                                            label: const Text('Chekni ko‘rish / chiqarish', style: TextStyle(fontSize: 11.5)),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: AppColors.green,
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              visualDensity: VisualDensity.compact,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // 3. Pastki boshqaruv tugmalari
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: widget.onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: const Text('Tahrirlash'),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => _openStatement(sales, aggregatedItems),
+                          icon: const Icon(Icons.print_rounded, size: 16),
+                          label: const Text('Mijoz Hisobot Cheki (Akt-sverka)'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: context.isDark ? AppColors.neonLime : const Color(0xFF10B981),
+                            foregroundColor: context.isDark ? AppColors.ink : Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                        tooltip: 'Yopish',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mijoz umumiy xaridlar va hisob-kitob kvitansiyasi (Akt-sverka) Cheki
+// ---------------------------------------------------------------------------
+
+class _CustomerStatementDialog extends StatefulWidget {
+  const _CustomerStatementDialog({
+    required this.customer,
+    required this.sales,
+    required this.items,
+  });
+
+  final Customer customer;
+  final List<SaleResult> sales;
+  final List<_CustomerItemSummary> items;
+
+  @override
+  State<_CustomerStatementDialog> createState() => _CustomerStatementDialogState();
+}
+
+class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
+  bool _isPrinting = false;
+
+  double get _totalSpent {
+    if (widget.sales.isNotEmpty) {
+      return widget.sales.fold<double>(0, (sum, s) => sum + s.total);
+    }
+    return widget.customer.totalSpent;
+  }
+
+  double get _totalPaid {
+    if (widget.sales.isNotEmpty) {
+      return widget.sales.fold<double>(0, (sum, s) => sum + s.paid);
+    }
+    return (_totalSpent - widget.customer.totalDebt).clamp(0, double.infinity);
+  }
+
+  double get _totalDebt => (_totalSpent - _totalPaid).clamp(0, double.infinity);
+
+  String _buildPlainText() {
+    final c = widget.customer;
+    final sb = StringBuffer();
+    sb.writeln('========================================');
+    sb.writeln('       NTJ — NAMUNA TOSH JILO          ');
+    sb.writeln('      Tabiiy tosh va granit markazi     ');
+    sb.writeln('       Tel: +998 (90) 123-45-67        ');
+    sb.writeln('========================================');
+    sb.writeln('    MIJOZ HISOBOT CHEKI (AKT-SVERKA)    ');
+    sb.writeln('Mijoz: ${c.name}');
+    if (c.phone != null && c.phone!.isNotEmpty) sb.writeln('Tel: ${c.phone}');
+    if (c.passport != null && c.passport!.isNotEmpty) sb.writeln('Pasport: ${c.passport}');
+    sb.writeln('Hisobot sanasi: ${formatDateTime(DateTime.now())}');
+    sb.writeln('Jami savdolar soni: ${widget.sales.length} ta');
+    sb.writeln('----------------------------------------');
+    sb.writeln('XARID QILINGAN BARCHA TOVARLAR:');
+    sb.writeln('----------------------------------------');
+    for (final it in widget.items) {
+      sb.writeln('• ${it.productName}');
+      sb.writeln('  ${qty(it.totalQuantity)} ${it.unit} | Jami: ${money(it.totalAmount)}');
+    }
+    sb.writeln('----------------------------------------');
+    sb.writeln('SAVDOLAR VA CHEKLAR RO‘YXATI:');
+    sb.writeln('----------------------------------------');
+    for (final s in widget.sales) {
+      final dt = formatDateTime(s.createdAt ?? DateTime.now());
+      sb.writeln('Chek #${s.id} ($dt):');
+      sb.writeln('  Jami: ${money(s.total)} | To‘landi: ${money(s.paid)} | Nasiya: ${money(s.debt)}');
+    }
+    sb.writeln('========================================');
+    sb.writeln('MOLIYAVIY YAKUNIY BALANS:');
+    sb.writeln('  JAMI XARIDLAR:     ${money(_totalSpent)}');
+    sb.writeln('  JAMI TO‘LANGAN:    ${money(_totalPaid)}');
+    sb.writeln('  HOZIRGI NASIYA:    ${money(_totalDebt)}');
+    sb.writeln('========================================');
+    sb.writeln('Xaridingiz va hamkorligingiz uchun rahmat!');
+    return sb.toString();
+  }
+
+  Future<void> _printPdf(BuildContext context) async {
+    setState(() => _isPrinting = true);
+    try {
+      final doc = pw.Document();
+      final font = await PdfGoogleFonts.robotoRegular();
+      final fontBold = await PdfGoogleFonts.robotoBold();
+
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(24),
+          build: (pw.Context ctx) => [
+            pw.Center(
+              child: pw.Column(
                 children: [
-                  const Text('Mijoz profili', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                  const Spacer(),
+                  pw.Text('NTJ — NAMUNA TOSH JILO', style: pw.TextStyle(font: fontBold, fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 3),
+                  pw.Text('Tabiiy tosh va granit markazi • Tel: +998 (90) 123-45-67', style: pw.TextStyle(font: font, fontSize: 10)),
+                  pw.SizedBox(height: 6),
+                  pw.Text('MIJOZ SAVDOLARI VA TO‘LOVLAR HISOBOTI (AKT-SVERKA)', style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                  pw.Divider(thickness: 1),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Mijoz: ${widget.customer.name}', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                pw.Text('Sana: ${formatDateTime(DateTime.now())}', style: pw.TextStyle(font: font, fontSize: 10)),
+              ],
+            ),
+            if (widget.customer.phone != null && widget.customer.phone!.isNotEmpty)
+              pw.Text('Tel: ${widget.customer.phone}', style: pw.TextStyle(font: font, fontSize: 10)),
+            pw.SizedBox(height: 12),
+            pw.Text('1. Xarid qilingan barcha mahsulotlar:', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+            pw.SizedBox(height: 6),
+            pw.TableHelper.fromTextArray(
+              headers: ['№', 'Mahsulot / Xizmat', 'Miqdori', 'O‘rtacha narxi', 'Jami summa'],
+              data: [
+                for (var i = 0; i < widget.items.length; i++)
+                  [
+                    '${i + 1}',
+                    widget.items[i].productName,
+                    '${qty(widget.items[i].totalQuantity)} ${widget.items[i].unit}',
+                    money(widget.items[i].lastUnitPrice),
+                    money(widget.items[i].totalAmount),
+                  ],
+              ],
+              headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, fontWeight: pw.FontWeight.bold),
+              cellStyle: pw.TextStyle(font: font, fontSize: 8.5),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            ),
+            pw.SizedBox(height: 14),
+            pw.Text('2. Savdolar va cheklar tarixi:', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+            pw.SizedBox(height: 6),
+            pw.TableHelper.fromTextArray(
+              headers: ['Chek №', 'Sana', 'Jami summa', 'To‘langan', 'Nasiya / Qarz'],
+              data: [
+                for (final s in widget.sales)
+                  [
+                    '#${s.id}',
+                    formatDateTime(s.createdAt ?? DateTime.now()),
+                    money(s.total),
+                    money(s.paid),
+                    money(s.debt),
+                  ],
+              ],
+              headerStyle: pw.TextStyle(font: fontBold, fontSize: 9, fontWeight: pw.FontWeight.bold),
+              cellStyle: pw.TextStyle(font: font, fontSize: 8.5),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            ),
+            pw.SizedBox(height: 16),
+            pw.Divider(thickness: 1),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.end,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text('Jami xaridlar summasi: ${money(_totalSpent)}', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                    pw.Text('Jami to‘langan summa: ${money(_totalPaid)}', style: pw.TextStyle(font: font, fontSize: 10)),
+                    pw.Text('Hozirgi nasiya / qarz: ${money(_totalDebt)}', style: pw.TextStyle(font: fontBold, fontSize: 12, color: _totalDebt > 0 ? PdfColors.red : PdfColors.green)),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (format) async => doc.save(),
+        name: 'Mijoz_Hisoboti_${widget.customer.name.replaceAll(' ', '_')}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        showMessage(context, 'Chop etishda xatolik: $e', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isPrinting = false);
+    }
+  }
+
+  void _copyToClipboard() {
+    final text = _buildPlainText();
+    Clipboard.setData(ClipboardData(text: text));
+    showMessage(context, 'Hisobot nusxalandi! Telegram orqali mijozga yuborishingiz mumkin.');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.isDark;
+    final c = widget.customer;
+
+    return Dialog(
+      backgroundColor: context.cardColor,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 680),
+        child: Column(
+          children: [
+            // Sarlavha
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.receipt_long_rounded, color: AppColors.green, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Mijoz Akt-sverkasi • ${c.name}',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.inkColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close_rounded, size: 20),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+            ),
+            const Divider(height: 1),
 
-              // Rasm va Ism
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: (c.photoUrl != null && c.photoUrl!.isNotEmpty)
-                        ? () => showProductImagePreview(
-                              context,
-                              imageUrl: c.photoUrl,
-                              name: c.name,
-                              subtitle: 'Pasport: ${c.passport ?? 'Yo‘q'}',
-                            )
-                        : null,
-                    child: ProductThumbnail(
-                      imageUrl: c.photoUrl,
-                      name: c.name,
-                      size: 74,
-                      borderRadius: 18,
-                    ),
+            // Termal chek uslubidagi qog'oz varag'i
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF141C16) : const Color(0xFFFAFAFA),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          c.name,
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: context.inkColor),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(
+                        child: Text(
+                          'NTJ — NAMUNA TOSH JILO',
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5),
                         ),
-                        const SizedBox(height: 4),
-                        if (c.phone != null && c.phone!.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.phone, size: 14, color: AppColors.muted),
-                              const SizedBox(width: 6),
-                              Text(c.phone!, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
-                            ],
+                      ),
+                      const Center(
+                        child: Text(
+                          'Tabiiy tosh va granit markazi',
+                          style: TextStyle(fontSize: 10.5, color: AppColors.muted),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Center(
+                        child: Text(
+                          'MIJOZ SAVDOLAR HISOBOTI (AKT-SVERKA)',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '--------------------------------------------------',
+                        style: TextStyle(color: AppColors.muted, fontSize: 11),
+                        textAlign: TextAlign.center,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Mijoz: ${c.name}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                          Text(formatDateTime(DateTime.now()), style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+                        ],
+                      ),
+                      if (c.phone != null && c.phone!.isNotEmpty)
+                        Text('Tel: ${c.phone}', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+                      const Text(
+                        '--------------------------------------------------',
+                        style: TextStyle(color: AppColors.muted, fontSize: 11),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Tovarlar jadvali
+                      const Text('OLINGAN TOVARLAR XULOSASI:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+                      const SizedBox(height: 6),
+                      for (final it in widget.items) ...[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    it.productName,
+                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                                  ),
+                                  Text(
+                                    '${qty(it.totalQuantity)} ${it.unit} (~${money(it.lastUnitPrice)})',
+                                    style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              money(it.totalAmount),
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+
+                      const SizedBox(height: 6),
+                      const Text(
+                        '--------------------------------------------------',
+                        style: TextStyle(color: AppColors.muted, fontSize: 11),
+                        textAlign: TextAlign.center,
+                      ),
+                      const Text('SAVDOLAR (CHEKLAR) RO‘YXATI:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+                      const SizedBox(height: 6),
+                      for (final s in widget.sales) ...[
+                        Row(
+                          children: [
+                            Text('Chek #${s.id}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                formatDateTime(s.createdAt ?? DateTime.now()),
+                                style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                              ),
+                            ),
+                            Text(money(s.total), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8, bottom: 4),
+                          child: Text(
+                            'To‘landi: ${money(s.paid)}${s.debt > 0 ? ' • Nasiya: ${money(s.debt)}' : ''}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: s.debt > 0 ? AppColors.danger : AppColors.muted,
+                              fontWeight: s.debt > 0 ? FontWeight.w700 : FontWeight.normal,
+                            ),
                           ),
-                        if (c.passport != null && c.passport!.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.badge_outlined, size: 14, color: AppColors.muted),
-                              const SizedBox(width: 6),
-                              Text('Pasport: ${c.passport!}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            ],
+                        ),
+                      ],
+
+                      const Text(
+                        '==================================================',
+                        style: TextStyle(color: AppColors.muted, fontSize: 11),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Yakuniy moliyaviy hisobot
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('JAMI XARIDLAR:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          Text(money(_totalSpent), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('JAMI TO‘LANGAN:', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
+                          Text(money(_totalPaid), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'HOZIRGI NASIYA / QARZ:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              color: _totalDebt > 0 ? AppColors.danger : AppColors.green,
+                            ),
+                          ),
+                          Text(
+                            money(_totalDebt),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color: _totalDebt > 0 ? AppColors.danger : AppColors.green,
+                            ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Moliyaviy xulosa
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: context.isDark ? const Color(0xFF1E2822) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: context.borderColor),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        const Text('Jami xarid', style: TextStyle(fontSize: 11, color: AppColors.muted)),
-                        const SizedBox(height: 3),
-                        Text(money(c.totalSpent), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: context.inkColor)),
-                      ],
-                    ),
-                    Container(width: 1, height: 28, color: context.borderColor),
-                    Column(
-                      children: [
-                        const Text('Nasiya / Qarz', style: TextStyle(fontSize: 11, color: AppColors.muted)),
-                        const SizedBox(height: 3),
-                        Text(
-                          money(c.totalDebt),
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: hasDebt ? AppColors.danger : AppColors.green),
+                      ),
+                      const SizedBox(height: 12),
+                      const Center(
+                        child: Text(
+                          'Xaridingiz va hamkorligingiz uchun rahmat!',
+                          style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: AppColors.muted),
                         ),
-                      ],
-                    ),
-                    Container(width: 1, height: 28, color: context.borderColor),
-                    Column(
-                      children: [
-                        const Text('Savdolar soni', style: TextStyle(fontSize: 11, color: AppColors.muted)),
-                        const SizedBox(height: 3),
-                        Text('${c.salesCount} ta', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: context.inkColor)),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
 
-              // Harakat tugmalari
-              Row(
+            const Divider(height: 1),
+
+            // Tugmalar: Chop etish, Nusxalash, Yopish
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onEdit,
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('Tahrirlash'),
-                    ),
+                  OutlinedButton.icon(
+                    onPressed: _copyToClipboard,
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Telegramga nusxalash'),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Yopish'),
+                      onPressed: _isPrinting ? null : () => _printPdf(context),
+                      icon: _isPrinting
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.print_rounded, size: 16),
+                      label: Text(_isPrinting ? 'Tayyorlanmoqda...' : 'Chop etish (Print / PDF)'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
