@@ -367,10 +367,9 @@ void main() {
 
   test('Mahsulot standart kategoriyalari to‘g‘ri saqlanadi va filtrlanadi', () async {
     expect(standardProductCategories, containsAll([
-      'Granit',
+      'Marmar',
       'Kerama granit',
       'Kafel',
-      'Marmar',
       'Tayyor mahsulot',
       'Xomashyo',
       'Qo‘shimcha',

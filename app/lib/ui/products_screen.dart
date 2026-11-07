@@ -1519,7 +1519,7 @@ class _ProductDialogState extends State<ProductDialog> {
       donaM2: isTile
           ? calculatedDonaM2
           : (_unit == 'm2' ? (widget.product?.donaM2 ?? Units.stoneDonaM2) : null),
-      thickness: (_category?.trim().toLowerCase() == 'granit' && thick != null && thick > 0)
+      thickness: ((_category?.trim().toLowerCase() == 'marmar' || _category?.trim().toLowerCase() == 'granit') && thick != null && thick > 0)
           ? thick
           : null,
       tileLength: tLen,
@@ -2244,13 +2244,13 @@ class _ProductDialogState extends State<ProductDialog> {
                   ),
                 ),
               ],
-              if (_category != null && _category!.trim().toLowerCase() == 'granit') ...[
+              if (_category != null && (_category!.trim().toLowerCase() == 'marmar' || _category!.trim().toLowerCase() == 'granit')) ...[
                 const SizedBox(height: 12),
                 TextField(
                   controller: _thickness,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
-                    labelText: 'Granit qalinligi (sm)',
+                    labelText: 'Marmar qalinligi (sm)',
                     hintText: 'Masalan: 2.0 yoki 1.8',
                     prefixIcon: Icon(Icons.layers_outlined, size: 20),
                   ),

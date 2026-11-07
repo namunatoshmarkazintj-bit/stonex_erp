@@ -3183,7 +3183,7 @@ class _ProductPickerDialogState extends State<_ProductPickerDialog> {
     final isDark = context.isDark;
     final query = _searchCtrl.text.trim().toLowerCase();
 
-    final categories = ['Barchasi', 'Keramogranit', 'Kafel', 'Granit', 'Marmar', 'Travertin'];
+    final categories = ['Barchasi', 'Marmar', 'Keramogranit', 'Kafel', 'Travertin'];
 
     final filtered = widget.products.where((p) {
       if (!p.isCuttableStone) return false;
@@ -3191,14 +3191,12 @@ class _ProductPickerDialogState extends State<_ProductPickerDialog> {
         final cat = (p.category ?? '').toLowerCase();
         final name = p.name.toLowerCase();
         final filterLow = _categoryFilter.toLowerCase();
-        if (_categoryFilter == 'Keramogranit') {
+        if (_categoryFilter == 'Marmar') {
+          if (!cat.contains('marmar') && !name.contains('marmar') && !cat.contains('granit') && !name.contains('granit')) return false;
+        } else if (_categoryFilter == 'Keramogranit') {
           if (!cat.contains('keram') && !name.contains('keram')) return false;
         } else if (_categoryFilter == 'Kafel') {
           if (!cat.contains('kafel') && !name.contains('kafel')) return false;
-        } else if (_categoryFilter == 'Granit') {
-          if (!cat.contains('granit') && !name.contains('granit')) return false;
-        } else if (_categoryFilter == 'Marmar') {
-          if (!cat.contains('marmar') && !name.contains('marmar')) return false;
         } else if (_categoryFilter == 'Travertin') {
           if (!cat.contains('travertin') && !name.contains('travertin')) return false;
         } else {

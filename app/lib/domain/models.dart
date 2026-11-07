@@ -261,10 +261,9 @@ class SalaryReportItem {
 }
 
 const List<String> standardProductCategories = [
-  'Granit',
+  'Marmar',
   'Kerama granit',
   'Kafel',
-  'Marmar',
   'Tayyor mahsulot',
   'Xomashyo',
   'Qo‘shimcha',
@@ -578,7 +577,13 @@ class Product {
   factory Product.fromJson(Map<String, dynamic> j) => Product(
         id: (j['id'] as num?)?.toInt() ?? 0,
         name: (j['name'] ?? '').toString(),
-        category: j['category']?.toString(),
+        category: () {
+          final c = j['category']?.toString();
+          if (c != null && c.trim().toLowerCase() == 'granit') {
+            return 'Marmar';
+          }
+          return c;
+        }(),
         sku: (j['sku'] ?? '').toString(),
         qrCode: (j['qr_code'] ?? '').toString(),
         unit: (j['unit'] ?? 'm²').toString(),
