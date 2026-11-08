@@ -21,12 +21,11 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String username, String password, Role role) async {
+  Future<void> login(String username, String password, [Role? role]) async {
     loading = true;
     error = null;
     notifyListeners();
     try {
-      // Rolni tanlash hech narsa bermaydi: server haqiqiy akkaunt va rolni tekshiradi.
       user = await _repo.login(username, password, role);
     } catch (e) {
       error = e.toString();

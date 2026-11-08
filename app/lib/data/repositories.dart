@@ -2,7 +2,7 @@ import '../domain/models.dart';
 
 /// UI faqat shu interfeyslarga murojaat qiladi. Mock yoki API ekanini bilmaydi.
 abstract class AuthRepository {
-  Future<AppUser> login(String username, String password, Role role);
+  Future<AppUser> login(String username, String password, [Role? role]);
   Future<AppUser?> tryRestoreSession();
   Future<void> logout();
 }

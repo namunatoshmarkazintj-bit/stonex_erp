@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../core/config.dart';
 import '../core/theme.dart';
 import '../data/repository_factory.dart';
-import '../domain/models.dart';
 import '../state/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,11 +16,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final _user = TextEditingController(text: 'admin');
-  final _pass = TextEditingController(text: 'admin12345');
+  final _user = TextEditingController();
+  final _pass = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  Role _role = Role.admin;
   bool _hidePassword = true;
   bool _isSurging = false;
   late final AnimationController _animCtrl;
@@ -55,20 +53,11 @@ class _LoginScreenState extends State<LoginScreen>
     await context.read<AuthController>().login(
           _user.text.trim(),
           _pass.text,
-          _role,
         );
 
     if (mounted) {
       setState(() => _isSurging = false);
     }
-  }
-
-  void _fillDemo(String username, String pass, Role role) {
-    setState(() {
-      _user.text = username;
-      _pass.text = pass;
-      _role = role;
-    });
   }
 
   void _showServerDialog() {
@@ -383,39 +372,9 @@ class _LoginScreenState extends State<LoginScreen>
 
                 const SizedBox(height: 20),
 
-                // Rolni tanlash segment tugmalari
-                const Text(
-                  'Xodimlarning roli',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    color: Color(0xFFCBD5E1),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141A24),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildRoleButton(Role.admin, 'Admin', Icons.shield_rounded),
-                      _buildRoleButton(Role.kassir, 'Kassir', Icons.point_of_sale_rounded),
-                      _buildRoleButton(Role.ishBoshqaruvchi, 'Boshqaruvchi', Icons.engineering_rounded),
-                      _buildRoleButton(Role.ishchi, 'Ishchi', Icons.handyman_rounded),
-                      _buildRoleButton(Role.haydovchi, 'Haydovchi', Icons.local_shipping_rounded),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
                 // Login maydoni
                 const Text(
-                  'Foydalanuvchi nomi (Login)',
+                  'Foydalanuvchi nomi yoki Kod',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -429,7 +388,7 @@ class _LoginScreenState extends State<LoginScreen>
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFF141B26),
-                    hintText: 'admin, kassir yoki ishchi',
+                    hintText: 'Login yoki kodingizni kiriting',
                     hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     prefixIcon: const Icon(Icons.person_outline_rounded, size: 19, color: Color(0xFF94A3B8)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -443,14 +402,14 @@ class _LoginScreenState extends State<LoginScreen>
                       borderSide: const BorderSide(color: AppColors.neonLime, width: 1.5),
                     ),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Loginni kiriting' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Login yoki kodni kiriting' : null,
                 ),
 
                 const SizedBox(height: 16),
 
                 // Parol maydoni
                 const Text(
-                  'Maxfiy parol',
+                  'Maxfiy parol / Kod',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -466,7 +425,7 @@ class _LoginScreenState extends State<LoginScreen>
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFF141B26),
-                    hintText: '••••••••',
+                    hintText: 'Parol yoki kodni kiriting',
                     hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     prefixIcon: const Icon(Icons.lock_outline_rounded, size: 19, color: Color(0xFF94A3B8)),
                     suffixIcon: IconButton(
@@ -557,34 +516,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
 
-                const SizedBox(height: 20),
-                const Divider(color: Color(0xFF1E2838), height: 1),
-                const SizedBox(height: 14),
-
-                // Tezkor Demo Hisoblar
-                const Text(
-                  'TEZKOR DEMO HISOB BILAN KIRISH:',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF94A3B8),
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildDemoChip('Admin', 'admin', 'admin12345', Role.admin, AppColors.neonLime, Icons.shield_rounded),
-                    _buildDemoChip('Kassir', 'kassir', 'kassir123', Role.kassir, const Color(0xFF38BDF8), Icons.point_of_sale_rounded),
-                    _buildDemoChip('Boshqaruvchi', 'boshqaruvchi', 'boshqaruvchi123', Role.ishBoshqaruvchi, const Color(0xFF34D399), Icons.engineering_rounded),
-                    _buildDemoChip('Ishchi', 'ishchi', 'ishchi123', Role.ishchi, const Color(0xFFFBBF24), Icons.handyman_rounded),
-                    _buildDemoChip('Haydovchi', 'haydovchi', 'haydovchi123', Role.haydovchi, const Color(0xFF0284C7), Icons.local_shipping_rounded),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
+                const SizedBox(height: 24),
 
                 // Server manzili indikatori
                 Center(
@@ -634,62 +566,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildRoleButton(Role role, String label, IconData icon) {
-    final isSelected = _role == role;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _role = role),
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.neonLime : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected ? const Color(0xFF090D14) : const Color(0xFF94A3B8),
-              ),
-              const SizedBox(width: 3.5),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected ? const Color(0xFF090D14) : const Color(0xFFCBD5E1),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDemoChip(String label, String username, String pass, Role role, Color accent, IconData icon) {
-    return ActionChip(
-      backgroundColor: const Color(0xFF141C28),
-      side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-      avatar: Icon(icon, size: 14, color: accent),
-      label: Text(
-        label,
-        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onPressed: () => _fillDemo(username, pass, role),
     );
   }
 }

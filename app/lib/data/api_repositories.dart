@@ -11,9 +11,13 @@ class ApiAuthRepository implements AuthRepository {
   final ApiClient _api;
 
   @override
-  Future<AppUser> login(String username, String password, Role role) async {
-    final j = await _api.post('/auth/login',
-        body: {'username': username, 'password': password, 'role': role.code});
+  Future<AppUser> login(String username, String password, [Role? role]) async {
+    final body = <String, dynamic>{
+      'username': username,
+      'password': password,
+    };
+    if (role != null) body['role'] = role.code;
+    final j = await _api.post('/auth/login', body: body);
     final token = j['access_token'] as String;
     _api.token = token;
     final user = AppUser.fromJson(j['user'] as Map<String, dynamic>);

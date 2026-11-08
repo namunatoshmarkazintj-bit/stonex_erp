@@ -578,7 +578,7 @@ class MockAuthRepository implements AuthRepository {
   final MockStore _s;
 
   @override
-  Future<AppUser> login(String username, String password, Role role) async {
+  Future<AppUser> login(String username, String password, [Role? role]) async {
     final rec = _s.users[username.trim()];
     if (rec == null) throw ApiException('Login yoki parol noto‘g‘ri', 401);
     if (!rec.user.canLogin) {
@@ -587,7 +587,7 @@ class MockAuthRepository implements AuthRepository {
     final isMatch = rec.password == password ||
         (username.trim() == 'admin' && (password == 'admin12345' || password == 'admin123'));
     if (!isMatch) throw ApiException('Login yoki parol noto‘g‘ri', 401);
-    if (rec.user.role != role) throw ApiException('Bu akkaunt tanlangan rol uchun emas', 403);
+    if (role != null && rec.user.role != role) throw ApiException('Bu akkaunt tanlangan rol uchun emas', 403);
     return rec.user;
   }
 
