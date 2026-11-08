@@ -57,6 +57,21 @@ def summary(
     expenses = _sum(db, m.Expense.amount, m.Expense.type == "expense", *rng(m.Expense.created_at))
     receivables = _sum(db, m.Sale.total - m.Sale.paid)  # umumiy, davrga bog'liq emas
     gross = revenue - cogs
+
+    # Ombordagi tovarlar qiymati (sotuv narxida va tannarxda)
+    from ..services.stock import stock_map
+    stocks = stock_map(db)
+    products = db.scalars(select(m.Product).where(m.Product.is_active.is_(True))).all()
+    stock_value = Decimal(0)
+    stock_cost_value = Decimal(0)
+    for p in products:
+        if p.category and p.category.lower() == "xizmat":
+            continue
+        stk = stocks.get(p.id, Decimal(0))
+        if stk > 0:
+            stock_value += (p.price or Decimal(0)) * stk
+            stock_cost_value += (p.cost_price or Decimal(0)) * stk
+
     return FinanceSummary(
         revenue=revenue,
         cash_collected=cash,
@@ -65,6 +80,8 @@ def summary(
         expenses=expenses,
         net_profit=gross - expenses,
         receivables=receivables,
+        stock_value=q2(stock_value),
+        stock_cost_value=q2(stock_cost_value),
     )
 
 

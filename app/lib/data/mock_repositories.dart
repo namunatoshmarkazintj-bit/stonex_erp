@@ -692,6 +692,17 @@ class MockFinanceRepository implements FinanceRepository {
     final paid = _s.sales.fold<double>(0, (a, e) => a + e.result.paid);
     final receivables = _s.sales.fold<double>(0, (a, e) => a + e.result.debt);
     final exp = _s.financeTransactions.where((t) => t.isExpense).fold<double>(0, (a, e) => a + e.amount);
+
+    var stockVal = 0.0;
+    var stockCostVal = 0.0;
+    for (final p in _s.products) {
+      if (p.isService) continue;
+      if (p.stock > 0) {
+        stockVal += p.stock * p.price;
+        stockCostVal += p.stock * p.costPrice;
+      }
+    }
+
     return FinanceSummary(
       revenue: revenue,
       cashCollected: paid,
@@ -700,6 +711,8 @@ class MockFinanceRepository implements FinanceRepository {
       expenses: exp,
       netProfit: revenue - cogs - exp,
       receivables: receivables,
+      stockValue: stockVal,
+      stockCostValue: stockCostVal,
     );
   }
 

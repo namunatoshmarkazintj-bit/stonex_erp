@@ -1250,7 +1250,10 @@ class FinanceSummary {
       grossProfit,
       expenses,
       netProfit,
-      receivables;
+      receivables,
+      stockValue,
+      stockCostValue;
+
   const FinanceSummary({
     required this.revenue,
     required this.cashCollected,
@@ -1259,6 +1262,8 @@ class FinanceSummary {
     required this.expenses,
     required this.netProfit,
     required this.receivables,
+    this.stockValue = 0,
+    this.stockCostValue = 0,
   });
 
   factory FinanceSummary.fromJson(Map<String, dynamic> j) => FinanceSummary(
@@ -1269,6 +1274,8 @@ class FinanceSummary {
         expenses: parseNum(j['expenses']),
         netProfit: parseNum(j['net_profit']),
         receivables: parseNum(j['receivables']),
+        stockValue: parseNum(j['stock_value']),
+        stockCostValue: parseNum(j['stock_cost_value']),
       );
 }
 

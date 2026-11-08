@@ -464,6 +464,8 @@ class FinanceSummary(BaseModel):
     expenses: Decimal
     net_profit: Decimal
     receivables: Decimal  # umumiy qarzdorlik (nasiya)
+    stock_value: Decimal = Decimal(0)  # ombordagi tovarlar qiymati (sotuv narxida)
+    stock_cost_value: Decimal = Decimal(0)  # ombordagi tovarlar qiymati (tannarxda)
 
 
 # ---------- notifications ----------

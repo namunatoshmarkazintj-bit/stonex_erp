@@ -507,13 +507,16 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
   Widget _buildKpiGrid(BuildContext context, bool isDark) {
     final s = _summary!;
+    final potentialMargin = s.stockValue - s.stockCostValue;
+    final marginPct = s.stockValue > 0 ? (potentialMargin / s.stockValue * 100).toStringAsFixed(1) : '0';
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 900;
-        final isPhone = constraints.maxWidth < 480;
-        final cardWidth = isPhone
-            ? constraints.maxWidth
-            : (isWide ? (constraints.maxWidth - 36) / 4 : (constraints.maxWidth - 12) / 2);
+        final isWide = constraints.maxWidth >= 960;
+        final isMedium = constraints.maxWidth >= 600 && constraints.maxWidth < 960;
+        final cardWidth = isWide
+            ? (constraints.maxWidth - 24) / 3
+            : (isMedium ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth);
 
         final items = [
           _KpiData(
@@ -543,6 +546,20 @@ class _FinanceScreenState extends State<FinanceScreen> {
             subtitle: 'Mijozlardan kutilayotgan qarzlar',
             icon: Icons.pending_actions_rounded,
             color: const Color(0xFFF59E0B),
+          ),
+          _KpiData(
+            title: 'Ombor (Sotuv narxida)',
+            value: money(s.stockValue),
+            subtitle: 'Ombordagi tovarlar sotuv qiymati',
+            icon: Icons.storefront_rounded,
+            color: isDark ? AppColors.neonLime : const Color(0xFF10B981),
+          ),
+          _KpiData(
+            title: 'Ombor (Tannarxda)',
+            value: money(s.stockCostValue),
+            subtitle: 'Kutilayotgan marja: +${money(potentialMargin)} ($marginPct%)',
+            icon: Icons.warehouse_rounded,
+            color: const Color(0xFF0284C7),
           ),
         ];
 
@@ -838,6 +855,225 @@ class _FinanceScreenState extends State<FinanceScreen> {
                         card2,
                         const SizedBox(width: 12),
                         card3,
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+
+        // Ombordagi tovarlar qiymati va zaxira balansi (Sotuv narxida va Tannarxda)
+        if (_summary != null) ...[
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: context.cardColor,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: context.borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF10B981), size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ombordagi tovarlar qiymati va aylanma zaxira',
+                            style: TextStyle(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w800,
+                              color: context.inkColor,
+                            ),
+                          ),
+                          Text(
+                            'Sotuv narxi va tannarx asosidagi tovarlar balansi',
+                            style: TextStyle(fontSize: 12, color: context.mutedColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 680;
+                    final s = _summary!;
+                    final potentialMargin = s.stockValue - s.stockCostValue;
+                    final marginPct = s.stockValue > 0
+                        ? (potentialMargin / s.stockValue * 100).toStringAsFixed(1)
+                        : '0';
+
+                    final item1 = Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF151C26) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF10B981),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Sotuv narxidagi qiymat',
+                                style: TextStyle(fontSize: 12, color: context.mutedColor, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            money(s.stockValue),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? AppColors.neonLime : const Color(0xFF10B981),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Omborda mavjud tovarlar sotuv qiymati',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    final item2 = Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF151C26) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF0284C7),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Tannarx asosidagi qiymat',
+                                style: TextStyle(fontSize: 12, color: context.mutedColor, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            money(s.stockCostValue),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF0284C7),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Tovarlar uchun sarflangan tannarx',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    final item3 = Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF151C26) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFF59E0B),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Kutilayotgan yalpi marja',
+                                style: TextStyle(fontSize: 12, color: context.mutedColor, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '+${money(potentialMargin)}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'O‘rtacha rentabellik: $marginPct%',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFFF59E0B), fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          item1,
+                          const SizedBox(height: 10),
+                          item2,
+                          const SizedBox(height: 10),
+                          item3,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: item1),
+                        const SizedBox(width: 12),
+                        Expanded(child: item2),
+                        const SizedBox(width: 12),
+                        Expanded(child: item3),
                       ],
                     );
                   },
