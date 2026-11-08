@@ -66,18 +66,6 @@ class MockStore {
         salaryType: 'monthly',
       ),
     ),
-    'ishchi': (
-      password: 'ishchi123',
-      user: const AppUser(
-        id: 3,
-        username: 'ishchi',
-        fullName: 'Ishchi Bobur',
-        role: Role.ishchi,
-        salary: 5200000,
-        salaryType: 'monthly',
-        canLogin: true,
-      ),
-    ),
     'haydovchi': (
       password: 'haydovchi123',
       user: const AppUser(
@@ -102,44 +90,9 @@ class MockStore {
         canLogin: true,
       ),
     ),
-    'worker_4': (
-      password: '',
-      user: const AppUser(
-        id: 4,
-        username: 'worker_4',
-        fullName: 'Rustam Toshkesar',
-        role: Role.ishchi,
-        salary: 200000,
-        salaryType: 'daily',
-        canLogin: false,
-      ),
-    ),
   };
 
-  final List<AttendanceRecord> attendances = [
-    AttendanceRecord(
-      id: 1,
-      userId: 2,
-      userName: 'Kassir Aziz',
-      date: '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
-      checkIn: DateTime.now().copyWith(hour: 8, minute: 45),
-      checkOut: null,
-      workedHours: 0,
-      status: 'present',
-      note: 'Vaqtida keldi',
-    ),
-    AttendanceRecord(
-      id: 2,
-      userId: 3,
-      userName: 'Ishchi Bobur',
-      date: '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
-      checkIn: DateTime.now().copyWith(hour: 9, minute: 25),
-      checkOut: null,
-      workedHours: 0,
-      status: 'late',
-      note: 'Tirbandlik sababli 10 daqiqa kechikdi',
-    ),
-  ];
+  final List<AttendanceRecord> attendances = [];
 
   final List<MockSaleEntry> sales = [];
 
@@ -151,15 +104,6 @@ class MockStore {
     StockMovementRecord(id: 2, productId: 2, productName: 'Miramir', qtyDelta: 150, kind: 'opening', note: 'Boshlang‘ich qoldiq', createdAt: DateTime.now().subtract(const Duration(days: 10))),
   ];
   final List<AppNotification> notifications = [];
-    AppNotification(
-      id: 4,
-      title: 'Ishlab chiqarish topshirig‘i',
-      message: 'Ishchi Bobur 50 m² Angola toshini qayta ishlashni yakunladi.',
-      kind: 'production',
-      isRead: true,
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-  ];
 
   int nextDeliveryId = 10;
   final List<Delivery> deliveries = [

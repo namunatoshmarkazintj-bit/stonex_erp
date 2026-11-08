@@ -43,6 +43,14 @@ def clean_database():
             except Exception as ex:
                 print(f"notifications xatolik: {ex}")
 
+            # Ishchilar va davomatni tozalash (admin saqlanadi)
+            try:
+                conn.execute(text("DELETE FROM attendance;"))
+                res = conn.execute(text("DELETE FROM users WHERE role = 'ishchi' OR username = 'zoyirjon';"))
+                print(f"Tozalandi [ishchilar]: {res.rowcount} ta qator")
+            except Exception as ex:
+                print(f"ishchilar xatolik: {ex}")
+
             if "mysql" in str(engine.url):
                 conn.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
             elif "sqlite" in str(engine.url):

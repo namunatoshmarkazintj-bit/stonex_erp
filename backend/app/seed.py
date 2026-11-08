@@ -43,10 +43,10 @@ def main() -> None:
             db.add(m.User(username="kassir", full_name="Kassir Aziz",
                           role=roles.CASHIER, password_hash=hash_password("kassir123")))
             print("Kassir yaratildi: kassir")
-        if not db.scalar(select(m.User).where(m.User.username == "ishchi")):
-            db.add(m.User(username="ishchi", full_name="Ishchi Bobur",
-                          role=roles.WORKER, password_hash=hash_password("ishchi123")))
-            print("Ishchi yaratildi: ishchi")
+        # if not db.scalar(select(m.User).where(m.User.username == "ishchi")):
+        #     db.add(m.User(username="ishchi", full_name="Ishchi Bobur",
+        #                   role=roles.WORKER, password_hash=hash_password("ishchi123")))
+        #     print("Ishchi yaratildi: ishchi")
         if not db.scalar(select(m.User).where(m.User.username == "haydovchi")):
             db.add(m.User(username="haydovchi", full_name="Farhod Haydovchi",
                           role=roles.DRIVER, password_hash=hash_password("haydovchi123")))
@@ -100,44 +100,8 @@ def seed_ntm_dataset(db) -> None:
         print(f"ntm_data.json o'qishda xatolik: {e}")
         return
 
-    # 1. Xodimlar (employees)
-    used_usernames = set(db.scalars(select(m.User.username)).all())
-    for idx, emp in enumerate(data.get("employees", [])):
-        full_name = (emp.get("name") or "").strip()
-        if not full_name:
-            continue
-        role = emp.get("role", roles.WORKER)
-        if role not in roles.ALL_ROLES:
-            role = roles.WORKER
-        salary = Decimal(str(emp.get("salary", 0)))
-        phone = (emp.get("phone") or "").strip()
-        parts = full_name.lower().split()
-        cand_user = re.sub(r"[^a-z0-9]", "", parts[-1] if len(parts) > 1 else parts[0])
-        if not cand_user:
-            cand_user = f"user_{phone[-4:] if len(phone) >= 4 else idx + 1}"
-        if cand_user in used_usernames:
-            cand_user = f"{cand_user}_{idx + 1}"
-        used_usernames.add(cand_user)
-
-        existing = db.scalar(select(m.User).where((m.User.username == cand_user) | (m.User.full_name == full_name)))
-        if not existing:
-            pwd = f"{cand_user}123" if len(cand_user) >= 4 else "123456"
-            try:
-                with db.begin_nested():
-                    db.add(m.User(
-                        username=cand_user,
-                        full_name=full_name,
-                        role=role,
-                        salary=salary,
-                        salary_type="monthly",
-                        password_hash=hash_password(pwd),
-                        is_active=True,
-                        can_login=True,
-                    ))
-                    db.flush()
-                print(f"NTM xodim yaratildi: {full_name} ({cand_user})")
-            except Exception as e:
-                print(f"Xodim kiritishda xatolik ({full_name}): {e}")
+    # 1. Xodimlar (employees) - Foydalanuvchi so'roviga binoan ishchilar o'chirilgan, qayta qo'shilmaydi
+    # used_usernames = set(db.scalars(select(m.User.username)).all())
 
     # 2. Mahsulotlar (products)
     used_skus = set(db.scalars(select(m.Product.sku).where(m.Product.sku.isnot(None))).all())

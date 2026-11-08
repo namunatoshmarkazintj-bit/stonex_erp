@@ -119,3 +119,81 @@ def toggle_user_shift(
     db.commit()
     db.refresh(u)
     return u
+
+
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_roles(roles.ADMIN)),
+):
+    if user_id == admin.id:
+        raise HTTPException(400, "O'zingizni o'chira olmaysiz")
+    u = db.get(User, user_id)
+    if u is None:
+        raise HTTPException(404, "Foydalanuvchi topilmadi")
+
+    from ..models import Attendance, StockMovement, ProductionTask, Delivery
+    # Clean up attendance
+    db.query(Attendance).filter(Attendance.user_id == user_id).delete(synchronize_session=False)
+    # Detach from stock movements
+    db.query(StockMovement).filter(StockMovement.created_by == user_id).update({StockMovement.created_by: None}, synchronize_session=False)
+    # Detach from deliveries
+    db.query(Delivery).filter(Delivery.driver_id == user_id).update({Delivery.driver_id: None}, synchronize_session=False)
+
+    db.delete(u)
+    db.commit()
+    return {"status": "ok", "message": f"{u.full_name} ({u.username}) muvaffaqiyatli o'chirildi"}
+
+
+@router.post("/reset-workers")
+def reset_workers(
+    delete_all_non_admin: bool = False,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_roles(roles.ADMIN)),
+):
+    """Ishchilarni (yoki barcha admin bo'lmagan xodimlarni) o'chirish."""
+    from sqlalchemy import text
+    from ..models import Attendance, StockMovement, Delivery
+
+    try:
+        bind = db.get_bind()
+        dialect = bind.dialect.name
+        if dialect == "sqlite":
+            db.execute(text("PRAGMA foreign_keys = OFF;"))
+        elif dialect == "mysql":
+            db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+
+        # Null out references
+        db.query(StockMovement).update({StockMovement.created_by: None}, synchronize_session=False)
+        db.query(Delivery).update({Delivery.driver_id: None}, synchronize_session=False)
+
+        if delete_all_non_admin:
+            db.query(Attendance).delete(synchronize_session=False)
+            to_delete = db.query(User).filter(User.id != admin.id).all()
+        else:
+            # Delete role == 'ishchi' + any imported workers
+            workers = db.query(User).filter((User.role == roles.WORKER) | (User.username.in_(["zoyirjon"]))).all()
+            w_ids = [w.id for w in workers]
+            if w_ids:
+                db.query(Attendance).filter(Attendance.user_id.in_(w_ids)).delete(synchronize_session=False)
+            to_delete = workers
+
+        deleted_names = [f"{u.full_name} ({u.role})" for u in to_delete]
+        for u in to_delete:
+            db.delete(u)
+
+        if dialect == "sqlite":
+            db.execute(text("PRAGMA foreign_keys = ON;"))
+        elif dialect == "mysql":
+            db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+
+        db.commit()
+        return {
+            "status": "ok",
+            "deleted_count": len(to_delete),
+            "deleted_users": deleted_names,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Ishchilarni o'chirishda xatolik: {e}")
