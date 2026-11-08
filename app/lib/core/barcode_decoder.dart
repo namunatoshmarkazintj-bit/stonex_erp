@@ -264,12 +264,24 @@ class BarcodeDecoder {
   static String? _decodeScanline(List<int> lum) {
     if (lum.length < 50) return null;
 
-    // 1. Standart chegara bilan tekshirish (delta = 6)
-    var res = _decodeScanlineWithDelta(lum, 6);
+    // 0. Chiziq kontrasti (Dynamic range) tekshiruvi:
+    // Real shtrix kod oq fonda qora chiziqlardan iborat (kontrast kamida 70 bo'lishi shart).
+    // Havo, devor, stol, pol yoki soyaning kontrasti past bo'ladi (10-40) va ular darhol chetlatiladi.
+    var minLum = 255;
+    var maxLum = 0;
+    for (var i = 0; i < lum.length; i++) {
+      final v = lum[i];
+      if (v < minLum) minLum = v;
+      if (v > maxLum) maxLum = v;
+    }
+    if (maxLum - minLum < 70) return null;
+
+    // 1. Standart chegara bilan tekshirish (delta = 16)
+    var res = _decodeScanlineWithDelta(lum, 16);
     if (res != null) return res;
 
-    // 2. Kuchliroq chegara bilan tekshirish (delta = 12) - yaltiroq yoki yarim qorong'i holatlar uchun
-    res = _decodeScanlineWithDelta(lum, 12);
+    // 2. Kuchliroq chegara bilan tekshirish (delta = 24)
+    res = _decodeScanlineWithDelta(lum, 24);
     if (res != null) return res;
 
     return null;
@@ -344,30 +356,38 @@ class BarcodeDecoder {
     return runs;
   }
 
-  /// EAN-13 dekoderi
+  /// EAN-13 dekoderi (Qat'iy Quiet-zone va modul tekshiruvi bilan)
   static String? _decodeEan13Runs(List<int> runs) {
     final totalRuns = runs.length;
-    // EAN-13 tarkibi: 3 (start) + 24 (6 chap raqam) + 5 (o'rta) + 24 (6 o'ng raqam) + 3 (stop) = 59 runs
-    if (totalRuns < 59) return null;
+    // EAN-13 tarkibi: oq_hoshiya (1) + 3 (start) + 24 (6 chap raqam) + 5 (o'rta) + 24 (6 o'ng raqam) + 3 (stop) + oq_hoshiya (1) = 61 runs
+    if (totalRuns < 61) return null;
 
-    for (var i = 0; i <= totalRuns - 59; i++) {
+    for (var i = 1; i <= totalRuns - 60; i++) {
+      // 0. Chap tomondagi oq hoshiya (Quiet zone)
+      final prevQuiet = runs[i - 1];
+
       // 1. Start Guard (Qora - Oq - Qora: 1-1-1)
       final w1 = runs[i];
       final w2 = runs[i + 1];
       final w3 = runs[i + 2];
       final avgW = (w1 + w2 + w3) / 3.0;
-      if (avgW < 0.6) continue;
+      if (avgW < 1.0) continue;
 
-      if ((w1 - avgW).abs() > avgW * 0.85 ||
-          (w2 - avgW).abs() > avgW * 0.85 ||
-          (w3 - avgW).abs() > avgW * 0.85) {
+      // Start guard nisbati qat'iy tekshiriladi (45% dan ortiq og'ish bo'lmasligi kerak)
+      if ((w1 - avgW).abs() > avgW * 0.45 ||
+          (w2 - avgW).abs() > avgW * 0.45 ||
+          (w3 - avgW).abs() > avgW * 0.45) {
         continue;
       }
+
+      // Chap oq hoshiya kamida 4.5 ta modul kenglikda bo'lishi shart
+      if (prevQuiet < avgW * 4.5) continue;
 
       var idx = i + 3;
       final leftDigits = <int>[];
       final leftTypes = <String>[];
       var ok = true;
+      var adjustedCount = 0;
 
       // 6 ta chap raqam
       for (var d = 0; d < 6; d++) {
@@ -383,15 +403,30 @@ class BarcodeDecoder {
           break;
         }
 
+        // 4 ta run ning umumiy kengligi taxminan 7 * avgW bo'lishi shart
+        if ((tot - 7.0 * avgW).abs() > 2.5 * avgW) {
+          ok = false;
+          break;
+        }
+
         var n1 = (r[0] * 7.0 / tot).round().clamp(1, 4);
         var n2 = (r[1] * 7.0 / tot).round().clamp(1, 4);
         var n3 = (r[2] * 7.0 / tot).round().clamp(1, 4);
         var n4 = (r[3] * 7.0 / tot).round().clamp(1, 4);
         var sumN = n1 + n2 + n3 + n4;
 
+        if ((sumN - 7).abs() > 1) {
+          ok = false;
+          break;
+        }
+
         if (sumN != 7) {
+          adjustedCount++;
+          if (adjustedCount > 2) {
+            ok = false;
+            break;
+          }
           final diff = 7 - sumN;
-          // Eng katta run-lengthga farqni qo'shamiz
           var maxIdx = 0;
           var maxVal = r[0];
           for (var k = 1; k < 4; k++) {
@@ -425,7 +460,7 @@ class BarcodeDecoder {
       final cRuns = [runs[idx], runs[idx + 1], runs[idx + 2], runs[idx + 3], runs[idx + 4]];
       idx += 5;
       final cAvg = (cRuns[0] + cRuns[1] + cRuns[2] + cRuns[3] + cRuns[4]) / 5.0;
-      if (cRuns.any((x) => (x - cAvg).abs() > cAvg * 0.9)) continue;
+      if (cRuns.any((x) => (x - cAvg).abs() > cAvg * 0.45)) continue;
 
       // 3. 6 ta o'ng raqam (faqat R-code)
       final rightDigits = <int>[];
@@ -442,13 +477,28 @@ class BarcodeDecoder {
           break;
         }
 
+        if ((tot - 7.0 * avgW).abs() > 2.5 * avgW) {
+          ok = false;
+          break;
+        }
+
         var n1 = (r[0] * 7.0 / tot).round().clamp(1, 4);
         var n2 = (r[1] * 7.0 / tot).round().clamp(1, 4);
         var n3 = (r[2] * 7.0 / tot).round().clamp(1, 4);
         var n4 = (r[3] * 7.0 / tot).round().clamp(1, 4);
         var sumN = n1 + n2 + n3 + n4;
 
+        if ((sumN - 7).abs() > 1) {
+          ok = false;
+          break;
+        }
+
         if (sumN != 7) {
+          adjustedCount++;
+          if (adjustedCount > 2) {
+            ok = false;
+            break;
+          }
           final diff = 7 - sumN;
           var maxIdx = 0;
           var maxVal = r[0];
@@ -474,12 +524,26 @@ class BarcodeDecoder {
       }
       if (!ok || rightDigits.length != 6) continue;
 
-      // 4. Birinchi raqamni aniqlash
+      // 4. Stop Guard (Qora - Oq - Qora: 1-1-1)
+      if (idx + 3 > runs.length) continue;
+      final sw1 = runs[idx];
+      final sw2 = runs[idx + 1];
+      final sw3 = runs[idx + 2];
+      final sAvg = (sw1 + sw2 + sw3) / 3.0;
+      if ((sw1 - sAvg).abs() > sAvg * 0.45 ||
+          (sw2 - sAvg).abs() > sAvg * 0.45 ||
+          (sw3 - sAvg).abs() > sAvg * 0.45) {
+        continue;
+      }
+      // O'ng oq hoshiya (Quiet zone) kamida 4.0 ta modul kenglikda bo'lishi shart
+      if (idx + 3 < runs.length && runs[idx + 3] < sAvg * 4.0) continue;
+
+      // 5. Birinchi raqamni aniqlash
       final patStr = leftTypes.join();
       final firstDigit = _firstPatterns.indexOf(patStr);
       if (firstDigit < 0) continue;
 
-      // 5. 13 xonali kodni yig'ish va nazorat raqamini (Checksum) tekshirish
+      // 6. 13 xonali kodni yig'ish va nazorat raqamini (Checksum) tekshirish
       final code = '$firstDigit${leftDigits.join()}${rightDigits.join()}';
       if (_verifyEan13Checksum(code)) {
         return code;

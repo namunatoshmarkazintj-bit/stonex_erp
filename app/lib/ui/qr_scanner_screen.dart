@@ -171,6 +171,9 @@ class _QrScannerScreenState extends State<QrScannerScreen>
 
   String? _currentLockedCode;
   int _emptyFramesCount = 0;
+  String? _candidateCode;
+  int _candidateCount = 0;
+  int _lastCandidateTime = 0;
 
   Product? _lastProduct;
   double _lastQty = 1.0;
@@ -308,6 +311,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           _emptyFramesCount++;
           if (_emptyFramesCount >= 3) {
             _currentLockedCode = null;
+            _candidateCode = null;
+            _candidateCount = 0;
           }
         }
       }
@@ -366,6 +371,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           _emptyFramesCount++;
           if (_emptyFramesCount >= 2) {
             _currentLockedCode = null;
+            _candidateCode = null;
+            _candidateCount = 0;
           }
         }
       } catch (_) {
@@ -383,6 +390,26 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     if (_currentLockedCode == code) {
       return;
     }
+
+    // 1D shtrix-kodlar (raqamli kodlar) uchun dubl-kadr tasdig'i:
+    // Bu shovqin, havo, pol yoki soyani tasodifan shtrix-kod deb o'qib ketishini 100% yo'qotadi
+    final is1DBarcode = RegExp(r'^\d{8,14}$').hasMatch(code);
+    if (is1DBarcode) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      if (_candidateCode == code && (now - _lastCandidateTime) < 500) {
+        _candidateCount++;
+        if (_candidateCount < 2) {
+          return; // Ikkinchi kadr tasdig'ini kutamiz
+        }
+      } else {
+        _candidateCode = code;
+        _candidateCount = 1;
+        _lastCandidateTime = now;
+        return; // Keyingi kadrda ham xuddi shu kod chiqishini kutamiz
+      }
+    }
+    _candidateCode = null;
+    _candidateCount = 0;
 
     // Agar mahsulot qo'shish/tahrirlash yoki boshqa joydan faqat kodni skanerlash uchun chaqirilgan bo'lsa:
     if (widget.onScanResult != null) {
