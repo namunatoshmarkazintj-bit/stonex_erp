@@ -1492,52 +1492,6 @@ class _VaultSidebar extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // Status / Pro Karta
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E2125),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2B3037)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.neonLime,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.workspace_premium_rounded,
-                      color: AppColors.ink, size: 17),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'NTM PRO',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        'Tizim barqaror faol',
-                        style:
-                            TextStyle(color: Color(0xFF8E959E), fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
           // Foydalanuvchi profili qatori
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
