@@ -634,23 +634,23 @@ class _DebtsKpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: context.cardBg,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.borderColor),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 19),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -658,16 +658,18 @@ class _DebtsKpiCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(fontSize: 11, color: context.subtextColor, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 10.5, color: context.subtextColor, fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: context.inkColor),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: context.inkColor),
+                  ),
                 ),
               ],
             ),
@@ -936,24 +938,48 @@ class _CustomerDebtGroupCardState extends State<_CustomerDebtGroupCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   money(totalDebt),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFFEF4444)),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFEF4444)),
                 ),
               ],
             ),
-            subtitle: Row(
-              children: [
-                Text(
-                  '${phone ?? 'Tel yo‘q'} · ${widget.sales.length} ta chek',
-                  style: TextStyle(fontSize: 12, color: context.subtextColor),
-                ),
-                const Spacer(),
-                Text(
-                  'Jami xarid: ${money(totalSum)}',
-                  style: TextStyle(fontSize: 11, color: context.subtextColor),
-                ),
-              ],
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    phone != null && phone.isNotEmpty ? phone : 'Telefon raqamsiz',
+                    style: TextStyle(fontSize: 12, color: context.subtextColor, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        '${widget.sales.length} ta chek',
+                        style: TextStyle(fontSize: 11, color: context.subtextColor),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '•',
+                        style: TextStyle(fontSize: 11, color: context.subtextColor),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Jami xarid: ${money(totalSum)}',
+                          style: TextStyle(fontSize: 11, color: context.subtextColor),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             trailing: Icon(
               _expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,

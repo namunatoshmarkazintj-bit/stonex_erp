@@ -2515,171 +2515,192 @@ class _UsersScreenState extends State<UsersScreen> {
           ),
           const SizedBox(height: 12),
 
-          // 2-Qator: Tartibli va bosiq ko'rsatkichlar paneli (4 ta ustun)
+          // 2-Qator: Tartibli ko'rsatkichlar paneli (2x2 qulay katakcha)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: context.pillColor,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: context.borderColor.withValues(alpha: 0.6)),
             ),
-            child: Row(
+            child: Column(
               children: [
-                // 1. Davomat
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Davomat',
-                        style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
+                Row(
+                  children: [
+                    // 1. Davomat
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${r.daysWorked}/$_totalWorkingDays kun',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.inkColor),
+                            'Davomat',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(height: 2),
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            children: [
+                              Text(
+                                '${r.daysWorked}/$_totalWorkingDays kun',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.inkColor),
+                              ),
+                              Text(
+                                '(${r.hoursWorked.toStringAsFixed(1)}s)',
+                                style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 1),
                           Text(
-                            '(${r.hoursWorked.toStringAsFixed(1)}s)',
-                            style: TextStyle(fontSize: 11, color: context.mutedColor),
+                            r.daysLate > 0
+                                ? '${r.daysLate} kun kechikdi'
+                                : 'Intizomli (kechikishsiz)',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: r.daysLate > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 1),
-                      Text(
-                        r.daysLate > 0
-                            ? '${r.daysLate} kun kechikdi'
-                            : 'Intizomli (kechikishsiz)',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: r.daysLate > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    Container(width: 1, height: 42, color: context.borderColor.withValues(alpha: 0.6), margin: const EdgeInsets.symmetric(horizontal: 10)),
+                    // 2. Qoldiq to'lov
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Qoldiq summa',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              money(r.remainingSalary > 0 ? r.remainingSalary : r.netSalary),
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w900,
+                                color: (r.remainingSalary <= 0 && r.paidAmount > 0)
+                                    ? const Color(0xFF10B981)
+                                    : (isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            (r.remainingSalary <= 0 && r.paidAmount > 0) ? 'To‘liq to‘langan' : 'To‘lanishi kerak',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: (r.remainingSalary <= 0 && r.paidAmount > 0) ? const Color(0xFF10B981) : context.mutedColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Container(width: 1, height: 36, color: context.borderColor.withValues(alpha: 0.6), margin: const EdgeInsets.symmetric(horizontal: 8)),
-
-                // 2. Ishlagan qismi
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ishlagan qismi:',
-                        style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        money(r.calculatedSalary),
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.inkColor),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        r.bonus > 0 ? 'Mukofot: +${money(r.bonus)}' : (r.deduction > 0 ? 'Jarima: -${money(r.deduction)}' : 'Hisoblangan maosh'),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: r.bonus > 0 ? const Color(0xFFD97706) : context.mutedColor,
-                          fontWeight: r.bonus > 0 ? FontWeight.w700 : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: context.borderColor.withValues(alpha: 0.5)),
                 ),
-                Container(width: 1, height: 36, color: context.borderColor.withValues(alpha: 0.6), margin: const EdgeInsets.symmetric(horizontal: 8)),
-
-                // 3. To'langan (Avans)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'To‘langan',
-                        style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
+                Row(
+                  children: [
+                    // 3. Ishlagan qismi
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ishlagan qismi:',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              money(r.calculatedSalary),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.inkColor),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            r.bonus > 0 ? 'Mukofot: +${money(r.bonus)}' : (r.deduction > 0 ? 'Jarima: -${money(r.deduction)}' : 'Hisoblangan maosh'),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: r.bonus > 0 ? const Color(0xFFD97706) : context.mutedColor,
+                              fontWeight: r.bonus > 0 ? FontWeight.w700 : FontWeight.normal,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        money(r.paidAmount),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: r.paidAmount > 0 ? context.inkColor : context.mutedColor,
-                        ),
+                    ),
+                    Container(width: 1, height: 42, color: context.borderColor.withValues(alpha: 0.6), margin: const EdgeInsets.symmetric(horizontal: 10)),
+                    // 4. To'langan (Avans)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'To‘langan',
+                            style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              money(r.paidAmount),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: r.paidAmount > 0 ? context.inkColor : context.mutedColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            r.paidAmount > 0 ? 'Avans / To‘lovlar' : 'To‘lanmagan',
+                            style: TextStyle(fontSize: 10, color: context.mutedColor),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 1),
-                      Text(
-                        r.paidAmount > 0 ? 'Avans / To‘lovlar' : 'To‘lanmagan',
-                        style: TextStyle(fontSize: 10, color: context.mutedColor),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(width: 1, height: 36, color: context.borderColor.withValues(alpha: 0.6), margin: const EdgeInsets.symmetric(horizontal: 8)),
-
-                // 4. Qoldiq to'lov
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Qoldiq summa',
-                        style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        money(r.remainingSalary > 0 ? r.remainingSalary : r.netSalary),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color: (r.remainingSalary <= 0 && r.paidAmount > 0)
-                              ? const Color(0xFF10B981)
-                              : (isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        (r.remainingSalary <= 0 && r.paidAmount > 0) ? 'To‘liq to‘langan' : 'To‘lanishi kerak',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: (r.remainingSalary <= 0 && r.paidAmount > 0) ? const Color(0xFF10B981) : context.mutedColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
 
-          // 3-Qator: Amallar tugmalari (Bosiq, qulay va bir xil o'lchamda)
-          Wrap(
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 6,
+          // 3-Qator: Amallar tugmalari (Ustma-ust va qulay taqsimlangan)
+          Row(
             children: [
               // 1. Davomat tafsilotlari (kunlar)
-              OutlinedButton.icon(
-                onPressed: () => _showEmployeeAttendanceDetails(r),
-                icon: Icon(Icons.calendar_today_rounded, size: 14, color: context.mutedColor),
-                label: const Text(
-                  'Davomat kunlari',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: context.inkColor,
-                  side: BorderSide(color: context.borderColor),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showEmployeeAttendanceDetails(r),
+                  icon: Icon(Icons.calendar_today_rounded, size: 14, color: context.mutedColor),
+                  label: const Text(
+                    'Davomat kunlari',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.inkColor,
+                    side: BorderSide(color: context.borderColor),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
-
+              const SizedBox(width: 8),
               // 2. Mukofot (Bonus) berish
               OutlinedButton.icon(
                 onPressed: () async {
@@ -2706,38 +2727,41 @@ class _UsersScreenState extends State<UsersScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-
-              // 3. Oylik to'lash / To'lov qilish
-              FilledButton.icon(
-                onPressed: () async {
-                  final ok = await FinanceTransactionDialog.show(
-                    context,
-                    initialCategory: 'Ish haqi / Avans',
-                    initialType: 'expense',
-                    initialUserId: r.userId,
-                    initialAmount: r.remainingSalary > 0
-                        ? r.remainingSalary
-                        : (r.netSalary > 0 ? r.netSalary : (r.calculatedSalary > 0 ? r.calculatedSalary : null)),
-                  );
-                  if (ok == true && mounted) {
-                    showMessage(context, '✓ ${r.fullName} uchun to‘lov saqlandi');
-                    _reloadSalary();
-                  }
-                },
-                icon: const Icon(Icons.payments_rounded, size: 14),
-                label: Text(
-                  r.remainingSalary <= 0 && r.paidAmount > 0 ? '+ To‘lov / Avans' : 'Oylik to‘lash',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
             ],
-          )
+          ),
+          const SizedBox(height: 8),
+          // 3. Oylik to'lash / To'lov qilish (To'liq kenglikda)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () async {
+                final ok = await FinanceTransactionDialog.show(
+                  context,
+                  initialCategory: 'Ish haqi / Avans',
+                  initialType: 'expense',
+                  initialUserId: r.userId,
+                  initialAmount: r.remainingSalary > 0
+                      ? r.remainingSalary
+                      : (r.netSalary > 0 ? r.netSalary : (r.calculatedSalary > 0 ? r.calculatedSalary : null)),
+                );
+                if (ok == true && mounted) {
+                  showMessage(context, '✓ ${r.fullName} uchun to‘lov saqlandi');
+                  _reloadSalary();
+                }
+              },
+              icon: const Icon(Icons.payments_rounded, size: 15),
+              label: Text(
+                r.remainingSalary <= 0 && r.paidAmount > 0 ? '+ To‘lov / Avans' : 'Oylik to‘lash',
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
         ],
       ),
     );

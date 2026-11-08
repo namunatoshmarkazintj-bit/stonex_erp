@@ -1090,16 +1090,17 @@ class _FinanceScreenState extends State<FinanceScreen> {
               required int selectedMonth,
               required Color activeColor,
               required ValueChanged<int> onSelect,
+              int crossAxisCount = 3,
             }) {
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: 12,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 6,
                   mainAxisSpacing: 6,
-                  childAspectRatio: 2.1,
+                  childAspectRatio: crossAxisCount == 4 ? 2.4 : 2.1,
                 ),
                 itemBuilder: (c, idx) {
                   final mNum = idx + 1;
@@ -1219,166 +1220,178 @@ class _FinanceScreenState extends State<FinanceScreen> {
             return Dialog(
               backgroundColor: isDark ? AppColors.darkCard : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 620),
+                constraints: BoxConstraints(
+                  maxWidth: 620,
+                  maxHeight: MediaQuery.of(dialogCtx).size.height * 0.9,
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(22),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Sarlavha va Yopish
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.compare_arrows_rounded, color: Color(0xFF3B82F6), size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Solishtirish davrini tanlash',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    color: context.inkColor,
-                                  ),
-                                ),
-                                Text(
-                                  'Ikkita davrni tanlang va dinamikani taqqoslang',
-                                  style: TextStyle(fontSize: 12, color: context.mutedColor),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 20),
-                            color: context.mutedColor,
-                            onPressed: () => Navigator.pop(dialogCtx),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Rejim tanlagich (Segmented bar)
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF14181F) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: context.borderColor),
-                        ),
-                        child: Row(
+                  padding: const EdgeInsets.all(16),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Sarlavha va Yopish
+                        Row(
                           children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.compare_arrows_rounded, color: Color(0xFF3B82F6), size: 20),
+                            ),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: InkWell(
-                                onTap: () => setDialogState(() => selectedMode = 0),
-                                borderRadius: BorderRadius.circular(9),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: selectedMode == 0
-                                        ? (isDark ? AppColors.neonLime : Colors.white)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(9),
-                                    boxShadow: selectedMode == 0
-                                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
-                                        : null,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Solishtirish davrini tanlash',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: context.inkColor,
+                                    ),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_month_rounded,
-                                        size: 16,
-                                        color: selectedMode == 0
-                                            ? (isDark ? AppColors.ink : const Color(0xFF0F172A))
-                                            : context.mutedColor,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Oylar bo‘yicha (Tezkor)',
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: selectedMode == 0 ? FontWeight.w800 : FontWeight.w600,
+                                  Text(
+                                    'Ikkita davrni tanlang va dinamikani taqqoslang',
+                                    style: TextStyle(fontSize: 11.5, color: context.mutedColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 20),
+                              color: context.mutedColor,
+                              onPressed: () => Navigator.pop(dialogCtx),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Rejim tanlagich (Segmented bar)
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF14181F) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: context.borderColor),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => setDialogState(() => selectedMode = 0),
+                                  borderRadius: BorderRadius.circular(9),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: selectedMode == 0
+                                          ? (isDark ? AppColors.neonLime : Colors.white)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(9),
+                                      boxShadow: selectedMode == 0
+                                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_month_rounded,
+                                          size: 15,
                                           color: selectedMode == 0
                                               ? (isDark ? AppColors.ink : const Color(0xFF0F172A))
                                               : context.mutedColor,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 5),
+                                        Flexible(
+                                          child: Text(
+                                            'Oylar bo‘yicha',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: selectedMode == 0 ? FontWeight.w800 : FontWeight.w600,
+                                              color: selectedMode == 0
+                                                  ? (isDark ? AppColors.ink : const Color(0xFF0F172A))
+                                                  : context.mutedColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => setDialogState(() => selectedMode = 1),
-                                borderRadius: BorderRadius.circular(9),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: selectedMode == 1
-                                        ? (isDark ? AppColors.neonLime : Colors.white)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(9),
-                                    boxShadow: selectedMode == 1
-                                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
-                                        : null,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.date_range_rounded,
-                                        size: 16,
-                                        color: selectedMode == 1
-                                            ? (isDark ? AppColors.ink : const Color(0xFF0F172A))
-                                            : context.mutedColor,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Kunbay / Aniq sanalar',
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: selectedMode == 1 ? FontWeight.w800 : FontWeight.w600,
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => setDialogState(() => selectedMode = 1),
+                                  borderRadius: BorderRadius.circular(9),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: selectedMode == 1
+                                          ? (isDark ? AppColors.neonLime : Colors.white)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(9),
+                                      boxShadow: selectedMode == 1
+                                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.date_range_rounded,
+                                          size: 15,
                                           color: selectedMode == 1
                                               ? (isDark ? AppColors.ink : const Color(0xFF0F172A))
                                               : context.mutedColor,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 5),
+                                        Flexible(
+                                          child: Text(
+                                            'Aniq sanalar',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: selectedMode == 1 ? FontWeight.w800 : FontWeight.w600,
+                                              color: selectedMode == 1
+                                                  ? (isDark ? AppColors.ink : const Color(0xFF0F172A))
+                                                  : context.mutedColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
-                      // ASOSIY KONTENT: Rejim 0 (Oylar bo'yicha)
-                      if (selectedMode == 0) ...[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1-davr oylari
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
+                        // ASOSIY KONTENT: Rejim 0 (Oylar bo'yicha)
+                        if (selectedMode == 0) ...[
+                          LayoutBuilder(
+                            builder: (context, box) {
+                              final isNarrow = box.maxWidth < 480;
+
+                              Widget buildCard1() => Container(
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: isDark ? const Color(0xFF1E232B) : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: context.borderColor),
                                 ),
                                 child: Column(
@@ -1387,9 +1400,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          '1-davr (Yangi):',
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
+                                        Flexible(
+                                          child: Text(
+                                            '1-davr (Yangi):',
+                                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: context.inkColor),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         // Yil steppri
                                         Row(
@@ -1404,7 +1421,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                             ),
                                             Text(
                                               '$year1',
-                                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: context.inkColor),
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
                                             ),
                                             InkWell(
                                               onTap: () => setDialogState(() => year1++),
@@ -1417,38 +1434,34 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     buildMonthGrid(
                                       selectedMonth: month1,
                                       activeColor: isDark ? AppColors.neonLime : const Color(0xFF0284C7),
                                       onSelect: (m) => setDialogState(() => month1 = m),
+                                      crossAxisCount: isNarrow ? 4 : 3,
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                            // O'rtadagi VS belgisi
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 60),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
+                              );
+
+                              Widget buildVsBadge() => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
                                   'VS',
                                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF3B82F6)),
                                 ),
-                              ),
-                            ),
-                            // 2-davr oylari
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
+                              );
+
+                              Widget buildCard2() => Container(
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: isDark ? const Color(0xFF1E232B) : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: context.borderColor),
                                 ),
                                 child: Column(
@@ -1457,9 +1470,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          '2-davr (Taqqoslovchi):',
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
+                                        Flexible(
+                                          child: Text(
+                                            '2-davr (Taqqoslovchi):',
+                                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: context.inkColor),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         // Yil steppri
                                         Row(
@@ -1474,7 +1491,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                             ),
                                             Text(
                                               '$year2',
-                                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: context.inkColor),
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
                                             ),
                                             InkWell(
                                               onTap: () => setDialogState(() => year2++),
@@ -1487,118 +1504,142 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     buildMonthGrid(
                                       selectedMonth: month2,
                                       activeColor: const Color(0xFF8B5CF6),
                                       onSelect: (m) => setDialogState(() => month2 = m),
+                                      crossAxisCount: isNarrow ? 4 : 3,
                                     ),
                                   ],
                                 ),
+                              );
+
+                              if (isNarrow) {
+                                return Column(
+                                  children: [
+                                    buildCard1(),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: Center(child: buildVsBadge()),
+                                    ),
+                                    buildCard2(),
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: buildCard1()),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 50),
+                                    child: buildVsBadge(),
+                                  ),
+                                  Expanded(child: buildCard2()),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // Tezkor oylar presetlari
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              ActionChip(
+                                label: const Text('Joriy vs O‘tgan oy', style: TextStyle(fontSize: 11)),
+                                avatar: const Icon(Icons.flash_on_rounded, size: 14),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    year1 = now.year;
+                                    month1 = now.month;
+                                    year2 = now.month == 1 ? now.year - 1 : now.year;
+                                    month2 = now.month == 1 ? 12 : now.month - 1;
+                                  });
+                                },
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Tezkor oylar presetlari
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            ActionChip(
-                              label: const Text('Joriy vs O‘tgan oy', style: TextStyle(fontSize: 11)),
-                              avatar: const Icon(Icons.flash_on_rounded, size: 14),
-                              onPressed: () {
-                                setDialogState(() {
-                                  year1 = now.year;
-                                  month1 = now.month;
-                                  year2 = now.month == 1 ? now.year - 1 : now.year;
-                                  month2 = now.month == 1 ? 12 : now.month - 1;
-                                });
-                              },
-                            ),
-                            ActionChip(
-                              label: const Text('O‘tgan oy vs Undan oldingi', style: TextStyle(fontSize: 11)),
-                              onPressed: () {
-                                setDialogState(() {
-                                  final p1Month = now.month == 1 ? 12 : now.month - 1;
-                                  final p1Year = now.month == 1 ? now.year - 1 : now.year;
-                                  final p2Month = p1Month == 1 ? 12 : p1Month - 1;
-                                  final p2Year = p1Month == 1 ? p1Year - 1 : p1Year;
-                                  year1 = p1Year;
-                                  month1 = p1Month;
-                                  year2 = p2Year;
-                                  month2 = p2Month;
-                                });
-                              },
-                            ),
-                            ActionChip(
-                              label: const Text('O‘tgan yilgi shu oy bilan (YoY)', style: TextStyle(fontSize: 11)),
-                              onPressed: () {
-                                setDialogState(() {
-                                  year1 = now.year;
-                                  month1 = now.month;
-                                  year2 = now.year - 1;
-                                  month2 = now.month;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ] else ...[
-                        // ASOSIY KONTENT: Rejim 1 (Kunbay sanalar)
-                        // Tezkor filtrlar
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            ActionChip(
-                              label: const Text('Oxirgi 7 kun', style: TextStyle(fontSize: 11)),
-                              onPressed: () {
-                                setDialogState(() {
-                                  curStart = now.subtract(const Duration(days: 6));
-                                  curEnd = now;
-                                  prevStart = now.subtract(const Duration(days: 13));
-                                  prevEnd = now.subtract(const Duration(days: 7));
-                                });
-                              },
-                            ),
-                            ActionChip(
-                              label: const Text('Oxirgi 30 kun', style: TextStyle(fontSize: 11)),
-                              onPressed: () {
-                                setDialogState(() {
-                                  curStart = now.subtract(const Duration(days: 29));
-                                  curEnd = now;
-                                  prevStart = now.subtract(const Duration(days: 59));
-                                  prevEnd = now.subtract(const Duration(days: 30));
-                                });
-                              },
-                            ),
-                            ActionChip(
-                              label: const Text('Joriy oy boshi — Bugun', style: TextStyle(fontSize: 11)),
-                              onPressed: () {
-                                setDialogState(() {
-                                  curStart = DateTime(now.year, now.month, 1);
-                                  curEnd = now;
-                                  final days = curEnd.difference(curStart).inDays;
-                                  prevEnd = curStart.subtract(const Duration(days: 1));
-                                  prevStart = prevEnd.subtract(Duration(days: days));
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1-davr
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
+                              ActionChip(
+                                label: const Text('O‘tgan oy vs Undan oldingi', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    final p1Month = now.month == 1 ? 12 : now.month - 1;
+                                    final p1Year = now.month == 1 ? now.year - 1 : now.year;
+                                    final p2Month = p1Month == 1 ? 12 : p1Month - 1;
+                                    final p2Year = p1Month == 1 ? p1Year - 1 : p1Year;
+                                    year1 = p1Year;
+                                    month1 = p1Month;
+                                    year2 = p2Year;
+                                    month2 = p2Month;
+                                  });
+                                },
+                              ),
+                              ActionChip(
+                                label: const Text('O‘tgan yilgi shu oy bilan (YoY)', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    year1 = now.year;
+                                    month1 = now.month;
+                                    year2 = now.year - 1;
+                                    month2 = now.month;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ] else ...[
+                          // ASOSIY KONTENT: Rejim 1 (Kunbay sanalar)
+                          // Tezkor filtrlar
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              ActionChip(
+                                label: const Text('Oxirgi 7 kun', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    curStart = now.subtract(const Duration(days: 6));
+                                    curEnd = now;
+                                    prevStart = now.subtract(const Duration(days: 13));
+                                    prevEnd = now.subtract(const Duration(days: 7));
+                                  });
+                                },
+                              ),
+                              ActionChip(
+                                label: const Text('Oxirgi 30 kun', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    curStart = now.subtract(const Duration(days: 29));
+                                    curEnd = now;
+                                    prevStart = now.subtract(const Duration(days: 59));
+                                    prevEnd = now.subtract(const Duration(days: 30));
+                                  });
+                                },
+                              ),
+                              ActionChip(
+                                label: const Text('Joriy oy boshi — Bugun', style: TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    curStart = DateTime(now.year, now.month, 1);
+                                    curEnd = now;
+                                    final days = curEnd.difference(curStart).inDays;
+                                    prevEnd = curStart.subtract(const Duration(days: 1));
+                                    prevStart = prevEnd.subtract(Duration(days: days));
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          LayoutBuilder(
+                            builder: (context, box) {
+                              final isNarrow = box.maxWidth < 480;
+
+                              Widget buildDateCard1() => Container(
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: isDark ? const Color(0xFF1E232B) : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: context.borderColor),
                                 ),
                                 child: Column(
@@ -1609,7 +1650,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                       children: [
                                         Text(
                                           '1-davr (Asosiy):',
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: context.inkColor),
                                         ),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1619,12 +1660,12 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                           ),
                                           child: Text(
                                             '${curEnd.difference(curStart).inDays + 1} kun',
-                                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     buildDateTile(
                                       label: 'Boshlanish sanasi',
                                       date: curStart,
@@ -1633,7 +1674,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                         if (curEnd.isBefore(curStart)) curEnd = curStart;
                                       }),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     buildDateTile(
                                       label: 'Tugash sanasi',
                                       date: curEnd,
@@ -1644,30 +1685,25 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                            // O'rtada VS
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 45),
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
+                              );
+
+                              Widget buildVsBadge() => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
                                   'VS',
                                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF3B82F6)),
                                 ),
-                              ),
-                            ),
-                            // 2-davr
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
+                              );
+
+                              Widget buildDateCard2() => Container(
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: isDark ? const Color(0xFF1E232B) : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: context.borderColor),
                                 ),
                                 child: Column(
@@ -1678,7 +1714,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                       children: [
                                         Text(
                                           '2-davr (Taqqoslovchi):',
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.inkColor),
+                                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: context.inkColor),
                                         ),
                                         InkWell(
                                           onTap: () {
@@ -1691,7 +1727,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                           child: Text(
                                             'Teng muddat',
                                             style: TextStyle(
-                                              fontSize: 11,
+                                              fontSize: 10.5,
                                               fontWeight: FontWeight.w700,
                                               color: isDark ? AppColors.neonLime : const Color(0xFF0284C7),
                                             ),
@@ -1699,7 +1735,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     buildDateTile(
                                       label: 'Boshlanish sanasi',
                                       date: prevStart,
@@ -1708,7 +1744,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                         if (prevEnd.isBefore(prevStart)) prevEnd = prevStart;
                                       }),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 6),
                                     buildDateTile(
                                       label: 'Tugash sanasi',
                                       date: prevEnd,
@@ -1719,45 +1755,69 @@ class _FinanceScreenState extends State<FinanceScreen> {
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: 18),
+                              );
 
-                      // Pastki xulosa va Harakat tugmalari
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF14181F) : const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF2D3748) : const Color(0xFFBFDBFE),
+                              if (isNarrow) {
+                                return Column(
+                                  children: [
+                                    buildDateCard1(),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: Center(child: buildVsBadge()),
+                                    ),
+                                    buildDateCard2(),
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: buildDateCard1()),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 40),
+                                    child: buildVsBadge(),
+                                  ),
+                                  Expanded(child: buildDateCard2()),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+
+                        // Pastki xulosa va Harakat tugmalari
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF14181F) : const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF2D3748) : const Color(0xFFBFDBFE),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF3B82F6)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  selectedMode == 0
+                                      ? 'Tanlangan: ${uzMonths[month1 - 1]} $year1  vs  ${uzMonths[month2 - 1]} $year2'
+                                      : 'Tanlangan: ${formatD(curStart)}—${formatD(curEnd)} vs ${formatD(prevStart)}—${formatD(prevEnd)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : const Color(0xFF1E3A8A),
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF3B82F6)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                selectedMode == 0
-                                    ? 'Tanlangan: ${uzMonths[month1 - 1]} $year1  vs  ${uzMonths[month2 - 1]} $year2'
-                                    : 'Tanlangan: ${formatD(curStart)}—${formatD(curEnd)} vs ${formatD(prevStart)}—${formatD(prevEnd)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF1E3A8A),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -1828,7 +1888,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   ),
                 ),
               ),
-            );
+            ),
+          );
           },
         );
       },

@@ -1862,21 +1862,27 @@ class _ProductDialogState extends State<ProductDialog> {
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 OutlinedButton.icon(
                   onPressed: () => _previewQrLabel(context),
                   icon: const Icon(Icons.print_rounded, size: 15),
-                  label: const Text('Chop etish / Katta ko‘rish', style: TextStyle(fontSize: 11.5)),
+                  label: const Text('Chop etish / Ko‘rish', style: TextStyle(fontSize: 11.5)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 17),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.copy_rounded, size: 16),
                   tooltip: 'Kodni nusxalash',
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.all(7),
+                  constraints: const BoxConstraints(),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: qrData));
                     showMessage(context, 'QR kod nusxalandi: $qrData');
