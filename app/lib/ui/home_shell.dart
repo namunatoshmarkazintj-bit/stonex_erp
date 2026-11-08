@@ -2330,7 +2330,10 @@ class _SettingsBottomSheet extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
       decoration: BoxDecoration(
         color: context.dialogBg,
         borderRadius: BorderRadius.circular(26),
@@ -2403,18 +2406,25 @@ class _SettingsBottomSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
-          // Day / Night Theme bo'limi
-          Text(
-            'INTERFEYS MAVZUSI (DAY / NIGHT)',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-              color: context.mutedColor,
-            ),
-          ),
+          // Scrollable sozlamalar ro'yxati
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Day / Night Theme bo'limi
+                  Text(
+                    'INTERFEYS MAVZUSI (DAY / NIGHT)',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: context.mutedColor,
+                    ),
+                  ),
           const SizedBox(height: 10),
 
           // Segmented controller
@@ -2809,7 +2819,11 @@ class _SettingsBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
 
           FilledButton(
             onPressed: () => Navigator.pop(context),
