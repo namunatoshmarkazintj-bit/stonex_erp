@@ -141,137 +141,9 @@ class MockStore {
     ),
   ];
 
-  final List<MockSaleEntry> sales = [
-    MockSaleEntry(
-      result: SaleResult(
-        id: 95,
-        total: 1800000,
-        paid: 1800000,
-        debt: 0,
-        customerId: 1,
-        customerName: 'Sardor Qodirov',
-        customerPhone: '+998 90 999 11 22',
-        cashierName: 'Alisher (Kassir)',
-        paymentMethod: 'cash',
-        createdAt: DateTime.now().subtract(const Duration(days: 6)),
-        items: const [
-          SaleItemRecord(productId: 1, productName: 'Angola', quantity: 10, unitPrice: 180000, lineTotal: 1800000),
-        ],
-      ),
-      cost: 1200000,
-    ),
-    MockSaleEntry(
-      result: SaleResult(
-        id: 96,
-        total: 900000,
-        paid: 900000,
-        debt: 0,
-        customerId: 2,
-        customerName: 'Farhod Usta',
-        customerPhone: '+998 91 888 22 33',
-        cashierName: 'Alisher (Kassir)',
-        paymentMethod: 'karta',
-        createdAt: DateTime.now().subtract(const Duration(days: 4)),
-        items: const [
-          SaleItemRecord(productId: 5, productName: 'Kley', quantity: 20, unitPrice: 45000, lineTotal: 900000),
-        ],
-      ),
-      cost: 600000,
-    ),
-    MockSaleEntry(
-      result: SaleResult(
-        id: 97,
-        total: 1500000,
-        paid: 1000000,
-        debt: 500000,
-        customerId: 3,
-        customerName: 'Javohir Toshkent',
-        customerPhone: '+998 93 777 33 44',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        items: const [
-          SaleItemRecord(productId: 4, productName: 'Metalogranit', quantity: 10, unitPrice: 150000, lineTotal: 1500000),
-        ],
-      ),
-      cost: 950000,
-    ),
-    MockSaleEntry(
-      result: SaleResult(
-        id: 98,
-        total: 512000,
-        paid: 512000,
-        debt: 0,
-        customerName: 'Botir Qurilish',
-        customerPhone: '+998 94 666 44 55',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        items: const [
-          SaleItemRecord(productId: 7, productName: 'Disk', quantity: 2, unitPrice: 250000, lineTotal: 500000),
-          SaleItemRecord(productId: 6, productName: 'Sim', quantity: 1, unitPrice: 12000, lineTotal: 12000),
-        ],
-      ),
-      cost: 347000,
-    ),
-    MockSaleEntry(
-      result: SaleResult(
-        id: 99,
-        total: 850000,
-        paid: 600000,
-        debt: 250000,
-        customerName: 'Akmal aka',
-        customerPhone: '+998 90 123 45 67',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        items: const [
-          SaleItemRecord(productId: 2, productName: 'Miramir', quantity: 5, unitPrice: 170000, lineTotal: 850000),
-        ],
-      ),
-      cost: 550000,
-    ),
-    MockSaleEntry(
-      result: SaleResult(
-        id: 100,
-        total: 1900000,
-        paid: 1900000,
-        debt: 0,
-        customerName: 'Sobirjon',
-        customerPhone: '+998 99 555 12 34',
-        createdAt: DateTime.now(),
-        items: const [
-          SaleItemRecord(productId: 3, productName: 'Tan Brown', quantity: 10, unitPrice: 190000, lineTotal: 1900000),
-        ],
-      ),
-      cost: 1300000,
-    ),
-    MockSaleEntry(
-      result: SaleResult(
-        id: 101,
-        total: 3800000,
-        paid: 3800000,
-        debt: 0,
-        customerId: 1,
-        customerName: 'Sardor Qodirov',
-        customerPhone: '+998 90 999 11 22',
-        cashierName: 'Alisher (Kassir)',
-        paymentMethod: 'cash',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        items: const [
-          SaleItemRecord(productId: 3, productName: 'Tan Brown', quantity: 15, unitPrice: 220000, lineTotal: 3300000),
-          SaleItemRecord(productId: 998, productName: 'Eni va bo‘yiga kesish xizmati', quantity: 10, unitPrice: 50000, lineTotal: 500000),
-        ],
-      ),
-      cost: 2600000,
-    ),
-  ];
+  final List<MockSaleEntry> sales = [];
 
   final List<FinanceTransaction> financeTransactions = [
-    FinanceTransaction(
-      id: 1,
-      type: 'income',
-      category: 'Savdo tushumi',
-      amount: 1900000,
-      paymentMethod: 'cash',
-      note: 'Buyurtma #100 (Sobirjon)',
-      date: DateTime.now().subtract(const Duration(hours: 3)),
-      createdByName: 'Kassa',
-    ),
     FinanceTransaction(
       id: 2,
       type: 'expense',
@@ -333,44 +205,7 @@ class MockStore {
       createdByName: 'Admin',
     ),
   ];
-  final List<Customer> customers = [
-    const Customer(
-      id: 1,
-      name: 'Sardor Qodirov',
-      phone: '+998 90 999 11 22',
-      passport: 'AB 1234567',
-      totalSpent: 1800000,
-      totalDebt: 0,
-      salesCount: 1,
-    ),
-    const Customer(
-      id: 2,
-      name: 'Farhod Usta',
-      phone: '+998 91 888 22 33',
-      passport: 'AC 9876543',
-      totalSpent: 900000,
-      totalDebt: 0,
-      salesCount: 1,
-    ),
-    const Customer(
-      id: 3,
-      name: 'Javohir Toshkent',
-      phone: '+998 93 777 33 44',
-      passport: 'AA 5556677',
-      totalSpent: 1500000,
-      totalDebt: 500000,
-      salesCount: 1,
-    ),
-    const Customer(
-      id: 4,
-      name: 'Komil Samarkand',
-      phone: '+998 99 555 12 34',
-      passport: 'AD 1122334',
-      totalSpent: 1900000,
-      totalDebt: 700000,
-      salesCount: 1,
-    ),
-  ];
+  final List<Customer> customers = [];
   final List<ProductionTask> tasks = [
     const ProductionTask(
       id: 1,
@@ -382,12 +217,11 @@ class MockStore {
       planned: 120,
       produced: 85,
       status: 'open',
-      orderId: 101,
       cutLength: 1.2,
       cutWidth: 0.6,
       cutPieces: 4,
       cutSpec: '120 sm × 60 sm',
-      note: 'Oshxona stoli uchun to‘g‘ri burchakli kesish [silliqlash]',
+      note: 'Sex ishlab chiqarish topshirig‘i',
     ),
     const ProductionTask(
       id: 2,
@@ -399,7 +233,6 @@ class MockStore {
       planned: 80,
       produced: 80,
       status: 'done',
-      orderId: 102,
       cutLength: 2.0,
       cutWidth: 0.8,
       cutPieces: 2,
@@ -416,7 +249,6 @@ class MockStore {
       planned: 60,
       produced: 25,
       status: 'open',
-      orderId: 103,
       cutLength: 0.9,
       cutWidth: 0.45,
       cutPieces: 8,

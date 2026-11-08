@@ -85,39 +85,6 @@ def main() -> None:
             if not db.scalar(select(m.Notification).where(m.Notification.title == title)):
                 db.add(m.Notification(title=title, message=msg, kind=kind))
 
-        # Namunaviy savdolar
-        if not db.scalar(select(m.Sale).limit(1)):
-            kassir = db.scalar(select(m.User).where(m.User.username == "kassir"))
-            if kassir:
-                from datetime import datetime, timedelta
-                from .schemas import SaleIn, SaleItemIn
-                from .services import sales as svc_sales
-                now = datetime.utcnow()
-                prods = {p.name: p for p in db.scalars(select(m.Product)).all()}
-                sales_to_seed = [
-                    (now - timedelta(days=6), [("Angola", 10)], 1800000, "Sardor Qodirov", "+998 90 999 11 22"),
-                    (now - timedelta(days=4), [("Kley", 20)], 900000, "Farhod Usta", "+998 91 888 22 33"),
-                    (now - timedelta(days=3), [("Metalogranit", 10)], 1000000, "Javohir Toshkent", "+998 93 777 33 44"),
-                    (now - timedelta(days=2), [("Disk", 2), ("Sim", 1)], 512000, "Botir Qurilish", "+998 94 666 44 55"),
-                    (now - timedelta(days=1), [("Miramir", 5)], 600000, "Akmal aka", "+998 90 123 45 67"),
-                    (now, [("Tan Brown", 10)], 1900000, "Sobirjon", "+998 99 555 12 34"),
-                ]
-                for sale_time, items, paid_val, c_name, c_phone in sales_to_seed:
-                    s_items = []
-                    for p_name, qty in items:
-                        if p_name in prods:
-                            s_items.append(SaleItemIn(product_id=prods[p_name].id, quantity=Decimal(qty), unit="base"))
-                    if s_items:
-                        try:
-                            s_obj = svc_sales.create_sale(db, kassir, SaleIn(
-                                items=s_items, paid_amount=Decimal(paid_val),
-                                customer_name=c_name, customer_phone=c_phone
-                            ))
-                            s_obj.created_at = sale_time
-                            db.flush()
-                        except Exception as e:
-                            print(f"Sample sale error: {e}")
-
         db.commit()
     print("Seed tayyor.")
 

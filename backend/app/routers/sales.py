@@ -125,3 +125,39 @@ def cancel(sale_id: int, db: Session = Depends(get_db), user: m.User = Depends(r
 def return_sale(sale_id: int, data: SaleReturnIn, db: Session = Depends(get_db),
                 user: m.User = Depends(require_roles(roles.ADMIN))):
     return to_out(svc.process_return(db, user, sale_id, data.items, data.reason))
+
+
+@router.post("/reset-all-data")
+def reset_all_sales_and_customers(
+    db: Session = Depends(get_db),
+    user: m.User = Depends(require_roles(roles.ADMIN)),
+):
+    """Barcha test savdolar va mijozlarni server bazasidan to'liq tozalash."""
+    from sqlalchemy import text
+    try:
+        bind = db.get_bind()
+        dialect = bind.dialect.name
+        if dialect == "sqlite":
+            db.execute(text("PRAGMA foreign_keys = OFF;"))
+        elif dialect == "mysql":
+            db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+
+        db.execute(text("DELETE FROM delivery_items;"))
+        db.execute(text("DELETE FROM deliveries;"))
+        db.execute(text("DELETE FROM payments;"))
+        db.execute(text("DELETE FROM sale_items;"))
+        db.execute(text("DELETE FROM sales;"))
+        db.execute(text("DELETE FROM customers;"))
+        db.execute(text("DELETE FROM stock_movements WHERE kind IN ('sale', 'return');"))
+        db.execute(text("DELETE FROM notifications WHERE kind IN ('sale', 'payment');"))
+
+        if dialect == "sqlite":
+            db.execute(text("PRAGMA foreign_keys = ON;"))
+        elif dialect == "mysql":
+            db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+
+        db.commit()
+        return {"status": "ok", "message": "Barcha savdolar, to'lovlar va mijozlar server bazasidan to'liq o'chirildi"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Tozalashda xatolik: {e}")
