@@ -1607,7 +1607,8 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
     sb.writeln('========================================');
     sb.writeln('       NTJ — NAMUNA TOSH JILO          ');
     sb.writeln('      Tabiiy tosh va granit markazi     ');
-    sb.writeln('       Tel: +998 (90) 123-45-67        ');
+    sb.writeln('   Manzil: Namuna MFY, Sokin ko‘cha, 11 ');
+    sb.writeln(' Tel: +998 90 588-66-99 • +998 50 588-66-99 • +998 50 700-06-06 ');
     sb.writeln('========================================');
     sb.writeln('    MIJOZ HISOBOT CHEKI (AKT-SVERKA)    ');
     sb.writeln('Mijoz: ${c.name}');
@@ -1665,8 +1666,12 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
                           fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(height: 3),
                   pw.Text(
-                      'Tabiiy tosh va granit markazi • Tel: +998 (90) 123-45-67',
+                      'Tabiiy tosh va granit markazi • Manzil: Namuna MFY, Sokin ko‘cha, 11-uy',
                       style: pw.TextStyle(font: font, fontSize: 10)),
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                      'Tel: +998 90 588-66-99 • +998 50 588-66-99 • +998 50 700-06-06',
+                      style: pw.TextStyle(font: font, fontSize: 9.5)),
                   pw.SizedBox(height: 6),
                   pw.Text('MIJOZ SAVDOLARI VA TO‘LOVLAR HISOBOTI (AKT-SVERKA)',
                       style: pw.TextStyle(font: fontBold, fontSize: 13)),

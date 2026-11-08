@@ -64,9 +64,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     final sale = widget.sale;
     final sb = StringBuffer();
     sb.writeln('================================');
-    sb.writeln('   NTJ — NAMUNA TOSH JILO    ');
+    sb.writeln('   NTJ — NAMUNA TOSH JILO       ');
     sb.writeln('  Tabiiy tosh va granit markazi ');
-    sb.writeln('   Tel: +998 (90) 123-45-67     ');
+    sb.writeln(' Manzil: Namuna MFY, Sokin ko‘cha, 11-uy ');
+    sb.writeln(' Tel: +998 (90) 588-66-99       ');
+    sb.writeln('      +998 (50) 588-66-99       ');
+    sb.writeln('      +998 (50) 700-06-06       ');
     sb.writeln('================================');
     sb.writeln('Chek №: #${sale.id.toString().padLeft(6, '0')}');
     sb.writeln('Sana: ${formatDateTime(sale.createdAt ?? DateTime.now())}');
@@ -238,8 +241,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
-                    'Tel: +998 (90) 123-45-67',
-                    style: pw.TextStyle(font: font, fontSize: 8),
+                    'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy',
+                    style: pw.TextStyle(font: font, fontSize: 7.5),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.Text(
+                    'Tel: +998 (90) 588-66-99 | +998 (50) 588-66-99 | +998 (50) 700-06-06',
+                    style: pw.TextStyle(font: font, fontSize: 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.SizedBox(height: 6),
@@ -622,14 +630,28 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 2),
                             const Center(
                               child: Text(
-                                'Tel: +998 (90) 123-45-67',
+                                'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy',
                                 style: TextStyle(
                                   fontFamily: 'Courier',
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   color: Color(0xFF6B7280),
                                 ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Center(
+                              child: Text(
+                                'Tel: +998 (90) 588-66-99 • +998 (50) 588-66-99\n+998 (50) 700-06-06',
+                                style: TextStyle(
+                                  fontFamily: 'Courier',
+                                  fontSize: 10,
+                                  color: Color(0xFF6B7280),
+                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                             const SizedBox(height: 12),

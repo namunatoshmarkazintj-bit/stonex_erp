@@ -2566,6 +2566,62 @@ class _SettingsBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          // Korxona va aloqa rekvizitlari
+          Text(
+            'KORXONA REKVIZITLARI VA ALOQA',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+              color: context.mutedColor,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: context.cardSubtle,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SettingsCompactRow(
+                  icon: Icons.storefront_rounded,
+                  label: 'Korxona',
+                  value: 'NTJ — Namuna Tosh Jilo',
+                ),
+                const SizedBox(height: 8),
+                const _SettingsCompactRow(
+                  icon: Icons.location_on_outlined,
+                  label: 'Manzil',
+                  value: 'Namuna MFY, Sokin ko‘cha, 11-uy',
+                ),
+                const SizedBox(height: 8),
+                const _SettingsCompactRow(
+                  icon: Icons.phone_in_talk_outlined,
+                  label: 'Murojaat uchun',
+                  value: '+998 (90) 588-66-99',
+                  valueColor: AppColors.green,
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 28),
+                  child: Text(
+                    '+998 (50) 588-66-99  •  +998 (50) 700-06-06',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: context.inkColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Tizim ma'lumotlari (ixcham qatorlar)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

@@ -53,8 +53,8 @@ class _DebtsScreenState extends State<DebtsScreen> {
         'NTJ (Namuna Tosh Jilo) dan xaridlaringiz bo‘yicha #${sale.id}-sonli chekdan '
         '${money(sale.debt)} miqdorida nasiya qarzdorligingiz mavjud.\n'
         'Iltimos, imkon qadar tezroq to‘lovni amalga oshirishingizni so‘raymiz.\n'
-        'Aloqa va ma‘lumot uchun: +998 (90) 123-45-67\n'
-        'Manzil: Namuna Tosh Jilo';
+        'Aloqa va ma‘lumot uchun: +998 (90) 588-66-99, +998 (50) 588-66-99, +998 (50) 700-06-06\n'
+        'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy';
 
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -77,7 +77,8 @@ class _DebtsScreenState extends State<DebtsScreen> {
         'NTJ (Namuna Tosh Jilo) dan xaridlaringiz ($count ta chek) bo‘yicha jami '
         '${money(totalDebt)} miqdorida nasiya qarzdorligingiz mavjud.\n'
         'Iltimos, to‘lovni amalga oshirishingizni so‘raymiz.\n'
-        'Aloqa va ma‘lumot uchun: +998 (90) 123-45-67';
+        'Aloqa va ma‘lumot uchun: +998 (90) 588-66-99, +998 (50) 588-66-99, +998 (50) 700-06-06\n'
+        'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy';
 
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
