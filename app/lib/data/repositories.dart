@@ -13,6 +13,8 @@ abstract class ProductRepository {
   Future<Product> create(Product p, {double initialStock = 0});
   Future<Product> update(Product p);
   Future<void> deactivate(int id);
+  Future<List<Product>> listDeleted();
+  Future<Product> restore(int id);
   Future<String> uploadImage(List<int> bytes, String filename);
   Future<Product> uploadProductImage(int productId, List<int> bytes, String filename);
 }
@@ -123,6 +125,9 @@ abstract class UserRepository {
     bool? isOnShift,
   });
   Future<void> toggleShift(int id, bool onShift);
+  Future<void> archive(int id);
+  Future<List<AppUser>> listArchived();
+  Future<AppUser> restore(int id);
 }
 
 abstract class AttendanceRepository {

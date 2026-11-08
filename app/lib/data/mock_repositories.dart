@@ -273,8 +273,36 @@ class MockProductRepository implements ProductRepository {
     return updated;
   }
 
+  final List<Product> _deletedProducts = [];
+
   @override
-  Future<void> deactivate(int id) async => _s.products.removeWhere((p) => p.id == id);
+  Future<void> deactivate(int id) async {
+    final idx = _s.products.indexWhere((p) => p.id == id);
+    if (idx >= 0) {
+      final p = _s.products.removeAt(idx);
+      _deletedProducts.add(p.copyWith(
+        isActive: false,
+        deletedAt: DateTime.now(),
+        deletedByName: "Admin",
+      ));
+    }
+  }
+
+  @override
+  Future<List<Product>> listDeleted() async => List.unmodifiable(_deletedProducts);
+
+  @override
+  Future<Product> restore(int id) async {
+    final idx = _deletedProducts.indexWhere((p) => p.id == id);
+    if (idx < 0) throw ApiException('Mahsulot topilmadi', 404);
+    final p = _deletedProducts.removeAt(idx).copyWith(
+      isActive: true,
+      deletedAt: null,
+      deletedByName: null,
+    );
+    _s.products.add(p);
+    return p;
+  }
 
   @override
   Future<String> uploadImage(List<int> bytes, String filename) async {
@@ -949,7 +977,7 @@ class MockUserRepository implements UserRepository {
 
   @override
   Future<List<AppUser>> list({String? role}) async {
-    final all = _s.users.values.map((e) => e.user);
+    final all = _s.users.values.map((e) => e.user).where((u) => !u.isArchived);
     if (role != null && role.isNotEmpty) {
       return all.where((u) => u.role.code == role).toList();
     }
@@ -1047,6 +1075,44 @@ class MockUserRepository implements UserRepository {
     );
     final updated = entry.value.user.copyWith(isOnShift: onShift);
     _s.users[entry.key] = (password: entry.value.password, user: updated);
+  }
+
+  @override
+  Future<void> archive(int id) async {
+    final entry = _s.users.entries.firstWhere(
+      (e) => e.value.user.id == id,
+      orElse: () => throw ApiException('Foydalanuvchi topilmadi', 404),
+    );
+    final updated = entry.value.user.copyWith(
+      isArchived: true,
+      isActive: false,
+      canLogin: false,
+      isOnShift: false,
+      archivedAt: DateTime.now(),
+      archivedByName: "Admin",
+    );
+    _s.users[entry.key] = (password: entry.value.password, user: updated);
+  }
+
+  @override
+  Future<List<AppUser>> listArchived() async =>
+      _s.users.values.map((e) => e.user).where((u) => u.isArchived).toList();
+
+  @override
+  Future<AppUser> restore(int id) async {
+    final entry = _s.users.entries.firstWhere(
+      (e) => e.value.user.id == id,
+      orElse: () => throw ApiException('Foydalanuvchi topilmadi', 404),
+    );
+    final updated = entry.value.user.copyWith(
+      isArchived: false,
+      isActive: true,
+      canLogin: true,
+      archivedAt: null,
+      archivedByName: null,
+    );
+    _s.users[entry.key] = (password: entry.value.password, user: updated);
+    return updated;
   }
 }
 

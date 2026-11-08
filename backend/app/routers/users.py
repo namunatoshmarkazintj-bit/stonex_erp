@@ -17,11 +17,18 @@ def list_users(role: str | None = None, db: Session = Depends(get_db),
                user: User = Depends(get_current_user)):
     if user.role not in (roles.ADMIN, roles.FOREMAN) and role != roles.WORKER:
         raise HTTPException(403, "Bu amal uchun ruxsat yo'q")
-    q = select(User).order_by(User.id)
+    q = select(User).where(User.is_archived.is_(False)).order_by(User.id)
     if role:
         q = q.where(User.role == role)
     elif user.role not in (roles.ADMIN, roles.FOREMAN):
         q = q.where(User.role == roles.WORKER)
+    return db.scalars(q).all()
+
+
+@router.get("/archived", response_model=list[UserOut])
+def list_archived_users(db: Session = Depends(get_db), _: User = Depends(require_roles(roles.ADMIN))):
+    """Arxivlangan (o'chirilgan) xodimlar ro'yxati."""
+    q = select(User).where(User.is_archived.is_(True)).order_by(User.archived_at.desc(), User.id)
     return db.scalars(q).all()
 
 
@@ -127,23 +134,64 @@ def delete_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_roles(roles.ADMIN)),
 ):
+    """Xodimni arxivga o'tkazish (dasturga kirishi taqiqlanadi, kim va qachon o'chirgani saqlanadi)."""
     if user_id == admin.id:
         raise HTTPException(400, "O'zingizni o'chira olmaysiz")
     u = db.get(User, user_id)
     if u is None:
         raise HTTPException(404, "Foydalanuvchi topilmadi")
 
-    from ..models import Attendance, StockMovement, ProductionTask, Delivery
-    # Clean up attendance
+    from ..models import get_server_now
+    u.is_archived = True
+    u.is_active = False
+    u.can_login = False
+    u.is_on_shift = False
+    u.archived_at = get_server_now()
+    u.archived_by_name = admin.full_name or admin.username
+    db.commit()
+    return {"status": "ok", "message": f"{u.full_name} ({u.username}) arxivga o'tkazildi"}
+
+
+@router.post("/{user_id}/restore", response_model=UserOut)
+def restore_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(roles.ADMIN)),
+):
+    """Arxivlangan xodimni qayta tiklash."""
+    u = db.get(User, user_id)
+    if u is None:
+        raise HTTPException(404, "Foydalanuvchi topilmadi")
+    u.is_archived = False
+    u.is_active = True
+    u.can_login = True
+    u.archived_at = None
+    u.archived_by_name = None
+    db.commit()
+    return u
+
+
+@router.delete("/{user_id}/permanent")
+def permanently_delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_roles(roles.ADMIN)),
+):
+    """Foydalanuvchini bazadan butunlay o'chirish."""
+    if user_id == admin.id:
+        raise HTTPException(400, "O'zingizni o'chira olmaysiz")
+    u = db.get(User, user_id)
+    if u is None:
+        raise HTTPException(404, "Foydalanuvchi topilmadi")
+
+    from ..models import Attendance, StockMovement, Delivery
     db.query(Attendance).filter(Attendance.user_id == user_id).delete(synchronize_session=False)
-    # Detach from stock movements
     db.query(StockMovement).filter(StockMovement.created_by == user_id).update({StockMovement.created_by: None}, synchronize_session=False)
-    # Detach from deliveries
     db.query(Delivery).filter(Delivery.driver_id == user_id).update({Delivery.driver_id: None}, synchronize_session=False)
 
     db.delete(u)
     db.commit()
-    return {"status": "ok", "message": f"{u.full_name} ({u.username}) muvaffaqiyatli o'chirildi"}
+    return {"status": "ok", "message": f"{u.full_name} butunlay o'chirildi"}
 
 
 @router.post("/reset-workers")

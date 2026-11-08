@@ -11,6 +11,7 @@ import '../core/theme.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
 import 'common.dart';
+import 'archived_users_screen.dart';
 import 'finance_screen.dart';
 
 class _KpiItem {
@@ -183,6 +184,67 @@ class _UsersScreenState extends State<UsersScreen> {
       if (mounted) {
         showMessage(context, 'Xatolik: $e', error: true);
       }
+    }
+  }
+
+  Future<void> _archiveUser(AppUser user) async {
+    if (user.role == Role.admin) {
+      showMessage(context, "Asosiy admin akkauntini arxivga olib bo‘lmaydi!", error: true);
+      return;
+    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.dialogBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Row(
+          children: [
+            Icon(Icons.archive_outlined, color: AppColors.danger, size: 22),
+            SizedBox(width: 10),
+            Text('Xodimni arxivlash', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          '"${user.fullName}" hisobi arxivga olinsinmi?\nU dasturga kira olmay qoladi va faol ishchilar ro‘yxatidan olib tashlanadi.',
+          style: const TextStyle(height: 1.4, color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bekor'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            icon: const Icon(Icons.archive_outlined, size: 18),
+            label: const Text('Arxivga olish', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await _usersRepo.archive(user.id);
+      if (mounted) {
+        showMessage(context, '${user.fullName} arxivga o‘tkazildi');
+        _reloadAll();
+      }
+    } catch (e) {
+      if (mounted) {
+        showMessage(context, 'Xatolik: $e', error: true);
+      }
+    }
+  }
+
+  Future<void> _openArchivedUsers() async {
+    final anyRestored = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const ArchivedUsersScreen()),
+    );
+    if (anyRestored == true && mounted) {
+      _reloadAll();
     }
   }
 
@@ -593,6 +655,27 @@ class _UsersScreenState extends State<UsersScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Arxivdagi xodimlar',
+                    child: OutlinedButton(
+                      onPressed: _openArchivedUsers,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        side: BorderSide(color: AppColors.danger.withValues(alpha: 0.45)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.archive_outlined, size: 18, color: AppColors.danger),
+                          SizedBox(width: 6),
+                          Text('Arxiv', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -806,6 +889,17 @@ class _UsersScreenState extends State<UsersScreen> {
                 onPressed: () => _toggleUserStatus(u),
                 tooltip: u.isActive ? 'Bloklash' : 'Faollashtirish',
               ),
+              if (u.role != Role.admin) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.all(6),
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.archive_outlined, size: 18, color: AppColors.danger),
+                  onPressed: () => _archiveUser(u),
+                  tooltip: 'Arxivga olish (o‘chirish)',
+                ),
+              ],
             ],
           ),
         ],

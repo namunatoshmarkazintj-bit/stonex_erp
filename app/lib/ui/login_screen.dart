@@ -2,9 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/config.dart';
 import '../core/theme.dart';
-import '../data/repository_factory.dart';
 import '../state/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -58,133 +56,6 @@ class _LoginScreenState extends State<LoginScreen>
     if (mounted) {
       setState(() => _isSurging = false);
     }
-  }
-
-  void _showServerDialog() {
-    final ctrl = TextEditingController(text: AppConfig.apiBaseUrl);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111722),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
-          children: [
-            Icon(Icons.dns_rounded, color: AppColors.neonLime, size: 22),
-            SizedBox(width: 10),
-            Text(
-              'Server manzilini tanlash',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 360,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                tileColor: AppConfig.apiBaseUrl.contains('onrender')
-                    ? AppColors.neonLime.withValues(alpha: 0.12)
-                    : Colors.transparent,
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF182232),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.cloud_queue_rounded, color: AppColors.neonLime, size: 20),
-                ),
-                title: const Text('Render Bulut Server (Online)',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-                subtitle: const Text('https://stonex-erp-ppwx.onrender.com',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
-                onTap: () {
-                  AppConfig.apiBaseUrl = 'https://stonex-erp-ppwx.onrender.com';
-                  appApiClient.baseUrl = AppConfig.apiBaseUrl;
-                  setState(() {});
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                tileColor: AppConfig.apiBaseUrl.contains('127.0.0.1') || AppConfig.apiBaseUrl.contains('localhost')
-                    ? AppColors.neonLime.withValues(alpha: 0.12)
-                    : Colors.transparent,
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF182232),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.computer_rounded, color: Color(0xFF38BDF8), size: 20),
-                ),
-                title: const Text('Lokal Ishchi Server',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-                subtitle: const Text('http://127.0.0.1:8000',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
-                onTap: () {
-                  AppConfig.apiBaseUrl = 'http://127.0.0.1:8000';
-                  appApiClient.baseUrl = AppConfig.apiBaseUrl;
-                  setState(() {});
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: ctrl,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  labelText: 'Boshqa maxsus manzil',
-                  labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                  hintText: 'https://...',
-                  hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  filled: true,
-                  fillColor: const Color(0xFF161E2C),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.neonLime),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Bekor', style: TextStyle(color: Color(0xFF94A3B8))),
-          ),
-          FilledButton(
-            onPressed: () {
-              final val = ctrl.text.trim();
-              if (val.isNotEmpty) {
-                AppConfig.apiBaseUrl = val;
-                appApiClient.baseUrl = val;
-                setState(() {});
-              }
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.neonLime,
-              foregroundColor: const Color(0xFF0A0E13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            child: const Text('Saqlash', style: TextStyle(fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -516,51 +387,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
 
-                const SizedBox(height: 24),
-
-                // Server manzili indikatori
-                Center(
-                  child: InkWell(
-                    onTap: _showServerDialog,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF141B26),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF10B981),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              'Server: ${AppConfig.apiBaseUrl.replaceFirst("https://", "").replaceFirst("http://", "")}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF94A3B8),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.settings_outlined, size: 13, color: Color(0xFF94A3B8)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

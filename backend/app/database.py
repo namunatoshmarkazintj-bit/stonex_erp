@@ -82,6 +82,10 @@ def ensure_migrations():
                 conn.execute(text("ALTER TABLE products ADD COLUMN waste_ratio DECIMAL(14, 3) DEFAULT 1.15"))
             if "cutting_rate" not in columns:
                 conn.execute(text("ALTER TABLE products ADD COLUMN cutting_rate DECIMAL(14, 2) DEFAULT 0.00"))
+            if "deleted_at" not in columns:
+                conn.execute(text("ALTER TABLE products ADD COLUMN deleted_at DATETIME NULL"))
+            if "deleted_by_name" not in columns:
+                conn.execute(text("ALTER TABLE products ADD COLUMN deleted_by_name VARCHAR(128) NULL"))
             # Baza mahsulotlari uchun kategoriyalarni to'g'rilash (Miramir, Angola va h.k.)
             conn.execute(text("UPDATE products SET category = 'Marmar', sort = 'sort 1' WHERE name IN ('Angola', 'Miramir', 'Tan Brown') AND (category IS NULL OR category = '')"))
             conn.execute(text("UPDATE products SET category = 'Kerama granit', sort = 'sort 1' WHERE name = 'Metalogranit' AND (category IS NULL OR category = '')"))
@@ -135,6 +139,13 @@ def ensure_migrations():
             if "is_on_shift" not in u_columns:
                 conn.execute(text("ALTER TABLE users ADD COLUMN is_on_shift BOOLEAN DEFAULT TRUE"))
                 conn.execute(text("UPDATE users SET is_on_shift = TRUE WHERE is_on_shift IS NULL"))
+            if "is_archived" not in u_columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_archived BOOLEAN DEFAULT FALSE"))
+                conn.execute(text("UPDATE users SET is_archived = FALSE WHERE is_archived IS NULL"))
+            if "archived_at" not in u_columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN archived_at DATETIME NULL"))
+            if "archived_by_name" not in u_columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN archived_by_name VARCHAR(128) NULL"))
     if "attendance" in table_names:
         att_columns = [c["name"] for c in inspector.get_columns("attendance")]
         with engine.begin() as conn:

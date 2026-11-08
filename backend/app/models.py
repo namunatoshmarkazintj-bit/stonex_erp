@@ -51,6 +51,9 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     can_login: Mapped[bool] = mapped_column(Boolean, default=True)
     is_on_shift: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    archived_by_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
@@ -98,6 +101,8 @@ class Product(Base):
     cutting_rate: Mapped[Decimal | None] = mapped_column(MONEY, default=Decimal(0), nullable=True)  # 1 m2 ishbay haq
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    deleted_by_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 

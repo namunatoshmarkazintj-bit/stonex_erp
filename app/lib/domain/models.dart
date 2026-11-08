@@ -43,6 +43,9 @@ class AppUser {
   final bool isActive;
   final bool canLogin;
   final bool isOnShift;
+  final bool isArchived;
+  final DateTime? archivedAt;
+  final String? archivedByName;
 
   const AppUser({
     required this.id,
@@ -54,6 +57,9 @@ class AppUser {
     this.isActive = true,
     this.canLogin = true,
     this.isOnShift = true,
+    this.isArchived = false,
+    this.archivedAt,
+    this.archivedByName,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> j) {
@@ -73,6 +79,9 @@ class AppUser {
       isActive: (j['is_active'] ?? true) as bool,
       canLogin: canLogin,
       isOnShift: (j['is_on_shift'] ?? true) as bool,
+      isArchived: (j['is_archived'] ?? false) as bool,
+      archivedAt: j['archived_at'] == null ? null : DateTime.tryParse(j['archived_at'].toString()),
+      archivedByName: j['archived_by_name']?.toString(),
     );
   }
 
@@ -86,6 +95,9 @@ class AppUser {
         'is_active': isActive,
         'can_login': canLogin,
         'is_on_shift': isOnShift,
+        'is_archived': isArchived,
+        if (archivedAt != null) 'archived_at': archivedAt!.toIso8601String(),
+        if (archivedByName != null) 'archived_by_name': archivedByName,
       };
 
   AppUser copyWith({
@@ -98,6 +110,9 @@ class AppUser {
     bool? isActive,
     bool? canLogin,
     bool? isOnShift,
+    bool? isArchived,
+    DateTime? archivedAt,
+    String? archivedByName,
   }) =>
       AppUser(
         id: id ?? this.id,
@@ -109,6 +124,9 @@ class AppUser {
         isActive: isActive ?? this.isActive,
         canLogin: canLogin ?? this.canLogin,
         isOnShift: isOnShift ?? this.isOnShift,
+        isArchived: isArchived ?? this.isArchived,
+        archivedAt: archivedAt ?? this.archivedAt,
+        archivedByName: archivedByName ?? this.archivedByName,
       );
 
   @override
@@ -313,6 +331,9 @@ class Product {
   final double
       minStock; // kamida qancha bo'lishi kerak (ogohlantirish chegarasi)
   final String? imageUrl;
+  final bool isActive;
+  final DateTime? deletedAt;
+  final String? deletedByName;
 
   const Product({
     required this.id,
@@ -342,6 +363,9 @@ class Product {
     this.cuttingRate,
     this.minStock = 15,
     this.imageUrl,
+    this.isActive = true,
+    this.deletedAt,
+    this.deletedByName,
   });
 
   bool get hasDona => donaM2 != null && donaM2! > 0;
@@ -604,6 +628,9 @@ class Product {
     double? stock,
     double? minStock,
     String? imageUrl,
+    bool? isActive,
+    DateTime? deletedAt,
+    String? deletedByName,
   }) =>
       Product(
         id: id ?? this.id,
@@ -629,6 +656,9 @@ class Product {
         stock: stock ?? this.stock,
         minStock: minStock ?? this.minStock,
         imageUrl: imageUrl ?? this.imageUrl,
+        isActive: isActive ?? this.isActive,
+        deletedAt: deletedAt ?? this.deletedAt,
+        deletedByName: deletedByName ?? this.deletedByName,
       );
 
   factory Product.fromJson(Map<String, dynamic> j) => Product(
@@ -715,6 +745,11 @@ class Product {
             (j['image_url'] != null && j['image_url'].toString().isNotEmpty)
                 ? j['image_url'].toString()
                 : null,
+        isActive: j['is_active'] != false,
+        deletedAt: j['deleted_at'] == null
+            ? null
+            : DateTime.tryParse(j['deleted_at'].toString()),
+        deletedByName: j['deleted_by_name']?.toString(),
       );
 
   @override

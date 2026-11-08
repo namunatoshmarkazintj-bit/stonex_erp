@@ -17,6 +17,7 @@ import '../data/repositories.dart';
 import '../domain/models.dart';
 import '../state/cart_controller.dart';
 import 'common.dart';
+import 'deleted_products_screen.dart';
 import 'qr_scanner_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -111,6 +112,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
       }
     } catch (e) {
       if (mounted) showMessage(context, e.toString(), error: true);
+    }
+  }
+
+  Future<void> _openDeletedProducts() async {
+    final anyRestored = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const DeletedProductsScreen()),
+    );
+    if (anyRestored == true && mounted) {
+      _reload();
     }
   }
 
@@ -301,7 +312,30 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: 'O‘chirilgan mahsulotlar',
+                          child: OutlinedButton(
+                            onPressed: _openDeletedProducts,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.danger,
+                              side: BorderSide(color: AppColors.danger.withValues(alpha: 0.45)),
+                              padding: EdgeInsets.symmetric(horizontal: isNarrow ? 10 : 14, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.danger),
+                                if (!isNarrow) ...[
+                                  const SizedBox(width: 6),
+                                  const Text('O‘chirilganlar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         if (isExtraSmall)
                           Tooltip(
                             message: 'Mahsulot qo‘shish',

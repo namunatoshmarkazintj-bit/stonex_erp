@@ -52,6 +52,8 @@ def to_out(p: m.Product, stock) -> ProductOut:
         waste_ratio=getattr(p, 'waste_ratio', None),
         cutting_rate=getattr(p, 'cutting_rate', None),
         is_active=p.is_active,
+        deleted_at=getattr(p, 'deleted_at', None),
+        deleted_by_name=getattr(p, 'deleted_by_name', None),
         stock=stock,
     )
 
@@ -178,12 +180,37 @@ def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(g
     return to_out(p, get_stock(db, p.id))
 
 
-@router.delete("/{product_id}", status_code=204)
+@router.get("/deleted", response_model=list[ProductOut])
+def list_deleted_products(db: Session = Depends(get_db), _: m.User = Depends(require_roles(roles.ADMIN))):
+    """O'chirilgan (arxivlangan) mahsulotlar ro'yxati."""
+    stmt = select(m.Product).where(m.Product.is_active.is_(False)).order_by(m.Product.deleted_at.desc(), m.Product.name)
+    prods = db.scalars(stmt).all()
+    stocks = stock_map(db)
+    return [to_out(p, stocks.get(p.id, 0)) for p in prods]
+
+
+@router.post("/{product_id}/restore", response_model=ProductOut)
+def restore_product(product_id: int, db: Session = Depends(get_db), _: m.User = Depends(require_roles(roles.ADMIN))):
+    """O'chirilgan mahsulotni qayta tiklash."""
+    p = db.get(m.Product, product_id)
+    if p is None:
+        raise HTTPException(404, "Mahsulot topilmadi")
+    p.is_active = True
+    p.deleted_at = None
+    p.deleted_by_name = None
+    db.commit()
+    return to_out(p, get_stock(db, p.id))
+
+
+@router.delete("/{product_id}")
 def deactivate_product(product_id: int, db: Session = Depends(get_db),
-                       _: m.User = Depends(require_roles(roles.ADMIN))):
-    """Tarix saqlanishi uchun mahsulot o'chirilmaydi, faqat faolsizlantiriladi."""
+                       user: m.User = Depends(require_roles(roles.ADMIN))):
+    """Mahsulotni savatga / arxivga o'tkazish (kim va qachon o'chirgani saqlanadi)."""
     p = db.get(m.Product, product_id)
     if p is None:
         raise HTTPException(404, "Mahsulot topilmadi")
     p.is_active = False
+    p.deleted_at = m.utcnow()
+    p.deleted_by_name = user.full_name or user.username
     db.commit()
+    return {"status": "ok", "message": f"{p.name} o'chirildi"}

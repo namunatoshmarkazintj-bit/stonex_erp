@@ -26,6 +26,9 @@ class UserOut(ORM):
     is_active: bool
     can_login: bool = True
     is_on_shift: bool = True
+    is_archived: bool = False
+    archived_at: datetime | None = None
+    archived_by_name: str | None = None
 
 
 class LoginOut(BaseModel):
@@ -206,6 +209,8 @@ class ProductOut(BaseModel):
     waste_ratio: Decimal | None = None
     cutting_rate: Decimal | None = None
     is_active: bool
+    deleted_at: datetime | None = None
+    deleted_by_name: str | None = None
     stock: Decimal
 
 

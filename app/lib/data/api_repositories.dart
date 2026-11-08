@@ -117,6 +117,18 @@ class ApiProductRepository implements ProductRepository {
   Future<void> deactivate(int id) async => _api.delete('/products/$id');
 
   @override
+  Future<List<Product>> listDeleted() async {
+    final j = await _api.get('/products/deleted') as List;
+    return j.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  @override
+  Future<Product> restore(int id) async {
+    final res = await _api.post('/products/$id/restore', body: {});
+    return Product.fromJson(res as Map<String, dynamic>);
+  }
+
+  @override
   Future<String> uploadImage(List<int> bytes, String filename) async {
     final res = await _api.uploadFile('/products/upload-image', bytes, filename);
     return res['image_url'] as String;
@@ -446,6 +458,21 @@ class ApiUserRepository implements UserRepository {
   @override
   Future<void> toggleShift(int id, bool onShift) async {
     await _api.patch('/users/$id/shift', body: {'is_on_shift': onShift});
+  }
+
+  @override
+  Future<void> archive(int id) async => _api.delete('/users/$id');
+
+  @override
+  Future<List<AppUser>> listArchived() async {
+    final j = await _api.get('/users/archived') as List;
+    return j.map((e) => AppUser.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  @override
+  Future<AppUser> restore(int id) async {
+    final j = await _api.post('/users/$id/restore', body: {});
+    return AppUser.fromJson(j as Map<String, dynamic>);
   }
 }
 
