@@ -1,8 +1,10 @@
 {
   "version": 2,
+  "framework": null,
+  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.[\\w]+$).*)",
       "destination": "/index.html"
     }
   ],
