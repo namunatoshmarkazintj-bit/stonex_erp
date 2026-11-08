@@ -761,8 +761,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 // Solishtirish kartalari
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final isHorizontalScroll = constraints.maxWidth < 600;
-                    final itemW = isHorizontalScroll ? 175.0 : (constraints.maxWidth - 24) / 3;
+                    final isHorizontalScroll = constraints.maxWidth < 720;
+                    final itemW = isHorizontalScroll ? 250.0 : (constraints.maxWidth - 24) / 3;
 
                     final card1 = SizedBox(
                       width: itemW,
@@ -1930,89 +1930,87 @@ class _FinanceScreenState extends State<FinanceScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // 1-Qator: Bu oy (Noyabr)
+          // 1-Qism: Bu oy (Noyabr / Joriy)
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SizedBox(
-                width: 78,
+              Text(
+                '$curMonth (Joriy):',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: isLoss ? const Color(0xFFEF4444) : context.inkColor,
+                ),
+              ),
+              Flexible(
                 child: Text(
-                  '$curMonth (Joriy):',
+                  isLoss ? '-${money(curVal.abs())}' : money(curVal),
                   style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
                     color: isLoss ? const Color(0xFFEF4444) : context.inkColor,
                   ),
+                  textAlign: TextAlign.right,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: curRatio,
-                    minHeight: 8,
-                    backgroundColor: isDark ? const Color(0xFF14181F) : const Color(0xFFE2E8F0),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      isLoss ? const Color(0xFFEF4444) : accentColor,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isLoss ? '-${money(curVal.abs())}' : money(curVal),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: isLoss ? const Color(0xFFEF4444) : context.inkColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: curRatio,
+              minHeight: 6,
+              backgroundColor: isDark ? const Color(0xFF14181F) : const Color(0xFFE2E8F0),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isLoss ? const Color(0xFFEF4444) : accentColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
 
-          // 2-Qator: O'tgan oy (Oktyabr)
+          // 2-Qism: O'tgan oy (Oktyabr / O'tgan)
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SizedBox(
-                width: 78,
+              Text(
+                '$prevMonth (O‘tgan):',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: context.mutedColor,
+                ),
+              ),
+              Flexible(
                 child: Text(
-                  '$prevMonth (O‘tgan):',
+                  money(prevVal),
                   style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
                     color: context.mutedColor,
                   ),
+                  textAlign: TextAlign.right,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: prevRatio,
-                    minHeight: 8,
-                    backgroundColor: isDark ? const Color(0xFF14181F) : const Color(0xFFE2E8F0),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      context.mutedColor.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                money(prevVal),
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: context.mutedColor,
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: prevRatio,
+              minHeight: 6,
+              backgroundColor: isDark ? const Color(0xFF14181F) : const Color(0xFFE2E8F0),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                context.mutedColor.withValues(alpha: 0.4),
+              ),
+            ),
           ),
 
           const Divider(height: 16),
