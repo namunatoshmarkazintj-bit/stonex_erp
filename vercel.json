@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "web_deploy",
   "cleanUrls": true,
   "rewrites": [
     {
