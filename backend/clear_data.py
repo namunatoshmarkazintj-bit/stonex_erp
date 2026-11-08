@@ -21,7 +21,7 @@ def clean_database():
             elif "mysql" in str(engine.url):
                 conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
 
-            tables = ["delivery_items", "deliveries", "payments", "sale_items", "sales", "customers"]
+            tables = ["delivery_items", "deliveries", "payments", "sale_items", "sales", "customers", "expenses", "production_tasks"]
             for tbl in tables:
                 try:
                     res = conn.execute(text(f"DELETE FROM {tbl};"))
@@ -29,17 +29,17 @@ def clean_database():
                 except Exception as ex:
                     print(f"Jadval [{tbl}] xatolik: {ex}")
 
-            # Savdolar tufayli yuzaga kelgan ombor harakatlarini tozalash
+            # Savdolar va xaridlar ombor harakatlarini tozalash (faqat boshlang'ich opening qoladi)
             try:
-                res = conn.execute(text("DELETE FROM stock_movements WHERE kind IN ('sale', 'return');"))
-                print(f"Tozalandi [stock_movements (sale/return)]: {res.rowcount} ta qator")
+                res = conn.execute(text("DELETE FROM stock_movements WHERE kind != 'opening';"))
+                print(f"Tozalandi [stock_movements (not opening)]: {res.rowcount} ta qator")
             except Exception as ex:
                 print(f"stock_movements xatolik: {ex}")
 
-            # Xabarnomalardagi savdo va to'lov xabarlarini tozalash
+            # Xabarnomalarni tozalash
             try:
-                res = conn.execute(text("DELETE FROM notifications WHERE kind IN ('sale', 'payment');"))
-                print(f"Tozalandi [notifications (sale/payment)]: {res.rowcount} ta qator")
+                res = conn.execute(text("DELETE FROM notifications;"))
+                print(f"Tozalandi [notifications]: {res.rowcount} ta qator")
             except Exception as ex:
                 print(f"notifications xatolik: {ex}")
 
@@ -60,19 +60,19 @@ def clean_database():
             con = sqlite3.connect(sqlite_path)
             cur = con.cursor()
             cur.execute("PRAGMA foreign_keys = OFF;")
-            for tbl in ["delivery_items", "deliveries", "payments", "sale_items", "sales", "customers"]:
+            for tbl in ["delivery_items", "deliveries", "payments", "sale_items", "sales", "customers", "expenses", "production_tasks"]:
                 try:
                     cur.execute(f"DELETE FROM {tbl};")
                     print(f"SQLite [{tbl}]: {cur.rowcount} ta qator o'chirildi")
                 except Exception as e:
                     print(f"SQLite [{tbl}]: {e}")
             try:
-                cur.execute("DELETE FROM stock_movements WHERE kind IN ('sale', 'return');")
+                cur.execute("DELETE FROM stock_movements WHERE kind != 'opening';")
                 print(f"SQLite [stock_movements]: {cur.rowcount} ta qator o'chirildi")
             except Exception as e:
                 pass
             try:
-                cur.execute("DELETE FROM notifications WHERE kind IN ('sale', 'payment');")
+                cur.execute("DELETE FROM notifications;")
             except Exception as e:
                 pass
             con.commit()

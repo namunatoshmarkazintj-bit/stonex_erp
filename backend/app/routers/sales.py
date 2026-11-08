@@ -148,8 +148,10 @@ def reset_all_sales_and_customers(
         db.execute(text("DELETE FROM sale_items;"))
         db.execute(text("DELETE FROM sales;"))
         db.execute(text("DELETE FROM customers;"))
-        db.execute(text("DELETE FROM stock_movements WHERE kind IN ('sale', 'return');"))
-        db.execute(text("DELETE FROM notifications WHERE kind IN ('sale', 'payment');"))
+        db.execute(text("DELETE FROM expenses;"))
+        db.execute(text("DELETE FROM production_tasks;"))
+        db.execute(text("DELETE FROM stock_movements WHERE kind != 'opening';"))
+        db.execute(text("DELETE FROM notifications;"))
 
         if dialect == "sqlite":
             db.execute(text("PRAGMA foreign_keys = ON;"))
@@ -157,7 +159,7 @@ def reset_all_sales_and_customers(
             db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
 
         db.commit()
-        return {"status": "ok", "message": "Barcha savdolar, to'lovlar va mijozlar server bazasidan to'liq o'chirildi"}
+        return {"status": "ok", "message": "Barcha savdolar, xaridlar, to'lovlar, topshiriqlar va mijozlar server bazasidan to'liq o'chirildi, faqat mahsulotlar qoldi"}
     except Exception as e:
         db.rollback()
         raise HTTPException(500, f"Tozalashda xatolik: {e}")
