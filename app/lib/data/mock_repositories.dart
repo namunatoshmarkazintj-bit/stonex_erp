@@ -984,10 +984,6 @@ class MockSalesRepository implements SalesRepository {
       if (itemIdx < 0) throw ApiException('Mahsulot ushbu chekda topilmadi', 400);
       final it = updatedItems[itemIdx];
 
-      if (it.isCut) {
-        throw ApiException('\'${it.productName}\' maxsus razmerda kesib berilgan! Kesilgan kafellar qaytarib olinmaydi.', 400);
-      }
-
       if (ret.quantity > it.quantity) {
         throw ApiException('Qaytarish miqdori (${ret.quantity}) sotilgan miqdordan (${it.quantity}) ko‘p bo‘lishi mumkin emas', 400);
       }

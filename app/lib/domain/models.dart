@@ -867,11 +867,27 @@ class SaleItemRecord {
     required this.lineTotal,
   });
 
-  bool get isCut =>
-      (productName.contains('[') &&
-          (productName.contains(']') || productName.contains('dona)'))) ||
-      productName.toLowerCase().contains('kesil') ||
-      productName.toLowerCase().contains('maxsus razmer');
+  bool get isCut {
+    final lower = productName.toLowerCase();
+    if (lower.contains('kesil') ||
+        lower.contains('kesish') ||
+        lower.contains('maxsus razmer') ||
+        lower.contains('ishlov')) {
+      return true;
+    }
+    final matches = RegExp(r'\[(.*?)\]').allMatches(productName);
+    for (final m in matches) {
+      final inside = (m.group(1) ?? '').toLowerCase();
+      if (inside.contains('sort')) continue;
+      if (RegExp(r'\d+\s*[×xX*]\s*\d+').hasMatch(inside) ||
+          inside.contains('kes') ||
+          inside.contains('sm') ||
+          inside.contains('m2')) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   factory SaleItemRecord.fromJson(Map<String, dynamic> j) => SaleItemRecord(
         productId: (j['product_id'] as num?)?.toInt() ?? 0,

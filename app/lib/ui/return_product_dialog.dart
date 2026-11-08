@@ -27,6 +27,7 @@ class ReturnProductDialog extends StatefulWidget {
 
 class _ReturnProductDialogState extends State<ReturnProductDialog> {
   late final Map<int, double> _returnQuantities;
+  final Set<int> _forcedCutReturnIds = {};
   final _reasonCtrl = TextEditingController(text: 'Ortib qolgan butun mahsulot qaytarildi');
   bool _busy = false;
   String? _error;
@@ -56,7 +57,7 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
   double get _totalRefund {
     double sum = 0;
     for (final it in widget.sale.items) {
-      if (it.isCut) continue;
+      if (it.isCut && !_forcedCutReturnIds.contains(it.productId)) continue;
       final q = _returnQuantities[it.productId] ?? 0.0;
       sum += q * it.unitPrice;
     }
@@ -87,7 +88,7 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
     try {
       final itemsToReturn = <({int productId, double quantity})>[];
       for (final it in widget.sale.items) {
-        if (it.isCut) continue;
+        if (it.isCut && !_forcedCutReturnIds.contains(it.productId)) continue;
         final q = _returnQuantities[it.productId] ?? 0.0;
         if (q > 0) {
           itemsToReturn.add((productId: it.productId, quantity: q));
@@ -406,23 +407,32 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
   Widget _buildItemReturnCard(BuildContext context, SaleItemRecord it) {
     final isDark = context.isDark;
     final isCut = it.isCut;
+    final isForced = _forcedCutReturnIds.contains(it.productId);
     final selectedQty = _returnQuantities[it.productId] ?? 0.0;
+
+    Color cardBg;
+    Color borderColor;
+    if (isCut && !isForced) {
+      cardBg = isDark ? const Color(0xFF241517) : const Color(0xFFFEF2F2);
+      borderColor = const Color(0xFFF87171).withValues(alpha: 0.4);
+    } else if (isForced) {
+      cardBg = isDark ? const Color(0xFF2E2413) : const Color(0xFFFEFCE8);
+      borderColor = const Color(0xFFF59E0B).withValues(alpha: selectedQty > 0 ? 0.8 : 0.4);
+    } else if (selectedQty > 0) {
+      cardBg = isDark ? const Color(0xFF1E281F) : const Color(0xFFF0FDF4);
+      borderColor = AppColors.green.withValues(alpha: 0.6);
+    } else {
+      cardBg = context.cardColor;
+      borderColor = context.borderColor;
+    }
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isCut
-            ? (isDark ? const Color(0xFF241517) : const Color(0xFFFEF2F2))
-            : (selectedQty > 0
-                ? (isDark ? const Color(0xFF1E281F) : const Color(0xFFF0FDF4))
-                : context.cardColor),
+        color: cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isCut
-              ? const Color(0xFFF87171).withValues(alpha: 0.4)
-              : (selectedQty > 0
-                  ? AppColors.green.withValues(alpha: 0.6)
-                  : context.borderColor),
+          color: borderColor,
           width: selectedQty > 0 ? 1.5 : 1,
         ),
       ),
@@ -441,7 +451,9 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: isCut ? (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B)) : context.inkColor,
+                        color: (isCut && !isForced)
+                            ? (isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B))
+                            : context.inkColor,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -452,7 +464,7 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
                   ],
                 ),
               ),
-              if (isCut)
+              if (isCut && !isForced)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -472,6 +484,35 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
                     ],
                   ),
                 )
+              else if (isCut && isForced)
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _forcedCutReturnIds.remove(it.productId);
+                      _returnQuantities[it.productId] = 0.0;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFF59E0B)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.warning_amber_rounded, size: 12, color: Color(0xFFD97706)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Majburiy yoqildi ✕',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFD97706)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               else
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -487,13 +528,65 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
             ],
           ),
 
-          if (isCut) ...[
+          if (isCut && !isForced) ...[
             const SizedBox(height: 8),
             const Text(
               'Xaridor talabiga ko‘ra maxsus razmerda kesib berilgan kafellar nizom bo‘yicha qaytarib olinmaydi.',
               style: TextStyle(fontSize: 10.5, color: AppColors.danger, fontStyle: FontStyle.italic),
             ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _forcedCutReturnIds.add(it.productId);
+                  if ((_returnQuantities[it.productId] ?? 0) == 0) {
+                    _returnQuantities[it.productId] = it.quantity;
+                  }
+                });
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_open_rounded, size: 14, color: Color(0xFFD97706)),
+                    SizedBox(width: 6),
+                    Text(
+                      'Majburlab tanlash (Kesilgan bo‘lsa ham qaytarish)',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFD97706)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ] else ...[
+            if (isCut && isForced) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 12, color: Color(0xFFD97706)),
+                    SizedBox(width: 4),
+                    Text(
+                      'Diqqat: Ushbu kesilgan mahsulot majburiy qabul qilinmoqda',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFFD97706)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             Row(
               children: [
