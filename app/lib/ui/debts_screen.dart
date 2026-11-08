@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/config.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/repositories.dart';
@@ -50,11 +51,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
   void _copyReminderText(SaleResult sale) {
     final name = sale.customerName?.isNotEmpty == true ? sale.customerName! : 'Hurmatli mijoz';
     final text = 'Assalomu alaykum, $name!\n'
-        'NTJ (Namuna Tosh Jilo) dan xaridlaringiz bo‘yicha #${sale.id}-sonli chekdan '
+        '${CompanyInfo.name} dan xaridlaringiz bo‘yicha #${sale.id}-sonli chekdan '
         '${money(sale.debt)} miqdorida nasiya qarzdorligingiz mavjud.\n'
         'Iltimos, imkon qadar tezroq to‘lovni amalga oshirishingizni so‘raymiz.\n'
-        'Aloqa va ma‘lumot uchun: +998 (90) 588-66-99, +998 (50) 588-66-99, +998 (50) 700-06-06\n'
-        'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy';
+        'Aloqa va ma‘lumot uchun:\n${CompanyInfo.phonesFormatted}\n'
+        'Manzil: ${CompanyInfo.address}';
 
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -74,11 +75,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
 
   void _copyCustomerTotalReminder(String name, String? phone, double totalDebt, int count) {
     final text = 'Assalomu alaykum, $name!\n'
-        'NTJ (Namuna Tosh Jilo) dan xaridlaringiz ($count ta chek) bo‘yicha jami '
+        '${CompanyInfo.name} dan xaridlaringiz ($count ta chek) bo‘yicha jami '
         '${money(totalDebt)} miqdorida nasiya qarzdorligingiz mavjud.\n'
         'Iltimos, to‘lovni amalga oshirishingizni so‘raymiz.\n'
-        'Aloqa va ma‘lumot uchun: +998 (90) 588-66-99, +998 (50) 588-66-99, +998 (50) 700-06-06\n'
-        'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy';
+        'Aloqa va ma‘lumot uchun:\n${CompanyInfo.phonesFormatted}\n'
+        'Manzil: ${CompanyInfo.address}';
 
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(

@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../core/config.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/local_printer_store.dart';
@@ -65,12 +66,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     final sale = widget.sale;
     final sb = StringBuffer();
     sb.writeln('================================');
-    sb.writeln('   NTJ — NAMUNA TOSH JILO       ');
-    sb.writeln('  Tabiiy tosh va granit markazi ');
-    sb.writeln(' Manzil: Namuna MFY, Sokin ko‘cha, 11-uy ');
-    sb.writeln(' Tel: +998 (90) 588-66-99       ');
-    sb.writeln('      +998 (50) 588-66-99       ');
-    sb.writeln('      +998 (50) 700-06-06       ');
+    sb.writeln('   ${CompanyInfo.name}          ');
+    sb.writeln('  ${CompanyInfo.businessType}   ');
+    sb.writeln(' Manzil: ${CompanyInfo.address} ');
+    for (int i = 0; i < CompanyInfo.phones.length; i++) {
+      if (i == 0) {
+        sb.writeln(' Tel: ${CompanyInfo.phones[i]}');
+      } else {
+        sb.writeln('      ${CompanyInfo.phones[i]}');
+      }
+    }
     sb.writeln('================================');
     sb.writeln('Chek №: #${sale.id.toString().padLeft(6, '0')}');
     sb.writeln('Sana: ${formatDateTime(sale.createdAt ?? DateTime.now())}');
@@ -227,7 +232,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 mainAxisSize: pw.MainAxisSize.min,
                 children: [
                   pw.Text(
-                    'NTJ — NAMUNA TOSH JILO',
+                    CompanyInfo.name,
                     style: pw.TextStyle(
                       font: fontBold,
                       fontSize: 14,
@@ -237,17 +242,17 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   ),
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    'Tabiiy tosh va granit markazi',
+                    CompanyInfo.businessType,
                     style: pw.TextStyle(font: font, fontSize: 8),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
-                    'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy',
+                    'Manzil: ${CompanyInfo.address}',
                     style: pw.TextStyle(font: font, fontSize: 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
-                    'Tel: +998 (90) 588-66-99 | +998 (50) 588-66-99 | +998 (50) 700-06-06',
+                    'Tel: ${CompanyInfo.phonesInline}',
                     style: pw.TextStyle(font: font, fontSize: 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
@@ -797,10 +802,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // Brand
-                            const Center(
+                            Center(
                               child: Text(
-                                'NTJ — NAMUNA TOSH JILO',
-                                style: TextStyle(
+                                CompanyInfo.name,
+                                style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
@@ -811,10 +816,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            const Center(
+                            Center(
                               child: Text(
-                                'Tabiiy tosh va granit markazi',
-                                style: TextStyle(
+                                CompanyInfo.businessType,
+                                style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 11,
                                   color: Color(0xFF6B7280),
@@ -822,10 +827,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            const Center(
+                            Center(
                               child: Text(
-                                'Manzil: Namuna MFY, Sokin ko‘cha, 11-uy',
-                                style: TextStyle(
+                                'Manzil: ${CompanyInfo.address}',
+                                style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
                                   color: Color(0xFF6B7280),
@@ -834,10 +839,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            const Center(
+                            Center(
                               child: Text(
-                                'Tel: +998 (90) 588-66-99 • +998 (50) 588-66-99\n+998 (50) 700-06-06',
-                                style: TextStyle(
+                                'Tel: ${CompanyInfo.phonesFormatted}',
+                                style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
                                   color: Color(0xFF6B7280),

@@ -10,6 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
+import '../core/config.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/local_image_store.dart';
@@ -1605,10 +1606,10 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
     final c = widget.customer;
     final sb = StringBuffer();
     sb.writeln('========================================');
-    sb.writeln('       NTJ — NAMUNA TOSH JILO          ');
-    sb.writeln('      Tabiiy tosh va granit markazi     ');
-    sb.writeln('   Manzil: Namuna MFY, Sokin ko‘cha, 11 ');
-    sb.writeln(' Tel: +998 90 588-66-99 • +998 50 588-66-99 • +998 50 700-06-06 ');
+    sb.writeln('       ${CompanyInfo.name}              ');
+    sb.writeln('      ${CompanyInfo.businessType}       ');
+    sb.writeln('   Manzil: ${CompanyInfo.address}       ');
+    sb.writeln(' Tel: ${CompanyInfo.phonesInline}       ');
     sb.writeln('========================================');
     sb.writeln('    MIJOZ HISOBOT CHEKI (AKT-SVERKA)    ');
     sb.writeln('Mijoz: ${c.name}');
@@ -1659,18 +1660,18 @@ class _CustomerStatementDialogState extends State<_CustomerStatementDialog> {
             pw.Center(
               child: pw.Column(
                 children: [
-                  pw.Text('NTJ — NAMUNA TOSH JILO',
+                  pw.Text(CompanyInfo.name,
                       style: pw.TextStyle(
                           font: fontBold,
                           fontSize: 18,
                           fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(height: 3),
                   pw.Text(
-                      'Tabiiy tosh va granit markazi • Manzil: Namuna MFY, Sokin ko‘cha, 11-uy',
+                      '${CompanyInfo.businessType} • Manzil: ${CompanyInfo.address}',
                       style: pw.TextStyle(font: font, fontSize: 10)),
                   pw.SizedBox(height: 2),
                   pw.Text(
-                      'Tel: +998 90 588-66-99 • +998 50 588-66-99 • +998 50 700-06-06',
+                      'Tel: ${CompanyInfo.phonesInline}',
                       style: pw.TextStyle(font: font, fontSize: 9.5)),
                   pw.SizedBox(height: 6),
                   pw.Text('MIJOZ SAVDOLARI VA TO‘LOVLAR HISOBOTI (AKT-SVERKA)',

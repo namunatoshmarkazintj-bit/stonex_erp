@@ -5,10 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
+import '../core/config.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
+import '../data/local_company_store.dart';
 import '../data/local_printer_store.dart';
 import '../data/repositories.dart';
+import '../data/repository_factory.dart';
 import '../domain/models.dart';
 import '../state/app_lock_controller.dart';
 import '../state/auth_controller.dart';
@@ -2323,6 +2326,160 @@ class _SettingsBottomSheet extends StatelessWidget {
     }
   }
 
+  Future<bool?> _editCompanyDialog(BuildContext context) async {
+    final nameCtrl = TextEditingController(text: CompanyInfo.name);
+    final addrCtrl = TextEditingController(text: CompanyInfo.address);
+    final p1Ctrl = TextEditingController(text: CompanyInfo.phones.isNotEmpty ? CompanyInfo.phones[0] : '');
+    final p2Ctrl = TextEditingController(text: CompanyInfo.phones.length > 1 ? CompanyInfo.phones[1] : '');
+    final p3Ctrl = TextEditingController(text: CompanyInfo.phones.length > 2 ? CompanyInfo.phones[2] : '');
+
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.dialogBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.neonLime,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.edit_note_rounded, color: AppColors.ink, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Korxona ma’lumotlarini tahrirlash',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Korxona nomi',
+                    prefixIcon: const Icon(Icons.storefront_rounded, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: addrCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Korxona manzili',
+                    prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'MUROJAAT UCHUN TELEFON RAQAMLARI:',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: p1Ctrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: '1-Asosiy telefon raqami',
+                    hintText: '+998 (90) 588-66-99',
+                    prefixIcon: const Icon(Icons.phone_rounded, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: p2Ctrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: '2-Telefon raqami (ixtiyoriy)',
+                    hintText: '+998 (50) 588-66-99',
+                    prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: p3Ctrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: '3-Telefon raqami (ixtiyoriy)',
+                    hintText: '+998 (50) 700-06-06',
+                    prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              LocalCompanyStore.resetToDefault();
+              Navigator.pop(ctx, true);
+              showMessage(context, 'Korxona ma’lumotlari standart holatga qaytarildi');
+            },
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+            child: const Text('Standartga qaytarish'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              final newName = nameCtrl.text.trim().isEmpty ? CompanyInfo.defaultName : nameCtrl.text.trim();
+              final newAddr = addrCtrl.text.trim().isEmpty ? CompanyInfo.defaultAddress : addrCtrl.text.trim();
+              final phones = [p1Ctrl.text.trim(), p2Ctrl.text.trim(), p3Ctrl.text.trim()]
+                  .where((p) => p.isNotEmpty)
+                  .toList();
+              final finalPhones = phones.isEmpty ? CompanyInfo.defaultPhones : phones;
+
+              LocalCompanyStore.save(
+                name: newName,
+                address: newAddr,
+                phones: finalPhones,
+              );
+
+              // Serverga ham saqlash
+              try {
+                await appApiClient.post('/settings/company', body: {
+                  'name': newName,
+                  'address': newAddr,
+                  'business_type': CompanyInfo.businessType,
+                  'phones': finalPhones,
+                });
+              } catch (_) {}
+
+              if (ctx.mounted) Navigator.pop(ctx, true);
+              if (context.mounted) {
+                showMessage(context, '✓ Korxona telefon raqamlari va rekvizitlari muvaffaqiyatli saqlandi!');
+              }
+            },
+            child: const Text('Saqlash', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeCtrl = context.watch<ThemeController>();
@@ -2743,48 +2900,79 @@ class _SettingsBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: context.cardSubtle,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _SettingsCompactRow(
-                  icon: Icons.storefront_rounded,
-                  label: 'Korxona',
-                  value: 'NTJ — Namuna Tosh Jilo',
+          StatefulBuilder(
+            builder: (ctx, setCState) {
+              final phones = CompanyInfo.phones;
+              final p1 = phones.isNotEmpty ? phones[0] : 'Kiritilmagan';
+              final restPhones = phones.length > 1 ? phones.skip(1).join('  •  ') : null;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: context.cardSubtle,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderColor),
                 ),
-                const SizedBox(height: 8),
-                const _SettingsCompactRow(
-                  icon: Icons.location_on_outlined,
-                  label: 'Manzil',
-                  value: 'Namuna MFY, Sokin ko‘cha, 11-uy',
-                ),
-                const SizedBox(height: 8),
-                const _SettingsCompactRow(
-                  icon: Icons.phone_in_talk_outlined,
-                  label: 'Murojaat uchun',
-                  value: '+998 (90) 588-66-99',
-                  valueColor: AppColors.green,
-                ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.only(left: 28),
-                  child: Text(
-                    '+998 (50) 588-66-99  •  +998 (50) 700-06-06',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: context.inkColor,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SettingsCompactRow(
+                      icon: Icons.storefront_rounded,
+                      label: 'Korxona',
+                      value: CompanyInfo.name,
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    _SettingsCompactRow(
+                      icon: Icons.location_on_outlined,
+                      label: 'Manzil',
+                      value: CompanyInfo.address,
+                    ),
+                    const SizedBox(height: 8),
+                    _SettingsCompactRow(
+                      icon: Icons.phone_in_talk_outlined,
+                      label: 'Murojaat uchun',
+                      value: p1,
+                      valueColor: AppColors.green,
+                    ),
+                    if (restPhones != null) ...[
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 28),
+                        child: Text(
+                          restPhones,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: context.inkColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.edit_rounded, size: 16),
+                        label: const Text(
+                          'Telefon raqamlari va manzilni o‘zgartirish',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                        onPressed: () async {
+                          final updated = await _editCompanyDialog(context);
+                          if (updated == true) {
+                            setCState(() {});
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 16),
 

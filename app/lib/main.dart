@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
+import 'data/local_company_store.dart';
 import 'data/repositories.dart';
 import 'data/repository_factory.dart';
 import 'state/app_lock_controller.dart';
@@ -20,8 +21,27 @@ void main() {
     SystemUiMode.manual,
     overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],
   );
+  _syncCompanyInfo();
   final repos = buildRepositories();
   runApp(StonexApp(repos: repos));
+}
+
+Future<void> _syncCompanyInfo() async {
+  try {
+    final res = await appApiClient.get('/settings/company');
+    if (res is Map<String, dynamic>) {
+      final name = res['name'] as String?;
+      final addr = res['address'] as String?;
+      final phones = res['phones'] as List?;
+      if (name != null && addr != null && phones != null) {
+        LocalCompanyStore.save(
+          name: name,
+          address: addr,
+          phones: phones.map((p) => p.toString()).toList(),
+        );
+      }
+    }
+  } catch (_) {}
 }
 
 class StonexApp extends StatelessWidget {

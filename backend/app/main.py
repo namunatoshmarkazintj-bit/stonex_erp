@@ -20,6 +20,7 @@ from .routers import (
     sales,
     stock,
     users,
+    settings as settings_router,
 )
 
 uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
@@ -59,7 +60,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
 
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
-for r in (auth, users, products, stock, customers, sales, production, finance, notifications, attendance, deliveries):
+for r in (auth, users, products, stock, customers, sales, production, finance, notifications, attendance, deliveries, settings_router):
     app.include_router(r.router)
 
 
