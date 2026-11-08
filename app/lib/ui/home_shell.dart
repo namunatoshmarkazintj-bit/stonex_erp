@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../core/format.dart';
 import '../core/theme.dart';
+import '../data/local_printer_store.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
 import '../state/app_lock_controller.dart';
@@ -2279,6 +2281,48 @@ class _SettingsBottomSheet extends StatelessWidget {
   const _SettingsBottomSheet({required this.user});
   final AppUser user;
 
+  Future<Printer?> _pickPrinterDialog(BuildContext context) async {
+    try {
+      final printers = await Printing.listPrinters();
+      if (!context.mounted) return null;
+      return await showDialog<Printer>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: context.dialogBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Chek printerini tanlang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          content: SizedBox(
+            width: 380,
+            child: printers.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('Ulangan printer topilmadi. USB yoki Bluetooth printerni kompyuter/telefonga ulang.'),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: printers.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (ctx, i) {
+                      final p = printers[i];
+                      return ListTile(
+                        leading: Icon(p.isDefault ? Icons.star_rounded : Icons.print_outlined),
+                        title: Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                        subtitle: Text(p.isDefault ? 'Standart printer' : (p.model ?? 'Ulangan printer'), style: const TextStyle(fontSize: 11)),
+                        onTap: () => Navigator.pop(ctx, p),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Bekor qilish')),
+          ],
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeCtrl = context.watch<ThemeController>();
@@ -2554,6 +2598,118 @@ class _SettingsBottomSheet extends StatelessWidget {
                             onPressed: () {
                               Navigator.pop(ctx);
                               lockCtrl.lockNow();
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Chek printeri sozlamasi (USB / Bluetooth)
+          Text(
+            'CHEK PRINTERI SOZLAMASI (USB / BLUETOOTH)',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+              color: context.mutedColor,
+            ),
+          ),
+          const SizedBox(height: 10),
+          StatefulBuilder(
+            builder: (ctx, setPState) {
+              final printerName = LocalPrinterStore.getSavedPrinterName();
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: context.cardSubtle,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderColor),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: printerName != null
+                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                : context.pillColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.print_rounded,
+                            size: 18,
+                            color: printerName != null ? const Color(0xFF10B981) : context.mutedColor,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                printerName ?? 'Tanlanmagan (Chop etishda so‘raladi)',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.inkColor,
+                                ),
+                              ),
+                              Text(
+                                printerName != null
+                                    ? 'Doimiy printer (1 ta bosishda to‘g‘ridan-to‘g‘ri chiqaradi)'
+                                    : 'Bir marta tanlasangiz, doimiy saqlab qolinadi',
+                                style: TextStyle(fontSize: 11, color: context.mutedColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.tune_rounded, size: 16),
+                            label: Text(
+                              printerName != null ? 'Printerni almashtirish' : 'Printer tanlash',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                            onPressed: () async {
+                              final p = await _pickPrinterDialog(context);
+                              if (p != null) {
+                                LocalPrinterStore.savePrinter(p.url, p.name);
+                                setPState(() {});
+                              }
+                            },
+                          ),
+                        ),
+                        if (printerName != null) ...[
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFEF4444),
+                              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.close_rounded, size: 16),
+                            label: const Text('Tozalash', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            onPressed: () {
+                              LocalPrinterStore.clearPrinter();
+                              setPState(() {});
                             },
                           ),
                         ],

@@ -10,6 +10,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../core/format.dart';
 import '../core/theme.dart';
+import '../data/local_printer_store.dart';
 import '../domain/models.dart';
 import 'common.dart';
 import 'return_product_dialog.dart';
@@ -202,7 +203,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     );
   }
 
-  Future<void> _printPdf(BuildContext context) async {
+  Future<void> _printPdf(BuildContext context, {bool forcePickPrinter = false}) async {
     final sale = widget.sale;
     setState(() => _isPrinting = true);
 
@@ -437,10 +438,64 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         ),
       );
 
-      await Printing.layoutPdf(
-        onLayout: (format) async => doc.save(),
-        name: 'Chek_${sale.id}.pdf',
-      );
+      final savedUrl = LocalPrinterStore.getSavedPrinterUrl();
+      Printer? targetPrinter;
+
+      if (!forcePickPrinter && savedUrl != null && savedUrl.isNotEmpty) {
+        try {
+          final printers = await Printing.listPrinters();
+          targetPrinter = printers.where((p) => p.url == savedUrl).firstOrNull;
+        } catch (_) {}
+      }
+
+      // Agar majburiy almashtirish so'ralsa
+      if (forcePickPrinter) {
+        if (!mounted) return;
+        targetPrinter = await _showPrinterPickerDialog(context);
+        if (targetPrinter == null && mounted) {
+          // Foydalanuvchi tizim dialogini tanlagan bo'lsa
+          await Printing.layoutPdf(
+            onLayout: (format) async => doc.save(),
+            name: 'Chek_${sale.id}.pdf',
+          );
+          return;
+        }
+      }
+
+      if (targetPrinter != null) {
+        // Doimiy printerga to'g'ridan-to'g'ri (1-click, ortiqcha oynasiz) chiqarish!
+        await Printing.directPrintPdf(
+          printer: targetPrinter,
+          onLayout: (format) async => doc.save(),
+          name: 'Chek_${sale.id}.pdf',
+        );
+        if (mounted) {
+          showMessage(context, '✓ "${targetPrinter.name}" printeriga yuborildi');
+        }
+      } else {
+        // Birinchi marta tizimda printerlar bo'lsa, tanlashni taklif qilamiz
+        final printers = await Printing.listPrinters();
+        if (printers.isNotEmpty && savedUrl == null) {
+          if (!mounted) return;
+          final chosen = await _showPrinterPickerDialog(context);
+          if (chosen != null) {
+            await Printing.directPrintPdf(
+              printer: chosen,
+              onLayout: (format) async => doc.save(),
+              name: 'Chek_${sale.id}.pdf',
+            );
+            if (mounted) {
+              showMessage(context, '✓ "${chosen.name}" printeriga yuborildi');
+            }
+            return;
+          }
+        }
+
+        await Printing.layoutPdf(
+          onLayout: (format) async => doc.save(),
+          name: 'Chek_${sale.id}.pdf',
+        );
+      }
     } on MissingPluginException {
       // Dastur hot-reload bo'lganda native plugin ulanmagan bo'lsa
       if (context.mounted) {
@@ -508,6 +563,142 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         ],
       ),
     );
+  }
+
+  Future<Printer?> _showPrinterPickerDialog(BuildContext context) async {
+    List<Printer> printers = [];
+    try {
+      printers = await Printing.listPrinters();
+    } catch (_) {}
+
+    if (!context.mounted) return null;
+
+    bool remember = true;
+    Printer? selected;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          backgroundColor: context.dialogBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.print_rounded, color: Color(0xFF10B981), size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text('Chek printerini tanlang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (printers.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Tizimda ulangan printer topilmadi. Tizim oynasi orqali chop etishingiz mumkin.',
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: printers.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (ctx, idx) {
+                        final p = printers[idx];
+                        final isSaved = p.url == LocalPrinterStore.getSavedPrinterUrl();
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          leading: Icon(
+                            p.isDefault ? Icons.star_rounded : Icons.print_outlined,
+                            color: isSaved ? const Color(0xFF10B981) : (p.isDefault ? const Color(0xFFF59E0B) : Colors.grey.shade700),
+                          ),
+                          title: Text(
+                            p.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSaved ? FontWeight.w800 : FontWeight.w600,
+                              color: isSaved ? const Color(0xFF10B981) : null,
+                            ),
+                          ),
+                          subtitle: Text(
+                            p.isDefault ? 'Standart printer' : (p.model ?? 'Ulangan printer'),
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          trailing: isSaved
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text('Doimiy', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
+                                )
+                              : null,
+                          onTap: () {
+                            selected = p;
+                            if (remember) {
+                              LocalPrinterStore.savePrinter(p.url, p.name);
+                              if (mounted) setState(() {});
+                            }
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: remember,
+                  activeColor: const Color(0xFF10B981),
+                  title: const Text(
+                    'Har doim shu printerdan foydalanish (Eslab qolish)',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  onChanged: (v) => setDlgState(() => remember = v ?? true),
+                ),
+                const SizedBox(height: 6),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Tizim oynasi orqali chop etish', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  onPressed: () {
+                    selected = null;
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Bekor qilish'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return selected;
   }
 
   void _copyToClipboard(BuildContext context) {
@@ -994,25 +1185,55 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                           ),
                         ),
-                      FilledButton.icon(
-                        onPressed: _isPrinting ? null : () => _printPdf(context),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: _isPrinting
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.print_rounded, size: 15),
-                        label: const Text(
-                          'Chop etish',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                        ),
+                      Builder(
+                        builder: (ctx) {
+                          final savedPrinterName = LocalPrinterStore.getSavedPrinterName();
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: _isPrinting ? null : () => _printPdf(context),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF10B981),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.horizontal(
+                                      left: const Radius.circular(12),
+                                      right: savedPrinterName != null ? Radius.zero : const Radius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                icon: _isPrinting
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Icon(Icons.print_rounded, size: 15),
+                                label: Text(
+                                  savedPrinterName != null
+                                      ? 'Chop etish (${savedPrinterName.length > 14 ? "${savedPrinterName.substring(0, 12)}.." : savedPrinterName})'
+                                      : 'Chop etish',
+                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                                ),
+                              ),
+                              if (savedPrinterName != null)
+                                Container(
+                                  height: 38,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF059669),
+                                    borderRadius: BorderRadius.horizontal(right: Radius.circular(12)),
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.tune_rounded, size: 16, color: Colors.white),
+                                    tooltip: 'Printerni almashtirish ($savedPrinterName)',
+                                    onPressed: _isPrinting ? null : () => _printPdf(context, forcePickPrinter: true),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
