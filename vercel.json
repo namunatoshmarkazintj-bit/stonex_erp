@@ -1,6 +1,4 @@
 {
-  "version": 2,
-  "outputDirectory": "web_deploy",
   "cleanUrls": true,
   "rewrites": [
     {

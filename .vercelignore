@@ -1,0 +1,9 @@
+# Ignore backend and flutter source so Vercel only serves static web
+backend/
+app/
+*.py
+*.apk
+*.db
+render.yaml
+STONEX_ERP_FOR_GEMINI.md
+CREDENTIALS_AND_HANDOVER.md
