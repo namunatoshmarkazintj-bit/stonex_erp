@@ -996,32 +996,41 @@ class _OrderCard extends StatelessWidget {
                   if (i > 0)
                     Divider(height: 12, thickness: 0.5, color: context.borderColor.withOpacity(0.4)),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 14, color: context.subtextColor),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Icon(Icons.inventory_2_outlined, size: 14, color: context.subtextColor),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          order.items[i].productName,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: context.inkColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              order.items[i].productName,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: context.inkColor,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${order.items[i].quantity.toStringAsFixed(1)} × ${money(order.items[i].unitPrice)}',
+                              style: TextStyle(fontSize: 11.5, color: context.subtextColor),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${order.items[i].quantity.toStringAsFixed(1)} × ${money(order.items[i].unitPrice)}',
-                        style: TextStyle(fontSize: 11.5, color: context.subtextColor),
-                      ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Text(
                         money(order.items[i].lineTotal),
                         style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
                           color: context.inkColor,
                         ),
                       ),

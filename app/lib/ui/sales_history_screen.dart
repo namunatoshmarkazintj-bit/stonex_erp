@@ -553,15 +553,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  money(sale.total),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                ),
-              ),
             ],
+          ),
+          trailing: Text(
+            money(sale.total),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6),

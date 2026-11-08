@@ -615,32 +615,40 @@ class _HomeShellState extends State<HomeShell> {
             backgroundColor: context.dialogBg,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            title: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.notifications_active_rounded,
                         color: context.isDark
                             ? AppColors.neonLime
                             : AppColors.ink),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Text('Bildirishnomalar',
                         style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                            fontSize: 17,
                             color: context.inkColor)),
                   ],
                 ),
                 if (unreadList.isNotEmpty)
                   TextButton.icon(
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    ),
                     onPressed: () async {
                       await repos.notifications.markAllRead();
                       await _loadNotifications();
                       setDialogState(() {});
                     },
                     icon: const Icon(Icons.done_all_rounded, size: 16),
-                    label: const Text('Barchasini o‘qish',
+                    label: const Text('O‘qilgan qilish',
                         style: TextStyle(
                             fontSize: 12, fontWeight: FontWeight.w700)),
                   ),

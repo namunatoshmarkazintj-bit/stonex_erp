@@ -386,9 +386,12 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
                     icon: _busy
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.assignment_return_rounded, size: 18),
-                    label: Text(
-                      _busy ? 'Qaytarilmoqda...' : 'Qaytarishni tasdiqlash (${money(_cashRefund)})',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _busy ? 'Qaytarilmoqda...' : 'Tasdiqlash (${money(_cashRefund)})',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -494,74 +497,86 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Text(
-                  'Qaytarish miqdori:',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.subtextColor),
-                ),
-                const Spacer(),
-                // Stepper: [-] [qty] [+]
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1B232A) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: context.borderColor),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove, size: 16),
-                        padding: const EdgeInsets.all(6),
-                        constraints: const BoxConstraints(),
-                        onPressed: selectedQty > 0
-                            ? () {
-                                setState(() {
-                                  final next = (selectedQty - 1).clamp(0.0, it.quantity);
-                                  _returnQuantities[it.productId] = next;
-                                });
-                              }
-                            : null,
-                      ),
-                      Container(
-                        constraints: const BoxConstraints(minWidth: 44),
-                        alignment: Alignment.center,
-                        child: Text(
-                          qty(selectedQty),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: selectedQty > 0 ? (isDark ? AppColors.neonLime : AppColors.ink) : AppColors.muted,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    Text(
+                      'Qaytarish miqdori:',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.subtextColor),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Stepper: [-] [qty] [+]
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1B232A) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: context.borderColor),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove, size: 16),
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(),
+                                onPressed: selectedQty > 0
+                                    ? () {
+                                        setState(() {
+                                          final next = (selectedQty - 1).clamp(0.0, it.quantity);
+                                          _returnQuantities[it.productId] = next;
+                                        });
+                                      }
+                                    : null,
+                              ),
+                              Container(
+                                constraints: const BoxConstraints(minWidth: 40),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  qty(selectedQty),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: selectedQty > 0 ? (isDark ? AppColors.neonLime : AppColors.ink) : AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add, size: 16),
+                                padding: const EdgeInsets.all(5),
+                                constraints: const BoxConstraints(),
+                                onPressed: selectedQty < it.quantity
+                                    ? () {
+                                        setState(() {
+                                          final next = (selectedQty + 1).clamp(0.0, it.quantity);
+                                          _returnQuantities[it.productId] = next;
+                                        });
+                                      }
+                                    : null,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add, size: 16),
-                        padding: const EdgeInsets.all(6),
-                        constraints: const BoxConstraints(),
-                        onPressed: selectedQty < it.quantity
-                            ? () {
-                                setState(() {
-                                  final next = (selectedQty + 1).clamp(0.0, it.quantity);
-                                  _returnQuantities[it.productId] = next;
-                                });
-                              }
-                            : null,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _returnQuantities[it.productId] = it.quantity;
-                    });
-                  },
-                  child: const Text('Barchasi', style: TextStyle(fontSize: 11)),
+                        const SizedBox(width: 6),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _returnQuantities[it.productId] = it.quantity;
+                            });
+                          },
+                          child: const Text('Barchasi', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

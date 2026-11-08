@@ -516,35 +516,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                                   const SizedBox(width: 6),
 
-                                  // Xaridlar va cheklar hamda tahrirlash
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                            Icons.receipt_long_rounded,
-                                            size: 20),
-                                        color: AppColors.green,
-                                        tooltip: 'Xaridlar tarixi va cheklar',
-                                        visualDensity: VisualDensity.compact,
-                                        padding: const EdgeInsets.all(6),
-                                        constraints: const BoxConstraints(
-                                            minWidth: 34, minHeight: 34),
-                                        onPressed: () =>
-                                            _openCustomerDetails(c),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_outlined,
-                                            size: 20),
-                                        color: context.mutedColor,
-                                        tooltip: 'Tahrirlash',
-                                        visualDensity: VisualDensity.compact,
-                                        padding: const EdgeInsets.all(6),
-                                        constraints: const BoxConstraints(
-                                            minWidth: 34, minHeight: 34),
-                                        onPressed: () => _openCustomerDialog(c),
-                                      ),
-                                    ],
+                                  // Tahrirlash tugmasi
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        size: 19),
+                                    color: context.mutedColor,
+                                    tooltip: 'Tahrirlash',
+                                    visualDensity: VisualDensity.compact,
+                                    padding: const EdgeInsets.all(6),
+                                    constraints: const BoxConstraints(
+                                        minWidth: 32, minHeight: 32),
+                                    onPressed: () => _openCustomerDialog(c),
                                   ),
                                 ],
                               ),

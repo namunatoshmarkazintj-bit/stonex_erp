@@ -348,20 +348,30 @@ class _StockScreenState extends State<StockScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: _buildTabPill(
-                              label: 'Ombor qoldiqlari ($totalMatCount)',
-                              icon: Icons.inventory_2_rounded,
-                              active: _activeTab == 'products',
-                              onTap: () => setState(() => _activeTab = 'products'),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isCompact = constraints.maxWidth < 170;
+                                return _buildTabPill(
+                                  label: isCompact ? 'Qoldiqlar ($totalMatCount)' : 'Ombor qoldiqlari ($totalMatCount)',
+                                  icon: Icons.inventory_2_rounded,
+                                  active: _activeTab == 'products',
+                                  onTap: () => setState(() => _activeTab == 'products'),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
-                            child: _buildTabPill(
-                              label: 'Harakatlar tarixi (${allMovements.length})',
-                              icon: Icons.swap_horiz_rounded,
-                              active: _activeTab == 'movements',
-                              onTap: () => setState(() => _activeTab = 'movements'),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isCompact = constraints.maxWidth < 170;
+                                return _buildTabPill(
+                                  label: isCompact ? 'Tarix (${allMovements.length})' : 'Harakatlar tarixi (${allMovements.length})',
+                                  icon: Icons.swap_horiz_rounded,
+                                  active: _activeTab == 'movements',
+                                  onTap: () => setState(() => _activeTab == 'movements'),
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -924,7 +934,10 @@ class _StockScreenState extends State<StockScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -937,17 +950,14 @@ class _StockScreenState extends State<StockScreen> {
                         style: TextStyle(color: context.mutedColor, fontSize: 10.5, fontWeight: FontWeight.w600),
                       ),
                     ),
-                    if (sizeStr != null) ...[
-                      const SizedBox(width: 6),
+                    if (sizeStr != null)
                       Text(
                         sizeStr,
                         style: TextStyle(color: context.mutedColor, fontSize: 11),
                       ),
-                    ],
-                    const SizedBox(width: 8),
                     Text(
-                      'Sotuv: ${money(p.price)} / ${p.unit}',
-                      style: TextStyle(color: context.mutedColor, fontSize: 11),
+                      'Sotuv: ${money(p.price)}/${p.unit}',
+                      style: TextStyle(color: context.mutedColor, fontSize: 11, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),

@@ -895,11 +895,13 @@ class _DeliveryCard extends StatelessWidget {
           // 1. Header (Mashina raqami, Haydovchi, Holat)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            child: Row(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 // Avtomobil Davlat Raqami (Uzbekistan Car Plate Badge)
                 _buildCarPlate(context, delivery.vehicleNumber),
-                const SizedBox(width: 10),
 
                 // Mashina modeli kapsulasi
                 Container(
@@ -921,7 +923,6 @@ class _DeliveryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
 
                 // Holat kapsulasi
                 Container(
@@ -948,7 +949,6 @@ class _DeliveryCard extends StatelessWidget {
                   ),
                 ),
                 if (isOpenPool) ...[
-                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                     decoration: BoxDecoration(
@@ -973,7 +973,6 @@ class _DeliveryCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                const Spacer(),
 
                 // Sana va vaqt
                 Row(
@@ -1334,7 +1333,11 @@ class _DeliveryCard extends StatelessWidget {
           // 4. Yo'l haqi va Yetkazish vaqtlari
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 // Yo'l haqi kapsulasi
                 Container(
@@ -1360,20 +1363,16 @@ class _DeliveryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Spacer(),
-                if (delivery.dispatchTime != null) ...[
+                if (delivery.dispatchTime != null)
                   Text(
                     'Jo‘nadi: ${formatDateTime(delivery.dispatchTime!)}',
                     style: TextStyle(fontSize: 11, color: context.subtextColor),
                   ),
-                ],
-                if (delivery.deliveredTime != null) ...[
-                  const SizedBox(width: 8),
+                if (delivery.deliveredTime != null)
                   Text(
                     'Yetdi: ${formatDateTime(delivery.deliveredTime!)}',
                     style: const TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.w700),
                   ),
-                ],
               ],
             ),
           ),
@@ -2313,8 +2312,11 @@ class DeliveryWaybillDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Text('Reys raqami: #${delivery.id}', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
                         Text('Sana: ${formatDateTime(delivery.createdAt)}', style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
@@ -2336,20 +2338,23 @@ class DeliveryWaybillDialog extends StatelessWidget {
                           children: [
                             const Text('Mashina:', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF475569))),
                             const SizedBox(width: 6),
-                            Text('${delivery.vehicleModel} (${delivery.vehicleNumber})', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                            const Spacer(),
+                            Expanded(
+                              child: Text('${delivery.vehicleModel} (${delivery.vehicleNumber})', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)), overflow: TextOverflow.ellipsis),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
                             const Text('Haydovchi:', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF475569))),
                             const SizedBox(width: 6),
                             Text(delivery.driverName, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                            if (delivery.driverPhone != null) ...[
+                              const Spacer(),
+                              Text('Tel: ${delivery.driverPhone}', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                            ],
                           ],
                         ),
-                        if (delivery.driverPhone != null) ...[
-                          const SizedBox(height: 4),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text('Tel: ${delivery.driverPhone}', style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
-                          ),
-                        ],
                       ],
                     ),
                   ),

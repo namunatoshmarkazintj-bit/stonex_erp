@@ -393,88 +393,114 @@ class _FinanceScreenState extends State<FinanceScreen> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: context.borderColor),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.neonLime.withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.account_balance_wallet_rounded,
-              color: isDark ? AppColors.neonLime : const Color(0xFF2563EB),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Moliya va Hisobotlar',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: context.inkColor,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 780;
+
+          final titleRow = Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.neonLime.withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Kirim-chiqimlar, oylik hisobotlar, o‘tgan oy bilan solishtirish va daromad tahlili',
-                  style: TextStyle(fontSize: 12.5, color: context.mutedColor),
+                child: Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: isDark ? AppColors.neonLime : const Color(0xFF2563EB),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Moliya va Hisobotlar',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: context.inkColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Kirim-chiqimlar, oylik hisobotlar, o‘tgan oy bilan solishtirish va daromad tahlili',
+                      style: TextStyle(fontSize: 12.5, color: context.mutedColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+
+          final actions = [
+            OutlinedButton.icon(
+              onPressed: _exportExcel,
+              icon: const Icon(Icons.download_rounded, size: 17),
+              label: const Text('Excel', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.inkColor,
+                side: BorderSide(color: context.borderColor),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () => _openAddTransactionDialog(
+                initialCategory: 'Ish haqi / Avans',
+                initialType: 'expense',
+              ),
+              icon: const Icon(Icons.payments_rounded, size: 17),
+              label: const Text('Oylik to‘lash', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () => _openAddTransactionDialog(),
+              icon: const Icon(Icons.add_circle_outline_rounded, size: 17),
+              label: const Text('+ Chiqim / Kirim', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              style: FilledButton.styleFrom(
+                backgroundColor: isDark ? AppColors.neonLime : AppColors.darkCard,
+                foregroundColor: isDark ? AppColors.ink : Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ];
+
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                titleRow,
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: actions,
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
+            );
+          }
 
-          // Excel yuklab olish tugmasi
-          OutlinedButton.icon(
-            onPressed: _exportExcel,
-            icon: const Icon(Icons.download_rounded, size: 18),
-            label: const Text('Excel yuklab olish', style: TextStyle(fontWeight: FontWeight.w700)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: context.inkColor,
-              side: BorderSide(color: context.borderColor),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Oylik to'lash tugmasi
-          FilledButton.icon(
-            onPressed: () => _openAddTransactionDialog(
-              initialCategory: 'Ish haqi / Avans',
-              initialType: 'expense',
-            ),
-            icon: const Icon(Icons.payments_rounded, size: 18),
-            label: const Text('Oylik to‘lash', style: TextStyle(fontWeight: FontWeight.w800)),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Yangi Kirim / Chiqim qo'shish
-          FilledButton.icon(
-            onPressed: () => _openAddTransactionDialog(),
-            icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-            label: const Text('+ Chiqim / Kirim', style: TextStyle(fontWeight: FontWeight.w800)),
-            style: FilledButton.styleFrom(
-              backgroundColor: isDark ? AppColors.neonLime : AppColors.darkCard,
-              foregroundColor: isDark ? AppColors.ink : Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
+          return Row(
+            children: [
+              Expanded(child: titleRow),
+              const SizedBox(width: 14),
+              ...actions.map((btn) => Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: btn,
+                  )),
+            ],
+          );
+        },
       ),
     );
   }
@@ -484,7 +510,10 @@ class _FinanceScreenState extends State<FinanceScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 900;
-        final cardWidth = isWide ? (constraints.maxWidth - 36) / 4 : (constraints.maxWidth - 12) / 2;
+        final isPhone = constraints.maxWidth < 480;
+        final cardWidth = isPhone
+            ? constraints.maxWidth
+            : (isWide ? (constraints.maxWidth - 36) / 4 : (constraints.maxWidth - 12) / 2);
 
         final items = [
           _KpiData(
@@ -577,27 +606,30 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   Widget _buildTabSelector(BuildContext context, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E232B) : const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTabPill(
-            idx: 0,
-            label: '📊 Oylik tahlil & Taqqoslash',
-            isDark: isDark,
-          ),
-          const SizedBox(width: 4),
-          _buildTabPill(
-            idx: 1,
-            label: '📋 Kirim-chiqimlar jurnali',
-            isDark: isDark,
-          ),
-        ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E232B) : const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildTabPill(
+              idx: 0,
+              label: '📊 Oylik tahlil & Taqqoslash',
+              isDark: isDark,
+            ),
+            const SizedBox(width: 4),
+            _buildTabPill(
+              idx: 1,
+              label: '📋 Kirim-chiqimlar jurnali',
+              isDark: isDark,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -656,109 +688,156 @@ class _FinanceScreenState extends State<FinanceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.compare_arrows_rounded, color: Color(0xFF3B82F6), size: 20),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _comparisonPeriodKey == 'current_vs_prev'
-                                ? 'O‘tgan oy va bu oy o‘rtasida solishtirish'
-                                : 'Davrlarni solishtirish va dinamika',
-                            style: TextStyle(
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w800,
-                              color: context.inkColor,
-                            ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 620;
+                    final titleWidget = Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          Text(
-                            '${comp.current.monthName} vs ${comp.previous.monthName} dinamikasi',
-                            style: TextStyle(fontSize: 12, color: context.mutedColor),
+                          child: const Icon(Icons.compare_arrows_rounded, color: Color(0xFF3B82F6), size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _comparisonPeriodKey == 'current_vs_prev'
+                                    ? 'O‘tgan oy va bu oy o‘rtasida solishtirish'
+                                    : 'Davrlarni solishtirish va dinamika',
+                                style: TextStyle(
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: context.inkColor,
+                                ),
+                              ),
+                              Text(
+                                '${comp.current.monthName} vs ${comp.previous.monthName} dinamikasi',
+                                style: TextStyle(fontSize: 12, color: context.mutedColor),
+                              ),
+                            ],
                           ),
+                        ),
+                        if (_compLoading) ...[
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 10),
                         ],
-                      ),
-                    ),
-                    if (_compLoading) ...[
-                      const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    _buildComparisonPeriodButton(context, isDark),
-                  ],
+                      ],
+                    );
+
+                    final buttonWidget = _buildComparisonPeriodButton(context, isDark);
+
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          titleWidget,
+                          const SizedBox(height: 12),
+                          buttonWidget,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: titleWidget),
+                        const SizedBox(width: 12),
+                        buttonWidget,
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 18),
 
                 // Solishtirish kartalari
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final itemW = (constraints.maxWidth - 24) / 3;
+                    final isHorizontalScroll = constraints.maxWidth < 600;
+                    final itemW = isHorizontalScroll ? 175.0 : (constraints.maxWidth - 24) / 3;
+
+                    final card1 = SizedBox(
+                      width: itemW,
+                      child: _buildComparisonCard(
+                        title: 'Savdo Tushumi',
+                        curVal: comp.current.revenue,
+                        prevVal: comp.previous.revenue,
+                        growthPct: comp.revenueGrowthPercent,
+                        curMonth: comp.current.monthName,
+                        prevMonth: comp.previous.monthName,
+                        accentColor: const Color(0xFF10B981),
+                        icon: Icons.trending_up_rounded,
+                        context: context,
+                        isDark: isDark,
+                      ),
+                    );
+
+                    final card2 = SizedBox(
+                      width: itemW,
+                      child: _buildComparisonCard(
+                        title: 'Jami Xarajatlar',
+                        curVal: comp.current.expenses,
+                        prevVal: comp.previous.expenses,
+                        growthPct: comp.expenseGrowthPercent,
+                        curMonth: comp.current.monthName,
+                        prevMonth: comp.previous.monthName,
+                        accentColor: const Color(0xFFEF4444),
+                        icon: Icons.trending_down_rounded,
+                        context: context,
+                        isDark: isDark,
+                      ),
+                    );
+
+                    final card3 = SizedBox(
+                      width: itemW,
+                      child: _buildComparisonCard(
+                        title: 'Sof Foyda',
+                        curVal: comp.current.netProfit,
+                        prevVal: comp.previous.netProfit,
+                        growthPct: comp.netProfitGrowthPercent,
+                        curMonth: comp.current.monthName,
+                        prevMonth: comp.previous.monthName,
+                        accentColor: isDark ? AppColors.neonLime : const Color(0xFF0284C7),
+                        icon: Icons.auto_awesome_rounded,
+                        context: context,
+                        isDark: isDark,
+                        isProfitCard: true,
+                      ),
+                    );
+
+                    if (isHorizontalScroll) {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            card1,
+                            const SizedBox(width: 10),
+                            card2,
+                            const SizedBox(width: 10),
+                            card3,
+                          ],
+                        ),
+                      );
+                    }
+
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: itemW,
-                          child: _buildComparisonCard(
-                            title: 'Savdo Tushumi',
-                            curVal: comp.current.revenue,
-                            prevVal: comp.previous.revenue,
-                            growthPct: comp.revenueGrowthPercent,
-                            curMonth: comp.current.monthName,
-                            prevMonth: comp.previous.monthName,
-                            accentColor: const Color(0xFF10B981),
-                            icon: Icons.trending_up_rounded,
-                            context: context,
-                            isDark: isDark,
-                          ),
-                        ),
+                        card1,
                         const SizedBox(width: 12),
-                        SizedBox(
-                          width: itemW,
-                          child: _buildComparisonCard(
-                            title: 'Jami Xarajatlar',
-                            curVal: comp.current.expenses,
-                            prevVal: comp.previous.expenses,
-                            growthPct: comp.expenseGrowthPercent,
-                            curMonth: comp.current.monthName,
-                            prevMonth: comp.previous.monthName,
-                            accentColor: const Color(0xFFEF4444),
-                            icon: Icons.trending_down_rounded,
-                            context: context,
-                            isDark: isDark,
-                            isExpenseCard: true,
-                            cogs: comp.current.cogs,
-                            opExp: comp.current.operationalExpenses,
-                          ),
-                        ),
+                        card2,
                         const SizedBox(width: 12),
-                        SizedBox(
-                          width: itemW,
-                          child: _buildComparisonCard(
-                            title: 'Sof Foyda',
-                            curVal: comp.current.netProfit,
-                            prevVal: comp.previous.netProfit,
-                            growthPct: comp.netProfitGrowthPercent,
-                            curMonth: comp.current.monthName,
-                            prevMonth: comp.previous.monthName,
-                            accentColor: isDark ? AppColors.neonLime : const Color(0xFF0284C7),
-                            icon: Icons.auto_awesome_rounded,
-                            context: context,
-                            isDark: isDark,
-                            isProfitCard: true,
-                          ),
-                        ),
+                        card3,
                       ],
                     );
                   },
@@ -1997,6 +2076,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1-qator: #Rank, Kategoriya to'liq nomi va Foiz
           Row(
             children: [
               Container(
@@ -2023,45 +2103,48 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 child: Text(
                   item.category,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: context.inkColor,
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              Text(
+                '${item.percentage.toStringAsFixed(1)}%',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: barColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // 2-qator: Savdolar soni va Summa
+          Row(
+            children: [
+              const SizedBox(width: 34),
               if (item.count > 0) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF28313E) : const Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     '${item.count} ta savdo',
-                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: context.mutedColor),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.mutedColor),
                   ),
                 ),
-                const SizedBox(width: 12),
               ],
+              const Spacer(),
               Text(
                 money(item.amount),
                 style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w900,
                   color: context.inkColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 48,
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${item.percentage.toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: barColor,
-                  ),
                 ),
               ),
             ],

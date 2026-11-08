@@ -4006,15 +4006,16 @@ class _ShiftConfigDialogState extends State<ShiftConfigDialog> {
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
-                                            Text('$_graceMinutes daqiqa', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: context.inkColor)),
-                                            const Spacer(),
+                                            Expanded(
+                                              child: Text('$_graceMinutes daq', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: context.inkColor)),
+                                            ),
                                             IconButton(
                                               icon: const Icon(Icons.remove_circle_outline_rounded, size: 18),
                                               padding: EdgeInsets.zero,
                                               constraints: const BoxConstraints(),
                                               onPressed: _graceMinutes > 0 ? () => setState(() => _graceMinutes -= 5) : null,
                                             ),
-                                            const SizedBox(width: 8),
+                                            const SizedBox(width: 4),
                                             IconButton(
                                               icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
                                               padding: EdgeInsets.zero,
@@ -4069,6 +4070,7 @@ class _ShiftConfigDialogState extends State<ShiftConfigDialog> {
                               value: _autoCheckout,
                               onChanged: (v) => setState(() => _autoCheckout = v),
                             ),
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
