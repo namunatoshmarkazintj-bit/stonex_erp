@@ -2126,12 +2126,16 @@ class _ProductDialogState extends State<ProductDialog> {
                             color: _getCategoryColor(_category!),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            '$_category o‘lchamlari va Pachka hisobi',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: context.inkColor,
+                          Expanded(
+                            child: Text(
+                              '$_category o‘lchamlari va Pachka hisobi',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: context.inkColor,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -2146,7 +2150,10 @@ class _ProductDialogState extends State<ProductDialog> {
                               decoration: const InputDecoration(
                                 labelText: 'Bo‘yi (sm)',
                                 hintText: '60 yoki 120',
-                                prefixIcon: Icon(Icons.height_rounded, size: 18),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                prefixIcon: Icon(Icons.height_rounded, size: 16),
+                                prefixIconConstraints: BoxConstraints(minWidth: 26, minHeight: 26),
                               ),
                               onChanged: (_) {
                                 _recalculatePachkasWhenDimensionsChange();
@@ -2162,7 +2169,10 @@ class _ProductDialogState extends State<ProductDialog> {
                               decoration: const InputDecoration(
                                 labelText: 'Eni (sm)',
                                 hintText: '60',
-                                prefixIcon: Icon(Icons.straighten_rounded, size: 18),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                prefixIcon: Icon(Icons.straighten_rounded, size: 16),
+                                prefixIconConstraints: BoxConstraints(minWidth: 26, minHeight: 26),
                               ),
                               onChanged: (_) {
                                 _recalculatePachkasWhenDimensionsChange();
@@ -2176,9 +2186,12 @@ class _ProductDialogState extends State<ProductDialog> {
                               controller: _boxPieces,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
-                                labelText: 'Pachkada (dona)',
+                                labelText: 'Pachkada',
                                 hintText: '4',
-                                prefixIcon: Icon(Icons.all_inbox_rounded, size: 18),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                prefixIcon: Icon(Icons.all_inbox_rounded, size: 16),
+                                prefixIconConstraints: BoxConstraints(minWidth: 26, minHeight: 26),
                               ),
                               onChanged: (_) {
                                 _recalculatePachkasWhenDimensionsChange();
