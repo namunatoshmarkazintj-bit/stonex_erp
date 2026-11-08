@@ -83,7 +83,7 @@ def ensure_migrations():
             if "cutting_rate" not in columns:
                 conn.execute(text("ALTER TABLE products ADD COLUMN cutting_rate DECIMAL(14, 2) DEFAULT 0.00"))
             if "deleted_at" not in columns:
-                conn.execute(text("ALTER TABLE products ADD COLUMN deleted_at DATETIME NULL"))
+                conn.execute(text("ALTER TABLE products ADD COLUMN deleted_at TIMESTAMP NULL"))
             if "deleted_by_name" not in columns:
                 conn.execute(text("ALTER TABLE products ADD COLUMN deleted_by_name VARCHAR(128) NULL"))
             # Baza mahsulotlari uchun kategoriyalarni to'g'rilash (Miramir, Angola va h.k.)
@@ -143,7 +143,7 @@ def ensure_migrations():
                 conn.execute(text("ALTER TABLE users ADD COLUMN is_archived BOOLEAN DEFAULT FALSE"))
                 conn.execute(text("UPDATE users SET is_archived = FALSE WHERE is_archived IS NULL"))
             if "archived_at" not in u_columns:
-                conn.execute(text("ALTER TABLE users ADD COLUMN archived_at DATETIME NULL"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN archived_at TIMESTAMP NULL"))
             if "archived_by_name" not in u_columns:
                 conn.execute(text("ALTER TABLE users ADD COLUMN archived_by_name VARCHAR(128) NULL"))
     if "attendance" in table_names:
