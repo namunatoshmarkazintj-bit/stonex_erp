@@ -39,22 +39,7 @@ def main() -> None:
             admin.password_hash = hash_password(settings.admin_password)
             db.commit()
             print(f"Admin paroli yangilandi: {settings.admin_username}")
-        if not db.scalar(select(m.User).where(m.User.username == "kassir")):
-            db.add(m.User(username="kassir", full_name="Kassir Aziz",
-                          role=roles.CASHIER, password_hash=hash_password("kassir123")))
-            print("Kassir yaratildi: kassir")
-        # if not db.scalar(select(m.User).where(m.User.username == "ishchi")):
-        #     db.add(m.User(username="ishchi", full_name="Ishchi Bobur",
-        #                   role=roles.WORKER, password_hash=hash_password("ishchi123")))
-        #     print("Ishchi yaratildi: ishchi")
-        if not db.scalar(select(m.User).where(m.User.username == "haydovchi")):
-            db.add(m.User(username="haydovchi", full_name="Farhod Haydovchi",
-                          role=roles.DRIVER, password_hash=hash_password("haydovchi123")))
-            print("Haydovchi yaratildi: haydovchi")
-        if not db.scalar(select(m.User).where(m.User.username == "boshqaruvchi")):
-            db.add(m.User(username="boshqaruvchi", full_name="Mansur Ish boshqaruvchi",
-                          role=roles.FOREMAN, password_hash=hash_password("boshqaruvchi123")))
-            print("Ish boshqaruvchi yaratildi: boshqaruvchi")
+        # Barcha xodimlar va ishchilar bazadan tozalangan, faqat mahsulotlar qoladi.
         for name, unit, dona, price, cost, stock, cat, s_val in SAMPLE:
             existing = db.scalar(select(m.Product).where(m.Product.name == name))
             if existing:

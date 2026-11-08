@@ -55,41 +55,6 @@ class MockStore {
         salaryType: 'monthly',
       ),
     ),
-    'kassir': (
-      password: 'kassir123',
-      user: const AppUser(
-        id: 2,
-        username: 'kassir',
-        fullName: 'Kassir Aziz',
-        role: Role.kassir,
-        salary: 6500000,
-        salaryType: 'monthly',
-      ),
-    ),
-    'haydovchi': (
-      password: 'haydovchi123',
-      user: const AppUser(
-        id: 5,
-        username: 'haydovchi',
-        fullName: 'Farhod Haydovchi',
-        role: Role.haydovchi,
-        salary: 5500000,
-        salaryType: 'monthly',
-        canLogin: true,
-      ),
-    ),
-    'boshqaruvchi': (
-      password: 'boshqaruvchi123',
-      user: const AppUser(
-        id: 6,
-        username: 'boshqaruvchi',
-        fullName: 'Mansur Ish boshqaruvchi',
-        role: Role.ishBoshqaruvchi,
-        salary: 8000000,
-        salaryType: 'monthly',
-        canLogin: true,
-      ),
-    ),
   };
 
   final List<AttendanceRecord> attendances = [];

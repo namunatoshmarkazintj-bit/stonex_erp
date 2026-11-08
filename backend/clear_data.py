@@ -43,13 +43,13 @@ def clean_database():
             except Exception as ex:
                 print(f"notifications xatolik: {ex}")
 
-            # Ishchilar va davomatni tozalash (admin saqlanadi)
+            # Ishchilar va davomatni tozalash (faqat admin saqlanadi)
             try:
                 conn.execute(text("DELETE FROM attendance;"))
-                res = conn.execute(text("DELETE FROM users WHERE role = 'ishchi' OR username = 'zoyirjon';"))
-                print(f"Tozalandi [ishchilar]: {res.rowcount} ta qator")
+                res = conn.execute(text("DELETE FROM users WHERE username != 'admin';"))
+                print(f"Tozalandi [xodimlar]: {res.rowcount} ta qator")
             except Exception as ex:
-                print(f"ishchilar xatolik: {ex}")
+                print(f"xodimlar xatolik: {ex}")
 
             if "mysql" in str(engine.url):
                 conn.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
@@ -81,6 +81,12 @@ def clean_database():
                 pass
             try:
                 cur.execute("DELETE FROM notifications;")
+            except Exception as e:
+                pass
+            try:
+                cur.execute("DELETE FROM attendance;")
+                cur.execute("DELETE FROM users WHERE username != 'admin';")
+                print("SQLite [users]: non-admin foydalanuvchilar o'chirildi")
             except Exception as e:
                 pass
             con.commit()
