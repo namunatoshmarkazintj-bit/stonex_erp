@@ -949,6 +949,8 @@ class _HomeShellState extends State<HomeShell> {
 
     final isDashboard = dests[_index].label == 'Asosiy oyna' ||
         dests[_index].label == 'Dashboard';
+    final isPos = dests[_index].label.startsWith('Savdo');
+    final isProduction = dests[_index].label == 'Ishlab chiqarish';
 
     // Mobil va planshet ekrani
     return Scaffold(
@@ -986,9 +988,11 @@ class _HomeShellState extends State<HomeShell> {
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
         actions: [
-          const Center(child: CurrencyBadge(isCompact: true)),
-          const SizedBox(width: 4),
-          if (dests[_index].label.startsWith('Savdo')) ...[
+          if (isDashboard) ...[
+            const Center(child: CurrencyBadge(isCompact: true)),
+            const SizedBox(width: 4),
+          ],
+          if (isPos || isProduction) ...[
             IconButton(
               tooltip: 'Xizmatlar (kesish, faska, silliqlash, chizish)',
               icon: const Icon(Icons.design_services_rounded, size: 22),
@@ -1122,6 +1126,7 @@ class _VaultHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDashboard = title == 'Asosiy oyna' || title == 'Dashboard';
     final isPos = title.startsWith('Savdo');
+    final isProduction = title == 'Ishlab chiqarish';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -1159,8 +1164,10 @@ class _VaultHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const CurrencyBadge(),
+                if (isDashboard) ...[
+                  const SizedBox(width: 12),
+                  const CurrencyBadge(),
+                ],
               ],
             ),
           ),
@@ -1259,7 +1266,7 @@ class _VaultHeader extends StatelessWidget {
             ),
           ],
 
-          if (isPos) ...[
+          if (isPos || isProduction) ...[
             const SizedBox(width: 16),
             FilledButton.icon(
               onPressed: () => StoneServicesDialog.show(context, user: user),
