@@ -7,6 +7,7 @@ Pul tushumi (Payment) savdo summasidan alohida; bitta to'lov ikki marta hisoblan
 from decimal import Decimal
 
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models as m
