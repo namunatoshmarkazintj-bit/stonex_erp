@@ -13,8 +13,7 @@ class MasterPermissionsScreen extends StatefulWidget {
 
 class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
   String _selectedRole = 'kassir';
-  late Map<String, Map<String, bool>> _localPerms;
-  bool _isLoading = false;
+  Map<String, Map<String, bool>> _localPerms = {};
   bool _isSaving = false;
 
   final _newPassCtrl = TextEditingController();
@@ -53,7 +52,9 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
   void initState() {
     super.initState();
     _cloneStorePermissions();
-    _loadFromBackend();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFromBackend();
+    });
   }
 
   void _cloneStorePermissions() {
@@ -65,14 +66,16 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
   }
 
   Future<void> _loadFromBackend() async {
-    setState(() => _isLoading = true);
-    final api = context.read<ApiClient>();
-    await RolePermissionsStore.instance.load(api);
-    if (mounted) {
-      setState(() {
-        _cloneStorePermissions();
-        _isLoading = false;
-      });
+    try {
+      final api = context.read<ApiClient>();
+      await RolePermissionsStore.instance.load(api);
+      if (mounted) {
+        setState(() {
+          _cloneStorePermissions();
+        });
+      }
+    } catch (e) {
+      debugPrint('RolePermissions yuklashda xatolik: $e');
     }
   }
 
@@ -139,9 +142,7 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
     final isDark = context.isDark;
     return Scaffold(
       backgroundColor: context.scaffoldBg,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
+      body: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
