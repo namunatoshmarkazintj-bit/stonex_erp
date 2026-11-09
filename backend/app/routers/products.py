@@ -207,15 +207,19 @@ def purge_all_deleted_products(db: Session = Depends(get_db), _: m.User = Depend
     """Barcha savatdagi (arxivlangan) mahsulotlarni butunlay tozalash."""
     prods = db.scalars(select(m.Product).where(m.Product.is_active.is_(False))).all()
     count = 0
+    skipped = 0
     for p in prods:
+        has_sales = db.scalar(select(func.count(m.SaleItem.id)).where(m.SaleItem.product_id == p.id))
+        if has_sales and has_sales > 0:
+            skipped += 1
+            continue
         db.execute(delete(m.StockMovement).where(m.StockMovement.product_id == p.id))
         db.execute(delete(m.ProductionTask).where(m.ProductionTask.product_id == p.id))
         db.execute(delete(m.DeliveryItem).where(m.DeliveryItem.product_id == p.id))
-        db.execute(delete(m.SaleItem).where(m.SaleItem.product_id == p.id))
         db.delete(p)
         count += 1
     db.commit()
-    return {"status": "ok", "purged_count": count}
+    return {"status": "ok", "purged_count": count, "skipped_due_to_sales": skipped}
 
 
 @router.delete("/{product_id}/purge")
@@ -224,10 +228,20 @@ def purge_single_product(product_id: int, db: Session = Depends(get_db), _: m.Us
     p = db.get(m.Product, product_id)
     if not p:
         raise HTTPException(404, "Mahsulot topilmadi")
+
+    # Xavfsizlik: agar mahsulot avval biror chekda sotilgan bo'lsa, o'tmishdagi hisobotlar buzilmasligi uchun hard delete taqiqlanadi
+    has_sales = db.scalar(select(func.count(m.SaleItem.id)).where(m.SaleItem.product_id == p.id))
+    if has_sales and has_sales > 0:
+        raise HTTPException(
+            400,
+            f"«{p.name}» mahsuloti bo‘yicha avval savdo qilingan ({has_sales} ta chekda bor)! "
+            "O‘tmishdagi cheklar va moliya hisoboti buzilmasligi uchun uni butunlay o‘chirib bo‘lmaydi. "
+            "U savatda (arxivda) xavfsiz turadi va yangi savdolarda ko‘rinmaydi."
+        )
+
     db.execute(delete(m.StockMovement).where(m.StockMovement.product_id == p.id))
     db.execute(delete(m.ProductionTask).where(m.ProductionTask.product_id == p.id))
     db.execute(delete(m.DeliveryItem).where(m.DeliveryItem.product_id == p.id))
-    db.execute(delete(m.SaleItem).where(m.SaleItem.product_id == p.id))
     db.delete(p)
     db.commit()
     return {"status": "ok", "message": f"{p.name} butunlay o'chirildi"}
