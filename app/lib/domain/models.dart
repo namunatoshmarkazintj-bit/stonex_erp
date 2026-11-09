@@ -19,6 +19,7 @@ DateTime? parseDate(dynamic v) {
 }
 
 enum Role {
+  master('master', 'Tizim Muhandisi'),
   admin('admin', 'Admin'),
   kassir('kassir', 'Kassir'),
   ishBoshqaruvchi('ish_boshqaruvchi', 'Ish boshqaruvchi'),

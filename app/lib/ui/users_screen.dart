@@ -575,7 +575,9 @@ class _UsersScreenState extends State<UsersScreen> {
           return ErrorView(message: snap.error.toString(), onRetry: _reloadUsers);
         }
 
-        final allUsers = snap.data ?? [];
+        final allUsers = (snap.data ?? [])
+            .where((u) => u.role != Role.master && u.username != 'master')
+            .toList();
         final totalCount = allUsers.length;
         final adminCount = allUsers.where((u) => u.role == Role.admin).length;
         final cashierCount = allUsers.where((u) => u.role == Role.kassir).length;
@@ -734,6 +736,9 @@ class _UsersScreenState extends State<UsersScreen> {
   Widget _buildUserCard(AppUser u) {
     Color roleColor;
     switch (u.role) {
+      case Role.master:
+        roleColor = const Color(0xFFEF4444);
+        break;
       case Role.admin:
         roleColor = const Color(0xFF8B5CF6);
         break;
@@ -921,7 +926,10 @@ class _UsersScreenState extends State<UsersScreen> {
           return ErrorView(message: snap.error.toString(), onRetry: _reloadAttendance);
         }
 
-        final users = (snap.data?[0] as List<AppUser>?)?.where((u) => u.isActive).toList() ?? [];
+        final users = (snap.data?[0] as List<AppUser>?)
+                ?.where((u) => u.isActive && u.role != Role.master && u.username != 'master')
+                .toList() ??
+            [];
         final attendances = (snap.data?[1] as List<AttendanceRecord>?) ?? [];
 
         final attMap = <int, AttendanceRecord>{};

@@ -33,6 +33,9 @@ import 'sales_history_screen.dart';
 import 'stock_screen.dart';
 import 'stone_services_dialog.dart';
 import 'users_screen.dart';
+import '../data/api_client.dart';
+import '../data/role_permissions_store.dart';
+import 'master_permissions_screen.dart';
 
 class _Dest {
   final String label;
@@ -116,33 +119,52 @@ List<_Dest> _destinationsFor(Role role,
       isGeneral: true,
       actionLabel: 'Sozlash');
 
-  switch (role) {
-    case Role.admin:
-      return [
-        dash,
-        pos,
-        orders,
-        deliveries,
-        salesHistory,
-        customers,
-        debts,
-        purchases,
-        finance,
-        products,
-        stock,
-        prod,
-        staff,
-        cams
-      ];
-    case Role.kassir:
-      return [pos, orders, deliveries, salesHistory, customers, debts, purchases, finance, products];
-    case Role.ishBoshqaruvchi:
-      return [prod, stock];
-    case Role.ishchi:
-      return [prod];
-    case Role.haydovchi:
-      return [deliveries, orders];
+  if (role == Role.master) {
+    const masterPanel = _Dest(
+      'Ruxsatlar Matritsasi',
+      Icons.admin_panel_settings_rounded,
+      MasterPermissionsScreen.new,
+      actionLabel: 'Ruxsatlar',
+    );
+    return [
+      masterPanel,
+      dash,
+      pos,
+      orders,
+      deliveries,
+      salesHistory,
+      customers,
+      debts,
+      purchases,
+      finance,
+      products,
+      stock,
+      prod,
+      staff,
+    ];
   }
+
+  bool can(String key) => RolePermissionsStore.instance.can(role, key);
+
+  final List<_Dest> list = [];
+  if (can('dashboard')) list.add(dash);
+  if (can('pos')) list.add(pos);
+  if (can('orders')) list.add(orders);
+  if (can('deliveries')) list.add(deliveries);
+  if (can('sales')) list.add(salesHistory);
+  if (can('customers')) list.add(customers);
+  if (can('debts')) list.add(debts);
+  if (can('purchases')) list.add(purchases);
+  if (can('finance')) list.add(finance);
+  if (can('products')) list.add(products);
+  if (can('stock')) list.add(stock);
+  if (can('production')) list.add(prod);
+  if (can('users')) list.add(staff);
+
+  if (list.isEmpty) {
+    list.add(role == Role.ishchi ? prod : pos);
+  }
+  return list;
 }
 
 class HomeShell extends StatefulWidget {
@@ -172,13 +194,22 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    RolePermissionsStore.instance.addListener(_onPermsChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotifications();
       _checkPinSetup();
+      try {
+        final api = context.read<ApiClient>();
+        RolePermissionsStore.instance.load(api);
+      } catch (_) {}
     });
     _notifTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) _loadNotifications();
     });
+  }
+
+  void _onPermsChanged() {
+    if (mounted) setState(() {});
   }
 
   void _checkPinSetup() {
@@ -255,6 +286,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   void dispose() {
+    RolePermissionsStore.instance.removeListener(_onPermsChanged);
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _notifTimer?.cancel();
     _searchCtrl.dispose();

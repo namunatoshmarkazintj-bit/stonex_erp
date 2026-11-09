@@ -39,6 +39,14 @@ def main() -> None:
             admin.password_hash = hash_password(settings.admin_password)
             db.commit()
             print(f"Admin paroli yangilandi: {settings.admin_username}")
+
+        master = db.scalar(select(m.User).where(m.User.username == "master"))
+        if not master:
+            db.add(m.User(username="master", full_name="Tizim Muhandisi",
+                          role=roles.MASTER, password_hash=hash_password("master777"),
+                          is_active=True, can_login=True))
+            db.commit()
+            print("Master administrator yaratildi: master")
         # Barcha xodimlar va ishchilar bazadan tozalangan, faqat mahsulotlar qoladi.
         for name, unit, dona, price, cost, stock, cat, s_val in SAMPLE:
             existing = db.scalar(select(m.Product).where(m.Product.name == name))

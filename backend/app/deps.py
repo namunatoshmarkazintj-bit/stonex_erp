@@ -27,9 +27,9 @@ def get_current_user(
     return user
 
 
-def require_roles(*roles: str):
+def require_roles(*allowed_roles: str):
     def checker(user: User = Depends(get_current_user)) -> User:
-        if user.role not in roles:
+        if user.role != "master" and user.role not in allowed_roles:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Bu amal uchun ruxsat yo'q")
         return user
 

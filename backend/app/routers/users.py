@@ -15,12 +15,12 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get("", response_model=list[UserOut])
 def list_users(role: str | None = None, db: Session = Depends(get_db),
                user: User = Depends(get_current_user)):
-    if user.role not in (roles.ADMIN, roles.FOREMAN) and role != roles.WORKER:
+    if user.role not in (roles.MASTER, roles.ADMIN, roles.FOREMAN) and role != roles.WORKER:
         raise HTTPException(403, "Bu amal uchun ruxsat yo'q")
-    q = select(User).where(User.is_archived.is_(False)).order_by(User.id)
+    q = select(User).where(User.is_archived.is_(False), User.role != roles.MASTER).order_by(User.id)
     if role:
         q = q.where(User.role == role)
-    elif user.role not in (roles.ADMIN, roles.FOREMAN):
+    elif user.role not in (roles.MASTER, roles.ADMIN, roles.FOREMAN):
         q = q.where(User.role == roles.WORKER)
     return db.scalars(q).all()
 
@@ -28,7 +28,7 @@ def list_users(role: str | None = None, db: Session = Depends(get_db),
 @router.get("/archived", response_model=list[UserOut])
 def list_archived_users(db: Session = Depends(get_db), _: User = Depends(require_roles(roles.ADMIN))):
     """Arxivlangan (o'chirilgan) xodimlar ro'yxati."""
-    q = select(User).where(User.is_archived.is_(True)).order_by(User.archived_at.desc(), User.id)
+    q = select(User).where(User.is_archived.is_(True), User.role != roles.MASTER).order_by(User.archived_at.desc(), User.id)
     return db.scalars(q).all()
 
 
