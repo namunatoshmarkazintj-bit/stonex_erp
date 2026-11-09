@@ -1,8 +1,8 @@
 {
   "name": "stonex-erp-web",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
-    "build": "echo 'Deploying static Flutter Web from web_deploy'"
+    "build": "echo 'Deploying static Flutter Web from public'"
   }
 }

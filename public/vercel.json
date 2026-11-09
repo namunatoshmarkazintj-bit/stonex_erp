@@ -2,21 +2,21 @@
   "version": 2,
   "framework": null,
   "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/((?!.*\\.[\\w]+$).*)",
-      "destination": "/index.html"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!.*\\.[\\w]+$).*)",
+      "destination": "/index.html"
     }
   ]
 }
