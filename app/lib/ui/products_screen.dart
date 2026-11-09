@@ -127,8 +127,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filters = ['Barchasi', 'Toshlar (m²)', 'Sortli', 'Dona', 'Kam qolgan'];
-
     return Scaffold(
       backgroundColor: context.scaffoldBg,
       floatingActionButton: FloatingActionButton.extended(
@@ -149,6 +147,32 @@ class _ProductsScreenState extends State<ProductsScreen> {
           var allProducts = (snap.data ?? []).where((p) => !p.isService).toList();
           var displayList = List<Product>.from(allProducts);
 
+          // Dinamik kategoriyalar
+          final presentCategories = allProducts
+              .map((p) => p.effectiveCategory.trim())
+              .where((c) => c.isNotEmpty)
+              .toSet();
+          final orderedCategories = <String>[];
+          for (final cat in standardProductCategories) {
+            if (presentCategories.contains(cat)) {
+              orderedCategories.add(cat);
+            }
+          }
+          for (final cat in presentCategories) {
+            if (!orderedCategories.contains(cat)) {
+              orderedCategories.add(cat);
+            }
+          }
+
+          final filters = [
+            'Barchasi',
+            ...orderedCategories,
+            'Toshlar (m²)',
+            'Sortli',
+            'Dona',
+            'Kam qolgan',
+          ];
+
           // Qidiruv va Filtr qo'llash
           final q = _search.text.trim().toLowerCase();
           if (q.isNotEmpty) {
@@ -159,7 +183,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
             }).toList();
           }
 
-          if (_selectedFilter == 'Toshlar (m²)') {
+          if (orderedCategories.contains(_selectedFilter)) {
+            displayList = displayList
+                .where((p) => p.effectiveCategory.trim().toLowerCase() == _selectedFilter.toLowerCase())
+                .toList();
+          } else if (_selectedFilter == 'Toshlar (m²)') {
             displayList = displayList.where((p) => p.unit == 'm2').toList();
           } else if (_selectedFilter == 'Sortli') {
             displayList = displayList.where((p) => p.hasSorts || (p.sort != null && p.sort!.isNotEmpty)).toList();

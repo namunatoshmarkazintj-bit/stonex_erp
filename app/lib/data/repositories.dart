@@ -15,6 +15,8 @@ abstract class ProductRepository {
   Future<void> deactivate(int id);
   Future<List<Product>> listDeleted();
   Future<Product> restore(int id);
+  Future<void> purgeAll();
+  Future<void> purge(int id);
   Future<String> uploadImage(List<int> bytes, String filename);
   Future<Product> uploadProductImage(int productId, List<int> bytes, String filename);
 }

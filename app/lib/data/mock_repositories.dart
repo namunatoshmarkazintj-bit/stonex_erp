@@ -305,6 +305,16 @@ class MockProductRepository implements ProductRepository {
   }
 
   @override
+  Future<void> purgeAll() async {
+    _deletedProducts.clear();
+  }
+
+  @override
+  Future<void> purge(int id) async {
+    _deletedProducts.removeWhere((p) => p.id == id);
+  }
+
+  @override
   Future<String> uploadImage(List<int> bytes, String filename) async {
     return 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80';
   }

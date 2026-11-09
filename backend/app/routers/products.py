@@ -5,7 +5,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 import time
@@ -200,6 +200,37 @@ def restore_product(product_id: int, db: Session = Depends(get_db), _: m.User = 
     p.deleted_by_name = None
     db.commit()
     return to_out(p, get_stock(db, p.id))
+
+
+@router.delete("/deleted/purge-all")
+def purge_all_deleted_products(db: Session = Depends(get_db), _: m.User = Depends(require_roles(roles.ADMIN))):
+    """Barcha savatdagi (arxivlangan) mahsulotlarni butunlay tozalash."""
+    prods = db.scalars(select(m.Product).where(m.Product.is_active.is_(False))).all()
+    count = 0
+    for p in prods:
+        db.execute(delete(m.StockMovement).where(m.StockMovement.product_id == p.id))
+        db.execute(delete(m.ProductionTask).where(m.ProductionTask.product_id == p.id))
+        db.execute(delete(m.DeliveryItem).where(m.DeliveryItem.product_id == p.id))
+        db.execute(delete(m.SaleItem).where(m.SaleItem.product_id == p.id))
+        db.delete(p)
+        count += 1
+    db.commit()
+    return {"status": "ok", "purged_count": count}
+
+
+@router.delete("/{product_id}/purge")
+def purge_single_product(product_id: int, db: Session = Depends(get_db), _: m.User = Depends(require_roles(roles.ADMIN))):
+    """Mahsulotni savatdan butunlay o'chirish."""
+    p = db.get(m.Product, product_id)
+    if not p:
+        raise HTTPException(404, "Mahsulot topilmadi")
+    db.execute(delete(m.StockMovement).where(m.StockMovement.product_id == p.id))
+    db.execute(delete(m.ProductionTask).where(m.ProductionTask.product_id == p.id))
+    db.execute(delete(m.DeliveryItem).where(m.DeliveryItem.product_id == p.id))
+    db.execute(delete(m.SaleItem).where(m.SaleItem.product_id == p.id))
+    db.delete(p)
+    db.commit()
+    return {"status": "ok", "message": f"{p.name} butunlay o'chirildi"}
 
 
 @router.delete("/{product_id}")

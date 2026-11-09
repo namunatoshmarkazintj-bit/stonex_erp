@@ -283,6 +283,7 @@ class SalaryReportItem {
 }
 
 const List<String> standardProductCategories = [
+  'Granit',
   'Marmar',
   'Kerama granit',
   'Kafel',
@@ -587,20 +588,19 @@ class Product {
   String get effectiveCategory {
     final c = category?.trim();
     if (c != null && c.isNotEmpty) {
-      if (c.toLowerCase() == 'granit') return 'Marmar';
       return c;
     }
     final nm = name.toLowerCase();
-    if (nm.contains('miramir') ||
+    if (nm.contains('marmar') || nm.contains('travertin')) {
+      return 'Marmar';
+    }
+    if (nm.contains('granit') ||
+        nm.contains('miramir') ||
         nm.contains('saroy') ||
         nm.contains('angola') ||
         nm.contains('tan brown') ||
-        nm.contains('tambrovun') ||
-        nm.contains('kokkoz') ||
-        nm.contains('marmar') ||
-        nm.contains('travertin') ||
-        nm.contains('granit')) {
-      return 'Marmar';
+        nm.contains('tambrovun')) {
+      return 'Granit';
     }
     if (nm.contains('keram') ||
         nm.contains('metalogranit') ||

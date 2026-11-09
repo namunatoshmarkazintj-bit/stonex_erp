@@ -129,6 +129,16 @@ class ApiProductRepository implements ProductRepository {
   }
 
   @override
+  Future<void> purgeAll() async {
+    await _api.delete('/products/deleted/purge-all');
+  }
+
+  @override
+  Future<void> purge(int id) async {
+    await _api.delete('/products/$id/purge');
+  }
+
+  @override
   Future<String> uploadImage(List<int> bytes, String filename) async {
     final res = await _api.uploadFile('/products/upload-image', bytes, filename);
     return res['image_url'] as String;

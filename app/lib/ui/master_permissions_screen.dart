@@ -92,18 +92,32 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
 
   Future<void> _saveAll() async {
     setState(() => _isSaving = true);
-    final api = context.read<ApiClient>();
-    final ok = await RolePermissionsStore.instance.save(api, _localPerms);
-    if (mounted) {
-      setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(ok
-              ? 'Ruxsatlar muvaffaqiyatli saqlandi va barcha qurilmalarda kuchga kirdi!'
-              : 'Xatolik yuz berdi. Internetni tekshiring.'),
-          backgroundColor: ok ? AppColors.green : Colors.red,
-        ),
-      );
+    try {
+      final api = context.read<ApiClient>();
+      final ok = await RolePermissionsStore.instance.save(api, _localPerms);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok
+                ? 'Ruxsatlar muvaffaqiyatli saqlandi va barcha qurilmalarda kuchga kirdi!'
+                : 'Xatolik yuz berdi. Internetni tekshiring.'),
+            backgroundColor: ok ? AppColors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saqlashda xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 

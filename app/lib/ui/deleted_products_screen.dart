@@ -88,6 +88,102 @@ class _DeletedProductsScreenState extends State<DeletedProductsScreen> {
     }
   }
 
+  Future<void> _purgeProduct(Product p) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.dialogBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_forever_rounded, color: AppColors.danger, size: 24),
+            SizedBox(width: 10),
+            Text('Butunlay o‘chirish', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+          ],
+        ),
+        content: Text(
+          '"${p.name}" mahsulotini bazadan butunlay o‘chirib tashlamoqchimisiz? Uni keyin qayta tiklab bo‘lmaydi!',
+          style: const TextStyle(height: 1.4, color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bekor'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.delete_forever_rounded, size: 18),
+            label: const Text('Ha, tozalash', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      await _repo.purge(p.id);
+      if (mounted) {
+        showMessage(context, '${p.name} bazadan butunlay tozalandi!');
+        _reload();
+      }
+    } catch (e) {
+      if (mounted) showMessage(context, e.toString(), error: true);
+    }
+  }
+
+  Future<void> _purgeAll() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.dialogBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_sweep_rounded, color: AppColors.danger, size: 24),
+            SizedBox(width: 10),
+            Text('Savatni tozalash', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+          ],
+        ),
+        content: const Text(
+          'Barcha arxivlangan va o‘chirilgan mahsulotlarni butunlay tozalashni xohlaysizmi? Bu amalni ortga qaytarib bo‘lmaydi!',
+          style: TextStyle(height: 1.4, color: AppColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bekor'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+            label: const Text('Barchasini tozalash', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      await _repo.purgeAll();
+      if (mounted) {
+        showMessage(context, 'Barcha o‘chirilgan mahsulotlar butunlay tozalandi!');
+        _reload();
+      }
+    } catch (e) {
+      if (mounted) showMessage(context, e.toString(), error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -103,6 +199,11 @@ class _DeletedProductsScreenState extends State<DeletedProductsScreen> {
             onPressed: () => Navigator.pop(context, _anyRestored),
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded, color: AppColors.danger),
+              tooltip: 'Savatni butunlay tozalash',
+              onPressed: _purgeAll,
+            ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
               onPressed: _reload,
@@ -328,17 +429,27 @@ class _DeletedProductsScreenState extends State<DeletedProductsScreen> {
                     ],
                   ),
                 ),
-                // Qaytarish tugmasi
-                FilledButton.icon(
-                  onPressed: () => _restoreProduct(p),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
-                    foregroundColor: context.isDark ? AppColors.ink : Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  icon: const Icon(Icons.replay_rounded, size: 16),
-                  label: const Text('Qaytarish', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.delete_forever_rounded, color: AppColors.danger, size: 22),
+                      tooltip: 'Butunlay o‘chirish',
+                      onPressed: () => _purgeProduct(p),
+                    ),
+                    const SizedBox(width: 4),
+                    FilledButton.icon(
+                      onPressed: () => _restoreProduct(p),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
+                        foregroundColor: context.isDark ? AppColors.ink : Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.replay_rounded, size: 16),
+                      label: const Text('Qaytarish', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
                 ),
               ],
             ),

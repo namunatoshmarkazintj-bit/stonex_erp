@@ -44,9 +44,9 @@ class RolePermissionsStore extends ChangeNotifier {
 
   Future<bool> save(ApiClient api, Map<String, Map<String, bool>> updated) async {
     try {
+      await api.post('/settings/permissions', body: {'permissions': updated});
       _permissions = updated;
       notifyListeners();
-      await api.post('/settings/permissions', body: {'permissions': updated});
       return true;
     } catch (e) {
       debugPrint('RolePermissions saqlashda xatolik: $e');
