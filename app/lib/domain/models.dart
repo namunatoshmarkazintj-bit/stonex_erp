@@ -557,10 +557,6 @@ class Product {
   }
 
   String get sortLabel {
-    // Non-stone or accessory products never have sort badges
-    if (!isCuttableStone && !isTileOrCeramic && unit != 'm2' && unit != 'm²') {
-      return '';
-    }
     if (sort != null && sort!.isNotEmpty) {
       final s = sort!.trim();
       final lower = s.toLowerCase();
@@ -569,9 +565,10 @@ class Product {
       if (m != null) {
         return 'sort ${m.group(1)}';
       }
-      if (lower.startsWith('sort') || lower.contains('sort')) {
-        return s;
-      }
+      return s;
+    }
+    if (color != null && color!.isNotEmpty) {
+      return color!.trim();
     }
     final match =
         RegExp(r'\((1|1\.5|2|3|Oliy|oliy)[ -]sort\)', caseSensitive: false)

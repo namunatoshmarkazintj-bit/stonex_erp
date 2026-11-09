@@ -540,6 +540,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                     child: const Text('1 • 1.5 • 2 sort',
                                                         style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.green)),
                                                   ),
+                                                if (p.color != null && p.color!.isNotEmpty && p.color != p.sort)
+                                                  StoneColorBadge(colorName: p.color!),
                                               ],
                                             ),
                                           ],
