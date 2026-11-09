@@ -184,8 +184,7 @@ class _HomeShellState extends State<HomeShell> {
       _loadNotifications();
       _checkPinSetup();
       try {
-        final api = context.read<ApiClient>();
-        RolePermissionsStore.instance.load(api);
+        RolePermissionsStore.instance.load(appApiClient);
       } catch (_) {}
     });
     _notifTimer = Timer.periodic(const Duration(seconds: 15), (_) {

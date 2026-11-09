@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../core/theme.dart';
 import '../data/api_client.dart';
+import '../data/repository_factory.dart';
 import '../data/role_permissions_store.dart';
 
 class MasterPermissionsScreen extends StatefulWidget {
@@ -67,8 +67,7 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
 
   Future<void> _loadFromBackend() async {
     try {
-      final api = context.read<ApiClient>();
-      await RolePermissionsStore.instance.load(api);
+      await RolePermissionsStore.instance.load(appApiClient);
       if (mounted) {
         setState(() {
           _cloneStorePermissions();
@@ -93,8 +92,7 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
   Future<void> _saveAll() async {
     setState(() => _isSaving = true);
     try {
-      final api = context.read<ApiClient>();
-      final ok = await RolePermissionsStore.instance.save(api, _localPerms);
+      final ok = await RolePermissionsStore.instance.save(appApiClient, _localPerms);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -129,10 +127,9 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
       );
       return;
     }
-    final api = context.read<ApiClient>();
     try {
       // Find master user id
-      await api.patch('/users/change-password-master', body: {'password': pass}).catchError((_) async {
+      await appApiClient.patch('/users/change-password-master', body: {'password': pass}).catchError((_) async {
         // Fallback generic endpoint if needed
         return {};
       });

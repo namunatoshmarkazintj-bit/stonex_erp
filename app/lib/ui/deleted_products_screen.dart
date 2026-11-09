@@ -132,7 +132,13 @@ class _DeletedProductsScreenState extends State<DeletedProductsScreen> {
         _reload();
       }
     } catch (e) {
-      if (mounted) showMessage(context, e.toString(), error: true);
+      if (mounted) {
+        if (e.toString().contains('404') || e.toString().contains('Not Found')) {
+          showMessage(context, 'Server (Render) hali yangilanmagan. Iltimos, Render dashboardida "Manual Deploy" bosing.', error: true);
+        } else {
+          showMessage(context, e.toString(), error: true);
+        }
+      }
     }
   }
 
@@ -180,7 +186,13 @@ class _DeletedProductsScreenState extends State<DeletedProductsScreen> {
         _reload();
       }
     } catch (e) {
-      if (mounted) showMessage(context, e.toString(), error: true);
+      if (mounted) {
+        if (e.toString().contains('404') || e.toString().contains('Not Found')) {
+          showMessage(context, 'Server (Render) hali yangilanmagan. Iltimos, Render dashboardida "Manual Deploy" bosing.', error: true);
+        } else {
+          showMessage(context, e.toString(), error: true);
+        }
+      }
     }
   }
 
