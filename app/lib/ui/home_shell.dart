@@ -126,22 +126,7 @@ List<_Dest> _destinationsFor(Role role,
       MasterPermissionsScreen.new,
       actionLabel: 'Ruxsatlar',
     );
-    return [
-      masterPanel,
-      dash,
-      pos,
-      orders,
-      deliveries,
-      salesHistory,
-      customers,
-      debts,
-      purchases,
-      finance,
-      products,
-      stock,
-      prod,
-      staff,
-    ];
+    return [masterPanel];
   }
 
   bool can(String key) => RolePermissionsStore.instance.can(role, key);
