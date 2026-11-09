@@ -368,7 +368,29 @@ class Product {
     this.deletedByName,
   });
 
-  bool get hasDona => donaM2 != null && donaM2! > 0;
+  double? get effectiveDonaM2 {
+    if (donaM2 != null && donaM2! > 0) return donaM2;
+    if (tileLength != null &&
+        tileWidth != null &&
+        tileLength! > 0 &&
+        tileWidth! > 0) {
+      return (tileLength! * tileWidth!) / 10000.0;
+    }
+    return null;
+  }
+
+  bool get hasDona =>
+      (unit == 'm2' || unit == 'm²') &&
+      effectiveDonaM2 != null &&
+      effectiveDonaM2! > 0;
+
+  String get donaM2Formatted {
+    final m = effectiveDonaM2;
+    if (m == null || m <= 0) return '';
+    var s = m.toStringAsFixed(m * 100 == (m * 100).roundToDouble() ? 2 : 3);
+    s = s.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    return '$s m²';
+  }
 
   /// Kesish va toshga ishlov berish xizmatlari uchun yaroqli tosh/plita mahsuloti.
   /// Akfix, kley, disk, sim kabi kesib bo'lmaydigan asbob va yelimlar MUTLAQO kiritilmaydi.
@@ -535,21 +557,28 @@ class Product {
   }
 
   String get sortLabel {
+    // Non-stone or accessory products never have sort badges
+    if (!isCuttableStone && !isTileOrCeramic && unit != 'm2' && unit != 'm²') {
+      return '';
+    }
     if (sort != null && sort!.isNotEmpty) {
       final s = sort!.trim();
-      if (s.toLowerCase() == 'oliy') return 'Oliy sort';
-      if (RegExp(r'^(1|1\.5|2|3)$').hasMatch(s)) return '$s-sort';
-      return s;
-    }
-    if (color != null && color!.isNotEmpty) {
-      return color!.trim();
+      final lower = s.toLowerCase();
+      if (lower == 'oliy' || lower == 'oliy sort') return 'Oliy sort';
+      final m = RegExp(r'^(?:sort\s*)?(1|1\.5|2|3)(?:\s*sort)?$', caseSensitive: false).firstMatch(s);
+      if (m != null) {
+        return 'sort ${m.group(1)}';
+      }
+      if (lower.startsWith('sort') || lower.contains('sort')) {
+        return s;
+      }
     }
     final match =
         RegExp(r'\((1|1\.5|2|3|Oliy|oliy)[ -]sort\)', caseSensitive: false)
             .firstMatch(name);
     if (match != null) {
       final s = match.group(1)!;
-      return s.toLowerCase() == 'oliy' ? 'Oliy sort' : '$s-sort';
+      return s.toLowerCase() == 'oliy' ? 'Oliy sort' : 'sort $s';
     }
     if (hasSorts) {
       return '1 • 1.5 • 2 sort';
@@ -836,7 +865,7 @@ class CartLine {
       return quantity * product.effectiveBoxM2!;
     }
     if (inDona && product.hasDona) {
-      return quantity * product.donaM2!;
+      return quantity * (product.effectiveDonaM2 ?? product.donaM2 ?? 1.0);
     }
     return quantity;
   }

@@ -924,7 +924,7 @@ class _CartPanel extends StatelessWidget {
                     if (l.product.hasDona)
                       ButtonSegment(
                         value: 'dona',
-                        label: Text('dona (${qty(l.product.donaM2!)} m²)'),
+                        label: Text('dona (${qty(l.product.effectiveDonaM2 ?? l.product.donaM2 ?? 0.25)} m²)'),
                       ),
                   ],
                   selected: {inPachka ? 'pachka' : (inDona ? 'dona' : 'base')},
@@ -932,7 +932,7 @@ class _CartPanel extends StatelessWidget {
                     setS(() {
                       final cur = parseInput(ctrl.text) ?? 0;
                       final box = boxSize;
-                      final dona = l.product.donaM2 ?? (box / 2.0);
+                      final dona = l.product.effectiveDonaM2 ?? l.product.donaM2 ?? (box / 2.0);
 
                       // Asosiy m2 ga aylantirish
                       double currentBase = cur;
@@ -966,7 +966,7 @@ class _CartPanel extends StatelessWidget {
                   final propText = inPachka
                       ? '${qty(cur)} pachka = ${qty(_roundClean(cur * box))} m²'
                       : (inDona
-                          ? '${qty(cur)} dona = ${qty(_roundClean(cur * (l.product.donaM2 ?? (box / 2.0))))} m²'
+                          ? '${qty(cur)} dona = ${qty(_roundClean(cur * (l.product.effectiveDonaM2 ?? l.product.donaM2 ?? (box / 2.0))))} m²'
                           : '${qty(cur)} m² = ${qty(_roundClean(cur / box))} pachka');
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

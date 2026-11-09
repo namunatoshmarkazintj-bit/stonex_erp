@@ -508,15 +508,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                   'SKU: ${p.sku.isNotEmpty ? p.sku : 'Yo‘q'}',
                                                   style: const TextStyle(color: AppColors.muted, fontSize: 10.5),
                                                 ),
-                                                if (p.hasDona)
+                                                if (p.hasDona && p.donaM2Formatted.isNotEmpty)
                                                   Container(
                                                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                                     decoration: BoxDecoration(
                                                       color: context.pillColor,
                                                       borderRadius: BorderRadius.circular(6),
                                                     ),
-                                                    child: const Text('1 dona = 0.25 m²',
-                                                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700)),
+                                                    child: Text('1 dona = ${p.donaM2Formatted}',
+                                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700)),
                                                   ),
                                                 if (p.sortLabel.isNotEmpty)
                                                   Container(
@@ -691,7 +691,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                               ),
                                             ),
                                           ],
-                                          if (p.hasDona) ...[
+                                          if (p.hasDona && p.donaM2Formatted.isNotEmpty) ...[
                                             const SizedBox(width: 8),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -699,8 +699,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                                 color: context.pillColor,
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
-                                              child: const Text('1 dona = 0.25 m²',
-                                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                                              child: Text('1 dona = ${p.donaM2Formatted}',
+                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
                                             ),
                                           ],
                                           if (p.sortLabel.isNotEmpty) ...[
