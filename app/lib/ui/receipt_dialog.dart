@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +15,98 @@ import '../core/theme.dart';
 import '../data/local_printer_store.dart';
 import '../domain/models.dart';
 import 'common.dart';
+import 'receipt_html_printer.dart';
 import 'return_product_dialog.dart';
+
+String _cleanAscii(String? text) {
+  if (text == null || text.isEmpty) return '';
+  return text
+      .replaceAll('‘', "'")
+      .replaceAll('’', "'")
+      .replaceAll('`', "'")
+      .replaceAll('ʻ', "'")
+      .replaceAll('ʼ', "'")
+      .replaceAll('“', '"')
+      .replaceAll('”', '"')
+      .replaceAll('—', '-')
+      .replaceAll('–', '-')
+      .replaceAll('№', 'No.')
+      .replaceAll('²', '2')
+      .replaceAll('³', '3')
+      .replaceAll('€', 'EUR')
+      .replaceAll('£', 'GBP')
+      .replaceAll('¢', 'c')
+      .replaceAll('Ў', "O'")
+      .replaceAll('ў', "o'")
+      .replaceAll('Ғ', "G'")
+      .replaceAll('ғ', "g'")
+      .replaceAll('Ш', "Sh")
+      .replaceAll('ш', "sh")
+      .replaceAll('Ч', "Ch")
+      .replaceAll('ч', "ch")
+      .replaceAll('Ю', "Yu")
+      .replaceAll('ю', "yu")
+      .replaceAll('Я', "Ya")
+      .replaceAll('я', "ya")
+      .replaceAll('Ё', "Yo")
+      .replaceAll('ё', "yo")
+      .replaceAll('Ц', "Ts")
+      .replaceAll('ц', "ts")
+      .replaceAll('А', "A")
+      .replaceAll('а', "a")
+      .replaceAll('Б', "B")
+      .replaceAll('б', "b")
+      .replaceAll('В', "V")
+      .replaceAll('в', "v")
+      .replaceAll('Г', "G")
+      .replaceAll('г', "g")
+      .replaceAll('Д', "D")
+      .replaceAll('д', "d")
+      .replaceAll('Е', "E")
+      .replaceAll('е', "e")
+      .replaceAll('Ж', "J")
+      .replaceAll('ж', "j")
+      .replaceAll('З', "Z")
+      .replaceAll('з', "z")
+      .replaceAll('И', "I")
+      .replaceAll('и', "i")
+      .replaceAll('Й', "Y")
+      .replaceAll('й', "y")
+      .replaceAll('К', "K")
+      .replaceAll('к', "k")
+      .replaceAll('Л', "L")
+      .replaceAll('л', "l")
+      .replaceAll('М', "M")
+      .replaceAll('м', "m")
+      .replaceAll('Н', "N")
+      .replaceAll('н', "n")
+      .replaceAll('О', "O")
+      .replaceAll('о', "o")
+      .replaceAll('П', "P")
+      .replaceAll('п', "p")
+      .replaceAll('Р', "R")
+      .replaceAll('р', "r")
+      .replaceAll('С', "S")
+      .replaceAll('с', "s")
+      .replaceAll('Т', "T")
+      .replaceAll('т', "t")
+      .replaceAll('У', "U")
+      .replaceAll('у', "u")
+      .replaceAll('Ф', "F")
+      .replaceAll('ф', "f")
+      .replaceAll('Х', "X")
+      .replaceAll('х', "x")
+      .replaceAll('Ҳ', "H")
+      .replaceAll('ҳ', "h")
+      .replaceAll('Ъ', "'")
+      .replaceAll('ъ', "'")
+      .replaceAll('Ь', "")
+      .replaceAll('ь', "")
+      .replaceAll('Э', "E")
+      .replaceAll('э', "e")
+      .replaceAll('Ы', "I")
+      .replaceAll('ы', "i");
+}
 
 bool isReceiptQr(String code) {
   final c = code.trim().toUpperCase();
@@ -208,19 +300,193 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     );
   }
 
-  Future<void> _printPdf(BuildContext context, {bool forcePickPrinter = false}) async {
+  String _buildReceiptHtml(SaleResult sale, bool is58mm) {
+    final companyName = _cleanAscii(CompanyInfo.name);
+    final businessType = _cleanAscii(CompanyInfo.businessType);
+    final address = _cleanAscii(CompanyInfo.address);
+    final phones = _cleanAscii(CompanyInfo.phonesInline);
+    final cashier = _cleanAscii(sale.cashierName ?? 'Kassir');
+    final customer = _cleanAscii(sale.customerName?.isNotEmpty == true ? sale.customerName : 'Chakana xaridor');
+    final customerPhone = _cleanAscii(sale.customerPhone);
+    final widthCss = is58mm ? '54mm' : '74mm';
+    final pageSize = is58mm ? '58mm auto' : '80mm auto';
+    final fontSize = is58mm ? '11px' : '12.5px';
+    final titleSize = is58mm ? '14px' : '16px';
+
+    final itemsHtml = StringBuffer();
+    for (final item in sale.items) {
+      final name = _cleanAscii(item.productName);
+      final qty = item.quantity.toStringAsFixed(1);
+      final total = money(item.lineTotal);
+      itemsHtml.writeln('''
+        <tr>
+          <td style="text-align: left; padding: 2px 0;">$name</td>
+          <td style="text-align: center; padding: 2px 0;">$qty</td>
+          <td style="text-align: right; padding: 2px 0;">$total</td>
+        </tr>
+      ''');
+    }
+
+    String usdHtml = '';
+    if (sale.currencyRate != null && sale.currencyRate! > 0) {
+      final totalUsd = moneyUsd(sale.total / sale.currencyRate!);
+      final rate = money(sale.currencyRate!);
+      usdHtml = '''
+        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'};">
+          <span>USD (\$):</span>
+          <span style="font-weight: bold;">$totalUsd</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '10px' : '11px'}; color: #333;">
+          <span>Kurs (\$1 =):</span>
+          <span>$rate</span>
+        </div>
+      ''';
+    }
+
+    String debtHtml = '';
+    if (sale.debt > 0.005) {
+      debtHtml = '''
+        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'}; font-weight: bold; color: #b91c1c;">
+          <span>Qarz (Nasiya):</span>
+          <span>${money(sale.debt)}</span>
+        </div>
+      ''';
+    }
+
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Chek #${sale.id}</title>
+  <style>
+    @page {
+      size: $pageSize;
+      margin: 0;
+    }
+    @media print {
+      body {
+        width: $widthCss;
+        margin: 0 auto;
+        padding: 2mm 0;
+      }
+    }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: $fontSize;
+      line-height: 1.25;
+      color: #000;
+      background: #fff;
+      width: $widthCss;
+      margin: 0 auto;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .bold { font-weight: bold; }
+    .dashed { border-top: 1px dashed #000; margin: 4px 0; }
+    .flex-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: $fontSize; }
+  </style>
+</head>
+<body>
+  <div class="text-center bold" style="font-size: $titleSize;">$companyName</div>
+  <div class="text-center" style="font-size: ${is58mm ? '9px' : '10px'};">$businessType</div>
+  <div class="text-center" style="font-size: ${is58mm ? '9px' : '10px'};">Manzil: $address</div>
+  <div class="text-center" style="font-size: ${is58mm ? '9px' : '10px'};">Tel: $phones</div>
+
+  <div class="dashed"></div>
+
+  <div class="flex-row">
+    <span class="bold">Chek No: #${sale.id.toString().padLeft(6, '0')}</span>
+    <span>${formatDateTime(sale.createdAt ?? DateTime.now())}</span>
+  </div>
+  <div class="flex-row">
+    <span>Sotuvchi: $cashier</span>
+    <span>To'lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}</span>
+  </div>
+  <div class="text-left bold" style="margin-bottom: 2px;">
+    Xaridor: $customer ${customerPhone.isNotEmpty ? customerPhone : ''}
+  </div>
+
+  <div class="dashed"></div>
+
+  <table>
+    <thead>
+      <tr style="border-bottom: 1px dashed #000;">
+        <th style="text-align: left; padding-bottom: 3px;">Nomi</th>
+        <th style="text-align: center; padding-bottom: 3px;">Miqdor</th>
+        <th style="text-align: right; padding-bottom: 3px;">Summa</th>
+      </tr>
+    </thead>
+    <tbody>
+      $itemsHtml
+    </tbody>
+  </table>
+
+  <div class="dashed"></div>
+
+  <div class="flex-row bold" style="font-size: ${is58mm ? '13px' : '14px'};">
+    <span>JAMI:</span>
+    <span>${money(sale.total)}</span>
+  </div>
+
+  $usdHtml
+
+  <div class="flex-row">
+    <span>To'landi:</span>
+    <span class="bold">${money(sale.paid)}</span>
+  </div>
+
+  $debtHtml
+
+  <div class="dashed"></div>
+
+  <div class="text-center bold" style="font-size: ${is58mm ? '9px' : '10px'}; margin-top: 4px;">
+    Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)
+  </div>
+  <div class="text-center" style="font-size: ${is58mm ? '8px' : '9px'}; color: #444;">
+    (Mahsulot butun va chek taqdim etilganda)
+  </div>
+
+  <div class="text-center" style="margin-top: 6px; font-size: ${is58mm ? '10px' : '11px'};">
+    <div>Xaridingiz uchun tashakkur!</div>
+    <div style="color: #444; font-size: ${is58mm ? '8.5px' : '9.5px'};">NTJ - Namuna Tosh Jilo</div>
+  </div>
+</body>
+</html>
+''';
+  }
+
+  Future<void> _printPdf(BuildContext context, {bool forcePickPrinter = false, bool forcePdf = false}) async {
     final sale = widget.sale;
     setState(() => _isPrinting = true);
 
     try {
-      final doc = pw.Document();
-      final font = await PdfGoogleFonts.robotoRegular();
-      final fontBold = await PdfGoogleFonts.robotoBold();
-
       final paperWidthMm = LocalPrinterStore.getSavedPaperWidth();
       final is58mm = paperWidthMm <= 58;
+
+      // Web muhitida birinchi navbatda Brauzer HTML chop etish ishlatiladi (drayversiz ham toza monospaced chiqadi)
+      if (kIsWeb && !forcePickPrinter && !forcePdf) {
+        final ok = await printReceiptViaWebHtml(_buildReceiptHtml(sale, is58mm));
+        if (ok) {
+          if (mounted) {
+            showMessage(context, '✓ Brauzer chop etish oynasi ochildi (Oddiy shrift)');
+          }
+          return;
+        }
+      }
+
+      final doc = pw.Document();
+      // "Oddiy shrift" (standart Courier monospaced) — hech qanday internet yuklashlarsiz,
+      // baytlar chalkashmasdan, xitoycha iyerogliflarsiz toza chiqadi!
+      final font = pw.Font.courier();
+      final fontBold = pw.Font.courierBold();
+
       final pdfPageWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
-      final pdfMargin = (is58mm ? 2.5 : 4.0) * PdfPageFormat.mm;
+      final pdfMargin = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
 
       doc.addPage(
         pw.Page(
@@ -237,28 +503,28 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 mainAxisSize: pw.MainAxisSize.min,
                 children: [
                   pw.Text(
-                    CompanyInfo.name,
+                    _cleanAscii(CompanyInfo.name),
                     style: pw.TextStyle(
                       font: fontBold,
-                      fontSize: is58mm ? 12 : 14,
+                      fontSize: is58mm ? 11 : 13,
                       fontWeight: pw.FontWeight.bold,
                     ),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.SizedBox(height: 1),
                   pw.Text(
-                    CompanyInfo.businessType,
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 7.2 : 8),
+                    _cleanAscii(CompanyInfo.businessType),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 7.0 : 8),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
-                    'Manzil: ${CompanyInfo.address}',
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5),
+                    _cleanAscii('Manzil: ${CompanyInfo.address}'),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
-                    'Tel: ${CompanyInfo.phonesInline}',
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5),
+                    _cleanAscii('Tel: ${CompanyInfo.phonesInline}'),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.SizedBox(height: 4),
@@ -267,20 +533,20 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text('Chek №: #${sale.id.toString().padLeft(6, '0')}',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                      pw.Text(_cleanAscii('Chek No: #${sale.id.toString().padLeft(6, '0')}'),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.5)),
                       pw.Text(formatDateTime(sale.createdAt ?? DateTime.now()),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5)),
                     ],
                   ),
                   pw.SizedBox(height: 2),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text('Sotuvchi: ${sale.cashierName ?? 'Kassir'}',
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
-                      pw.Text('To‘lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}',
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
+                      pw.Text(_cleanAscii('Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5)),
+                      pw.Text(_cleanAscii("To'lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}"),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5)),
                     ],
                   ),
                   if (sale.customerName?.isNotEmpty == true) ...[
@@ -288,8 +554,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     pw.Align(
                       alignment: pw.Alignment.centerLeft,
                       child: pw.Text(
-                        'Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}',
-                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8),
+                        _cleanAscii('Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}'),
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 7.5),
                       ),
                     ),
                   ],
@@ -325,15 +591,15 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       children: [
                         pw.Expanded(
                           flex: 5,
-                          child: pw.Text(item.productName,
-                              style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
+                          child: pw.Text(_cleanAscii(item.productName),
+                              style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5)),
                         ),
                         pw.Expanded(
                           flex: 2,
                           child: pw.Text(
                             item.quantity.toStringAsFixed(1),
                             textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5),
                           ),
                         ),
                         pw.Expanded(
@@ -341,7 +607,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           child: pw.Text(
                             money(item.lineTotal),
                             textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5),
                           ),
                         ),
                       ],
@@ -355,9 +621,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text('JAMI:',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11)),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 10.5)),
                       pw.Text(money(sale.total),
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11)),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 10.5)),
                     ],
                   ),
                   if (sale.currencyRate != null && sale.currencyRate! > 0) ...[
@@ -366,9 +632,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('USD (\$):',
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.5)),
                         pw.Text(moneyUsd(sale.total / sale.currencyRate!),
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.5)),
                       ],
                     ),
                     pw.SizedBox(height: 1),
@@ -386,10 +652,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text('To‘landi:',
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
+                      pw.Text("To'landi:",
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 8.5)),
                       pw.Text(money(sale.paid),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 8.5)),
                     ],
                   ),
                   if (sale.debt > 0.005) ...[
@@ -398,9 +664,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('Qarz (Nasiya):',
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.5, color: PdfColors.red800)),
                         pw.Text(money(sale.debt),
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.5, color: PdfColors.red800)),
                       ],
                     ),
                   ],
@@ -414,13 +680,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     child: pw.Column(
                       children: [
                         pw.Text(
-                          'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.5 : 7.5),
+                          _cleanAscii('Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)'),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.2 : 7.2),
                           textAlign: pw.TextAlign.center,
                         ),
                         pw.SizedBox(height: 1),
                         pw.Text(
-                          '(Mahsulot butun va chek taqdim etilganda)',
+                          _cleanAscii('(Mahsulot butun va chek taqdim etilganda)'),
                           style: pw.TextStyle(font: font, fontSize: is58mm ? 5.5 : 6, color: PdfColors.grey700),
                           textAlign: pw.TextAlign.center,
                         ),
@@ -431,14 +697,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.BarcodeWidget(
                     data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
                     barcode: pw.Barcode.qrCode(),
-                    width: is58mm ? 42 : 50,
-                    height: is58mm ? 42 : 50,
+                    width: is58mm ? 40 : 48,
+                    height: is58mm ? 40 : 48,
                   ),
                   pw.SizedBox(height: 4),
                   pw.Text('Xaridingiz uchun tashakkur!',
                       style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8),
                       textAlign: pw.TextAlign.center),
-                  pw.Text('NTJ — Namuna Tosh Jilo',
+                  pw.Text('NTJ - Namuna Tosh Jilo',
                       style: pw.TextStyle(font: font, fontSize: is58mm ? 6 : 7, color: PdfColors.grey700),
                       textAlign: pw.TextAlign.center),
                 ],
@@ -1272,7 +1538,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.horizontal(
                                       left: const Radius.circular(12),
-                                      right: savedPrinterName != null ? Radius.zero : const Radius.circular(12),
+                                      right: (savedPrinterName != null && !kIsWeb) ? Radius.zero : const Radius.circular(12),
                                     ),
                                   ),
                                 ),
@@ -1284,13 +1550,15 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       )
                                     : const Icon(Icons.print_rounded, size: 15),
                                 label: Text(
-                                  savedPrinterName != null
-                                      ? 'Chop etish (${savedPrinterName.length > 14 ? "${savedPrinterName.substring(0, 12)}.." : savedPrinterName})'
-                                      : 'Chop etish',
+                                  kIsWeb
+                                      ? 'Chop etish (Brauzer / Oddiy shrift)'
+                                      : (savedPrinterName != null
+                                          ? 'Chop etish (${savedPrinterName.length > 14 ? "${savedPrinterName.substring(0, 12)}.." : savedPrinterName})'
+                                          : 'Chop etish'),
                                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
                                 ),
                               ),
-                              if (savedPrinterName != null)
+                              if (savedPrinterName != null && !kIsWeb)
                                 Container(
                                   height: 38,
                                   decoration: const BoxDecoration(
@@ -1303,6 +1571,42 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                     onPressed: _isPrinting ? null : () => _printPdf(context, forcePickPrinter: true),
                                   ),
                                 ),
+                              if (kIsWeb) ...[
+                                const SizedBox(width: 4),
+                                PopupMenuButton<String>(
+                                  tooltip: 'Chop etish turi',
+                                  icon: const Icon(Icons.more_vert_rounded, size: 18),
+                                  onSelected: (val) {
+                                    if (val == 'html') {
+                                      _printPdf(context, forcePdf: false);
+                                    } else if (val == 'pdf') {
+                                      _printPdf(context, forcePdf: true);
+                                    }
+                                  },
+                                  itemBuilder: (ctx) => [
+                                    const PopupMenuItem(
+                                      value: 'html',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.print_rounded, size: 16, color: Color(0xFF10B981)),
+                                          SizedBox(width: 8),
+                                          Text('Brauzer orqali (Tavsiya / Oddiy)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'pdf',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.picture_as_pdf_rounded, size: 16, color: Color(0xFFEF4444)),
+                                          SizedBox(width: 8),
+                                          Text('PDF orqali chop etish', style: TextStyle(fontSize: 12)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           );
                         },
