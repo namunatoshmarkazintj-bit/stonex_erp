@@ -70,13 +70,30 @@ class LocalPrinterStore {
     return data['name'] as String?;
   }
 
+  /// Qog'oz lentasi kengligi: 58 mm (sukut bo'yicha) yoki 80 mm
+  static int getSavedPaperWidth() {
+    final data = _readData();
+    final w = data['paper_width'];
+    if (w is int && (w == 58 || w == 80)) return w;
+    return 58;
+  }
+
+  static void savePaperWidth(int width) {
+    final data = Map<String, dynamic>.from(_readData());
+    data['paper_width'] = (width == 80) ? 80 : 58;
+    _writeData(data);
+  }
+
   /// Printerni doimiy qilib saqlash
-  static void savePrinter(String url, String name) {
-    _writeData({
-      'url': url,
-      'name': name,
-      'saved_at': DateTime.now().toIso8601String(),
-    });
+  static void savePrinter(String url, String name, [int? paperWidth]) {
+    final data = Map<String, dynamic>.from(_readData());
+    data['url'] = url;
+    data['name'] = name;
+    if (paperWidth != null) {
+      data['paper_width'] = paperWidth;
+    }
+    data['saved_at'] = DateTime.now().toIso8601String();
+    _writeData(data);
   }
 
   /// Eslab qolingan printerni tozalash (har safar so'rash uchun)

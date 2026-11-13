@@ -217,16 +217,21 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       final font = await PdfGoogleFonts.robotoRegular();
       final fontBold = await PdfGoogleFonts.robotoBold();
 
+      final paperWidthMm = LocalPrinterStore.getSavedPaperWidth();
+      final is58mm = paperWidthMm <= 58;
+      final pdfPageWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
+      final pdfMargin = (is58mm ? 2.5 : 4.0) * PdfPageFormat.mm;
+
       doc.addPage(
         pw.Page(
-          pageFormat: const PdfPageFormat(
-            80 * PdfPageFormat.mm,
+          pageFormat: PdfPageFormat(
+            pdfPageWidth,
             double.infinity,
-            marginAll: 4 * PdfPageFormat.mm,
+            marginAll: pdfMargin,
           ),
           build: (pw.Context ctx) {
             return pw.Container(
-              padding: const pw.EdgeInsets.all(6),
+              padding: pw.EdgeInsets.all(is58mm ? 2 : 4),
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 mainAxisSize: pw.MainAxisSize.min,
@@ -235,47 +240,47 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     CompanyInfo.name,
                     style: pw.TextStyle(
                       font: fontBold,
-                      fontSize: 14,
+                      fontSize: is58mm ? 12 : 14,
                       fontWeight: pw.FontWeight.bold,
                     ),
                     textAlign: pw.TextAlign.center,
                   ),
-                  pw.SizedBox(height: 2),
+                  pw.SizedBox(height: 1),
                   pw.Text(
                     CompanyInfo.businessType,
-                    style: pw.TextStyle(font: font, fontSize: 8),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 7.2 : 8),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
                     'Manzil: ${CompanyInfo.address}',
-                    style: pw.TextStyle(font: font, fontSize: 7.5),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
                     'Tel: ${CompanyInfo.phonesInline}',
-                    style: pw.TextStyle(font: font, fontSize: 7.5),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
-                  pw.SizedBox(height: 6),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
                   pw.SizedBox(height: 4),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text('Chek №: #${sale.id.toString().padLeft(6, '0')}',
-                          style: pw.TextStyle(font: fontBold, fontSize: 9)),
-                      pw.Text(formatDateTime(sale.createdAt ?? DateTime.now()),
-                          style: pw.TextStyle(font: font, fontSize: 8)),
-                    ],
-                  ),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
                   pw.SizedBox(height: 3),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
+                      pw.Text('Chek №: #${sale.id.toString().padLeft(6, '0')}',
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                      pw.Text(formatDateTime(sale.createdAt ?? DateTime.now()),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
+                    ],
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
                       pw.Text('Sotuvchi: ${sale.cashierName ?? 'Kassir'}',
-                          style: pw.TextStyle(font: font, fontSize: 8)),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
                       pw.Text('To‘lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}',
-                          style: pw.TextStyle(font: font, fontSize: 8)),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
                     ],
                   ),
                   if (sale.customerName?.isNotEmpty == true) ...[
@@ -284,36 +289,36 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       alignment: pw.Alignment.centerLeft,
                       child: pw.Text(
                         'Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}',
-                        style: pw.TextStyle(font: fontBold, fontSize: 8),
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8),
                       ),
                     ),
                   ],
-                  pw.SizedBox(height: 6),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
                   pw.SizedBox(height: 4),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                  pw.SizedBox(height: 3),
                   // Mahsulotlar ro'yxati
                   pw.Row(
                     children: [
                       pw.Expanded(
                         flex: 5,
                         child: pw.Text('Nomi',
-                            style: pw.TextStyle(font: fontBold, fontSize: 8)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8)),
                       ),
                       pw.Expanded(
                         flex: 2,
                         child: pw.Text('Miqdor',
                             textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(font: fontBold, fontSize: 8)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8)),
                       ),
                       pw.Expanded(
                         flex: 3,
                         child: pw.Text('Summa',
                             textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(font: fontBold, fontSize: 8)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8)),
                       ),
                     ],
                   ),
-                  pw.SizedBox(height: 4),
+                  pw.SizedBox(height: 3),
                   for (final item in sale.items) ...[
                     pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -321,14 +326,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                         pw.Expanded(
                           flex: 5,
                           child: pw.Text(item.productName,
-                              style: pw.TextStyle(font: font, fontSize: 8)),
+                              style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8)),
                         ),
                         pw.Expanded(
                           flex: 2,
                           child: pw.Text(
                             item.quantity.toStringAsFixed(1),
                             textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(font: font, fontSize: 8),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8),
                           ),
                         ),
                         pw.Expanded(
@@ -336,23 +341,23 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           child: pw.Text(
                             money(item.lineTotal),
                             textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(font: font, fontSize: 8),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8),
                           ),
                         ),
                       ],
                     ),
                     pw.SizedBox(height: 2),
                   ],
-                  pw.SizedBox(height: 4),
+                  pw.SizedBox(height: 3),
                   pw.Divider(borderStyle: pw.BorderStyle.dashed),
-                  pw.SizedBox(height: 4),
+                  pw.SizedBox(height: 3),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text('JAMI:',
-                          style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11)),
                       pw.Text(money(sale.total),
-                          style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11)),
                     ],
                   ),
                   if (sale.currencyRate != null && sale.currencyRate! > 0) ...[
@@ -361,9 +366,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('USD (\$):',
-                            style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                         pw.Text(moneyUsd(sale.total / sale.currencyRate!),
-                            style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                       ],
                     ),
                     pw.SizedBox(height: 1),
@@ -371,9 +376,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('Kurs (\$1 =):',
-                            style: pw.TextStyle(font: font, fontSize: 7.5)),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 7.5)),
                         pw.Text(money(sale.currencyRate!),
-                            style: pw.TextStyle(font: font, fontSize: 7.5)),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 7.5)),
                       ],
                     ),
                   ],
@@ -382,9 +387,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text('To‘landi:',
-                          style: pw.TextStyle(font: font, fontSize: 9)),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
                       pw.Text(money(sale.paid),
-                          style: pw.TextStyle(font: font, fontSize: 9)),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
                     ],
                   ),
                   if (sale.debt > 0.005) ...[
@@ -393,15 +398,15 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('Qarz (Nasiya):',
-                            style: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColors.red800)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
                         pw.Text(money(sale.debt),
-                            style: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColors.red800)),
+                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
                       ],
                     ),
                   ],
-                  pw.SizedBox(height: 6),
+                  pw.SizedBox(height: 5),
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 6),
+                    padding: const pw.EdgeInsets.symmetric(vertical: 2.5, horizontal: 4),
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
                       borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
@@ -410,31 +415,31 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       children: [
                         pw.Text(
                           'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)',
-                          style: pw.TextStyle(font: fontBold, fontSize: 7.5),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.5 : 7.5),
                           textAlign: pw.TextAlign.center,
                         ),
                         pw.SizedBox(height: 1),
                         pw.Text(
                           '(Mahsulot butun va chek taqdim etilganda)',
-                          style: pw.TextStyle(font: font, fontSize: 6, color: PdfColors.grey700),
+                          style: pw.TextStyle(font: font, fontSize: is58mm ? 5.5 : 6, color: PdfColors.grey700),
                           textAlign: pw.TextAlign.center,
                         ),
                       ],
                     ),
                   ),
-                  pw.SizedBox(height: 6),
+                  pw.SizedBox(height: 5),
                   pw.BarcodeWidget(
                     data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
                     barcode: pw.Barcode.qrCode(),
-                    width: 50,
-                    height: 50,
+                    width: is58mm ? 42 : 50,
+                    height: is58mm ? 42 : 50,
                   ),
-                  pw.SizedBox(height: 6),
+                  pw.SizedBox(height: 4),
                   pw.Text('Xaridingiz uchun tashakkur!',
-                      style: pw.TextStyle(font: font, fontSize: 8),
+                      style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8),
                       textAlign: pw.TextAlign.center),
                   pw.Text('NTJ — Namuna Tosh Jilo',
-                      style: pw.TextStyle(font: font, fontSize: 7, color: PdfColors.grey700),
+                      style: pw.TextStyle(font: font, fontSize: is58mm ? 6 : 7, color: PdfColors.grey700),
                       textAlign: pw.TextAlign.center),
                 ],
               ),
@@ -580,6 +585,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
     bool remember = true;
     Printer? selected;
+    int currentWidth = LocalPrinterStore.getSavedPaperWidth();
 
     await showDialog<void>(
       context: context,
@@ -604,11 +610,72 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
             ],
           ),
           content: SizedBox(
-            width: 400,
+            width: 420,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Qog'oz lentasi kengligini tanlash
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Qog‘oz lentasi o‘lchami:',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Text('58 mm (Xprinter)'),
+                              selected: currentWidth == 58,
+                              selectedColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              labelStyle: TextStyle(
+                                fontSize: 11,
+                                fontWeight: currentWidth == 58 ? FontWeight.w800 : FontWeight.w500,
+                                color: currentWidth == 58 ? const Color(0xFF047857) : Colors.black87,
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setDlgState(() => currentWidth = 58);
+                                  LocalPrinterStore.savePaperWidth(58);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Text('80 mm (Katta)'),
+                              selected: currentWidth == 80,
+                              selectedColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              labelStyle: TextStyle(
+                                fontSize: 11,
+                                fontWeight: currentWidth == 80 ? FontWeight.w800 : FontWeight.w500,
+                                color: currentWidth == 80 ? const Color(0xFF047857) : Colors.black87,
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setDlgState(() => currentWidth = 80);
+                                  LocalPrinterStore.savePaperWidth(80);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
                 if (printers.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -657,7 +724,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           onTap: () {
                             selected = p;
                             if (remember) {
-                              LocalPrinterStore.savePrinter(p.url, p.name);
+                              LocalPrinterStore.savePrinter(p.url, p.name, currentWidth);
                               if (mounted) setState(() {});
                             }
                             Navigator.pop(ctx);
