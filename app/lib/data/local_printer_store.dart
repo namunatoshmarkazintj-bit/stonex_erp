@@ -70,12 +70,12 @@ class LocalPrinterStore {
     return data['name'] as String?;
   }
 
-  /// Qog'oz lentasi kengligi: 58 mm (sukut bo'yicha) yoki 80 mm
+  /// Qog'oz lentasi kengligi: 80 mm (standart katta chek) yoki 58 mm
   static int getSavedPaperWidth() {
     final data = _readData();
     final w = data['paper_width'];
     if (w is int && (w == 58 || w == 80)) return w;
-    return 58;
+    return 80;
   }
 
   static void savePaperWidth(int width) {
