@@ -2414,7 +2414,7 @@ class _ProductDialogState extends State<ProductDialog> {
 // Mahsulot QR Yorlig'i (Chop etish va Katta ko'rish dialogi)
 // ---------------------------------------------------------------------------
 
-class ProductQrLabelDialog extends StatelessWidget {
+class ProductQrLabelDialog extends StatefulWidget {
   const ProductQrLabelDialog({
     super.key,
     required this.productName,
@@ -2433,15 +2433,24 @@ class ProductQrLabelDialog extends StatelessWidget {
   final Product? product;
 
   @override
+  State<ProductQrLabelDialog> createState() => _ProductQrLabelDialogState();
+}
+
+class _ProductQrLabelDialogState extends State<ProductQrLabelDialog> {
+  // 'sticker_50x30' (standart etiketka 50x30mm), 'sticker_58x40' (katta stiker), 'roll_80mm' (lenta)
+  String _selectedFormat = 'sticker_50x30';
+
+  @override
   Widget build(BuildContext context) {
-    final cleanCode = qrCode.trim().isNotEmpty ? qrCode.trim() : 'NO-CODE';
+    final cleanCode = widget.qrCode.trim().isNotEmpty ? widget.qrCode.trim() : 'NO-CODE';
+    final isSticker = _selectedFormat != 'roll_80mm';
 
     return Dialog(
       backgroundColor: context.dialogBg,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
+        constraints: const BoxConstraints(maxWidth: 440),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -2479,164 +2488,223 @@ class ProductQrLabelDialog extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
 
-              // Oq chop etiladigan stiker kartasi
+              // Format tanlash (SegmentedButton)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Qog‘oz / Stiker o‘lchami:',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.muted),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<String>(
+                      style: SegmentedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        textStyle: const TextStyle(fontSize: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      segments: const [
+                        ButtonSegment(
+                          value: 'sticker_50x30',
+                          label: Text('50x30 mm'),
+                          icon: Icon(Icons.label_outline_rounded, size: 14),
+                        ),
+                        ButtonSegment(
+                          value: 'sticker_58x40',
+                          label: Text('58x40 mm'),
+                          icon: Icon(Icons.sticky_note_2_outlined, size: 14),
+                        ),
+                        ButtonSegment(
+                          value: 'roll_80mm',
+                          label: Text('80 mm lenta'),
+                          icon: Icon(Icons.receipt_long_rounded, size: 14),
+                        ),
+                      ],
+                      selected: {_selectedFormat},
+                      onSelectionChanged: (set) => setState(() => _selectedFormat = set.first),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              // Oq chop etiladigan stiker kartasi (Real stiker ko'rinishi)
               Center(
                 child: Container(
-                  width: 280,
-                  constraints: BoxConstraints(maxWidth: math.max(200.0, MediaQuery.sizeOf(context).width - 80.0)),
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+                  width: isSticker ? 320 : 270,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFD0D7DE), width: 1.2),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x1A000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 6),
+                        blurRadius: 14,
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Kompaniya logotipi / stiker sarlavhasi
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0F9D58),
-                              shape: BoxShape.circle,
+                  child: isSticker
+                      // Stiker etiketka formati (50x30 / 58x40) - Bitta stikerga 100% to'liq sig'adigan
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Sarlavha
+                            const Text(
+                              'NAMUNA TOSH JILO',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                                color: Colors.black,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'NTM MARBLE',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              color: Colors.black,
+                            const Divider(color: Colors.black54, height: 8, thickness: 0.8),
+                            // Asosiy qator: chapda QR kod, o'ngda tovar nomi va narxi
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // QR kod
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(color: const Color(0xFFE1E4E8), width: 0.8),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: QrImageView(
+                                        data: cleanCode,
+                                        version: QrVersions.auto,
+                                        size: 78,
+                                        backgroundColor: Colors.white,
+                                        padding: const EdgeInsets.all(2),
+                                        eyeStyle: const QrEyeStyle(
+                                          eyeShape: QrEyeShape.square,
+                                          color: Colors.black,
+                                        ),
+                                        dataModuleStyle: const QrDataModuleStyle(
+                                          dataModuleShape: QrDataModuleShape.square,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      cleanCode,
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 9.5,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 10),
+                                // Mahsulot tafsilotlari
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        widget.productName,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black,
+                                          height: 1.15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${money(widget.price)} / ${widget.unit}',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w900,
+                                          color: Color(0xFF1B5E20),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 1),
-                      const Text(
-                        'Tosh ishlab chiqarish majmuasi',
-                        style: TextStyle(fontSize: 8.5, color: Color(0xFF57606A), fontWeight: FontWeight.w500),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Divider(color: Color(0xFFE1E4E8), height: 1, thickness: 1),
-                      ),
-
-                      // Haqiqiy skanerlanadigan QR Kod
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFEAECEF), width: 1),
-                        ),
-                        child: QrImageView(
-                          data: cleanCode,
-                          version: QrVersions.auto,
-                          size: math.min(180.0, math.max(120.0, MediaQuery.sizeOf(context).width - 130.0)),
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.all(4),
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square,
-                            color: Colors.black,
-                          ),
-                          dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.square,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // QR Kod matni
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF6F8FA),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFE1E4E8)),
-                        ),
-                        child: Text(
-                          cleanCode,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12.5,
-                            letterSpacing: 1.2,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Mahsulot nomi
-                      Text(
-                        productName,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black,
-                        ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      // Narx va o'lchov birligi
-                      Text(
-                        '${money(price)} / $unit',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B5E20),
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      // Pastki izoh
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              sku.isNotEmpty ? 'SKU: $sku' : 'NTM ERP',
-                              maxLines: 1,
+                            const Divider(color: Colors.black26, height: 8, thickness: 0.6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  widget.sku.isNotEmpty ? 'SKU: ${widget.sku}' : 'NTJ ERP',
+                                  style: const TextStyle(fontSize: 8.5, color: Color(0xFF57606A), fontWeight: FontWeight.w600),
+                                ),
+                                Text(
+                                  '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(fontSize: 8.5, color: Color(0xFF57606A)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      // Katta 80 mm lenta formati
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'NAMUNA TOSH JILO',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.black),
+                            ),
+                            const Text(
+                              'Tosh ishlab chiqarish majmuasi',
+                              style: TextStyle(fontSize: 8.5, color: Color(0xFF57606A)),
+                            ),
+                            const Divider(color: Color(0xFFE1E4E8), height: 10, thickness: 1),
+                            QrImageView(
+                              data: cleanCode,
+                              version: QrVersions.auto,
+                              size: 130,
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.all(4),
+                              eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
+                              dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Colors.black),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              cleanCode,
+                              style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.w900, fontSize: 11, color: Colors.black),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              widget.productName,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 9, color: Color(0xFF6E7781), fontWeight: FontWeight.w600),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Sana: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
-                            style: const TextStyle(fontSize: 9, color: Color(0xFF6E7781), fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${money(widget.price)} / ${widget.unit}',
+                              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF1B5E20)),
+                            ),
+                          ],
+                        ),
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               // Harakat tugmalari
               Row(
@@ -2672,14 +2740,14 @@ class ProductQrLabelDialog extends StatelessWidget {
                 ],
               ),
 
-              if (product != null) ...[
+              if (widget.product != null) ...[
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.tonalIcon(
                     onPressed: () {
-                      context.read<CartController>().add(product!);
-                      showMessage(context, '✅ “$productName” kassa savatiga qo‘shildi!');
+                      context.read<CartController>().add(widget.product!);
+                      showMessage(context, '✅ “${widget.productName}” kassa savatiga qo‘shildi!');
                     },
                     icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
                     label: const Text('Kassa savatiga qo‘shish (Sinash)',
@@ -2732,39 +2800,41 @@ class ProductQrLabelDialog extends StatelessWidget {
         .replaceAll('ц', "ts");
   }
 
-  String _buildLabelHtml(String cleanCode, bool is58mm) {
-    final widthCss = is58mm ? '54mm' : '72mm';
-    final pageSize = is58mm ? '58mm auto' : '80mm auto';
-    final qrSvgTag = generateQrSvg(cleanCode, size: is58mm ? 100 : 130);
+  String _buildLabelHtml(String cleanCode, String format) {
     final dateStr = '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}';
-    final cleanName = _cleanAsciiLabel(productName);
+    final cleanName = _cleanAsciiLabel(widget.productName);
+    final cleanPrice = _cleanAsciiLabel(money(widget.price));
+    final skuText = widget.sku.isNotEmpty ? 'SKU: ${widget.sku}' : 'NTJ ERP';
 
-    return '''
+    // 80mm kassa chek lentasi
+    if (format == 'roll_80mm') {
+      final qrSvgTag = generateQrSvg(cleanCode, size: 110);
+      return '''
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>QR-$cleanCode</title>
   <style>
-    @page { size: $pageSize; margin: 0; }
+    @page { size: 80mm auto; margin: 0; }
     @media print {
-      body { width: $widthCss; margin: 0 auto; padding: 2mm 0; }
+      body { width: 72mm; margin: 0 auto; padding: 2mm 0; }
     }
     body {
-      font-family: 'Courier New', Courier, 'Lucida Console', monospace;
+      font-family: 'Courier New', Courier, monospace;
       font-size: 13px;
       line-height: 1.32;
       text-align: center;
       color: #000;
       background: #fff;
-      width: $widthCss;
+      width: 72mm;
       margin: 0 auto;
       padding: 6px;
       box-sizing: border-box;
       -webkit-print-color-adjust: exact;
     }
     .bold { font-weight: bold; }
-    .title { font-size: 15px; font-weight: 800; letter-spacing: 0.8px; }
+    .title { font-size: 14px; font-weight: 800; letter-spacing: 0.8px; }
     .dashed { border-top: 1px dashed #000; margin: 5px 0; }
   </style>
 </head>
@@ -2773,33 +2843,187 @@ class ProductQrLabelDialog extends StatelessWidget {
   <div style="font-size: 10px; color: #333;">Tosh ishlab chiqarish majmuasi</div>
   <div class="dashed"></div>
   $qrSvgTag
-  <div class="bold" style="font-size: 14px; letter-spacing: 1px; margin: 4px 0;">$cleanCode</div>
-  <div class="bold" style="font-size: 14px; margin: 4px 0;">$cleanName</div>
-  <div class="bold" style="font-size: 13px; margin-bottom: 4px;">${money(price)} / $unit</div>
+  <div class="bold" style="font-size: 13px; letter-spacing: 1px; margin: 4px 0;">$cleanCode</div>
+  <div class="bold" style="font-size: 13px; margin: 4px 0;">$cleanName</div>
+  <div class="bold" style="font-size: 13px; margin-bottom: 4px;">$cleanPrice / ${widget.unit}</div>
   <div class="dashed"></div>
   <div style="display: flex; justify-content: space-between; font-size: 9.5px;">
-    <span>${sku.isNotEmpty ? "SKU: $sku" : "NTJ ERP"}</span>
+    <span>$skuText</span>
     <span>Sana: $dateStr</span>
   </div>
   <div style="height: 18mm;"></div>
 </body>
 </html>
 ''';
+    }
+
+    // Stiker etiketka formati (50x30 mm yoki 58x40 mm)
+    // LPS, Xprinter va barcha etiketka printerlari uchun stikerga 100% to'liq sig'adigan o'lcham
+    final is58x40 = format == 'sticker_58x40';
+    final widthMm = is58x40 ? 58 : 50;
+    final heightMm = is58x40 ? 40 : 30;
+    final qrPx = is58x40 ? 74 : 62;
+    final qrSvgTag = generateQrSvg(cleanCode, size: qrPx);
+
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stiker-$cleanCode</title>
+  <style>
+    @page {
+      size: ${widthMm}mm ${heightMm}mm;
+      margin: 0;
+    }
+    @media print {
+      html, body {
+        width: ${widthMm}mm;
+        height: ${heightMm}mm;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      width: ${widthMm}mm;
+      height: ${heightMm}mm;
+      background: #fff;
+      color: #000;
+      padding: 1.2mm 2mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+    .header {
+      font-size: ${is58x40 ? '8pt' : '7pt'};
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border-bottom: 0.5px solid #000;
+      padding-bottom: 0.4mm;
+      margin-bottom: 0.6mm;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .main-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      gap: 1.5mm;
+    }
+    .qr-side {
+      width: ${is58x40 ? '24mm' : '19mm'};
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .qr-side svg {
+      width: ${is58x40 ? '22mm' : '18mm'} !important;
+      height: ${is58x40 ? '22mm' : '18mm'} !important;
+      margin: 0 auto !important;
+      display: block;
+    }
+    .code-text {
+      font-family: monospace;
+      font-size: ${is58x40 ? '7pt' : '6pt'};
+      font-weight: 900;
+      text-align: center;
+      line-height: 1;
+      margin-top: 0.4mm;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .info-side {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .prod-title {
+      font-size: ${is58x40 ? '8.5pt' : '7.5pt'};
+      font-weight: 800;
+      line-height: 1.15;
+      max-height: 2.3em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      margin-bottom: 0.8mm;
+    }
+    .price-tag {
+      font-size: ${is58x40 ? '10.5pt' : '9.5pt'};
+      font-weight: 900;
+      color: #000;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .unit-tag {
+      font-size: ${is58x40 ? '7.5pt' : '6.5pt'};
+      font-weight: 600;
+      color: #333;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: ${is58x40 ? '6pt' : '5pt'};
+      color: #333;
+      border-top: 0.5px dashed #555;
+      padding-top: 0.4mm;
+      margin-top: 0.5mm;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">NAMUNA TOSH JILO</div>
+  <div class="main-row">
+    <div class="qr-side">
+      $qrSvgTag
+      <div class="code-text">$cleanCode</div>
+    </div>
+    <div class="info-side">
+      <div class="prod-title">$cleanName</div>
+      <div class="price-tag">$cleanPrice <span class="unit-tag">/ ${widget.unit}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    <span>$skuText</span>
+    <span>$dateStr</span>
+  </div>
+</body>
+</html>
+''';
   }
 
   Future<void> _printLabel(BuildContext context) async {
-    final cleanCode = qrCode.trim().isNotEmpty ? qrCode.trim() : 'NO-CODE';
-    final cleanName = _cleanAsciiLabel(productName);
-    final is80mm = LocalPrinterStore.getSavedPaperWidth() >= 80;
-    final is58mm = !is80mm;
-    final pageWidthMm = is80mm ? 80.0 : 58.0;
+    final cleanCode = widget.qrCode.trim().isNotEmpty ? widget.qrCode.trim() : 'NO-CODE';
+    final cleanName = _cleanAsciiLabel(widget.productName);
+    final cleanPrice = _cleanAsciiLabel(money(widget.price));
+    final skuText = widget.sku.isNotEmpty ? 'SKU: ${widget.sku}' : 'NTJ ERP';
+    final dateStr = '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}';
 
-    // Web muhitida brauzer HTML orqali chiqarish
+    // Web muhitida brauzer HTML orqali chiqarish (aniq stiker o'lchami bilan)
     if (kIsWeb) {
-      final ok = await printReceiptViaWebHtml(_buildLabelHtml(cleanCode, is58mm));
+      final ok = await printReceiptViaWebHtml(_buildLabelHtml(cleanCode, _selectedFormat));
       if (ok) {
         if (context.mounted) {
-          showMessage(context, '✓ QR Yorliq chop etish oynasi ochildi');
+          showMessage(context, '✓ QR Yorliq chop etish oynasi ochildi ($_selectedFormat)');
         }
         return;
       }
@@ -2810,71 +3034,140 @@ class ProductQrLabelDialog extends StatelessWidget {
       final font = pw.Font.courier();
       final fontBold = pw.Font.courierBold();
 
-      doc.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat(
-            pageWidthMm * PdfPageFormat.mm,
-            double.infinity,
-            marginAll: 3 * PdfPageFormat.mm,
+      final PdfPageFormat pageFormat;
+      if (_selectedFormat == 'roll_80mm') {
+        pageFormat = const PdfPageFormat(80.0 * PdfPageFormat.mm, double.infinity, marginAll: 3 * PdfPageFormat.mm);
+      } else if (_selectedFormat == 'sticker_58x40') {
+        pageFormat = const PdfPageFormat(58.0 * PdfPageFormat.mm, 40.0 * PdfPageFormat.mm, marginAll: 1.5 * PdfPageFormat.mm);
+      } else {
+        pageFormat = const PdfPageFormat(50.0 * PdfPageFormat.mm, 30.0 * PdfPageFormat.mm, marginAll: 1.2 * PdfPageFormat.mm);
+      }
+
+      if (_selectedFormat == 'roll_80mm') {
+        doc.addPage(
+          pw.Page(
+            pageFormat: pageFormat,
+            build: (pw.Context ctx) {
+              return pw.Container(
+                padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  mainAxisSize: pw.MainAxisSize.min,
+                  children: [
+                    pw.Text('NAMUNA TOSH JILO', style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                    pw.Text('Tosh ishlab chiqarish majmuasi', style: pw.TextStyle(font: font, fontSize: 8)),
+                    pw.SizedBox(height: 3),
+                    pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                    pw.SizedBox(height: 4),
+                    pw.BarcodeWidget(
+                      data: cleanCode,
+                      barcode: pw.Barcode.qrCode(),
+                      width: 60,
+                      height: 60,
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(cleanCode, style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                    pw.SizedBox(height: 4),
+                    pw.Text(cleanName, textAlign: pw.TextAlign.center, style: pw.TextStyle(font: fontBold, fontSize: 12)),
+                    pw.SizedBox(height: 2),
+                    pw.Text('$cleanPrice / ${widget.unit}', style: pw.TextStyle(font: fontBold, fontSize: 11)),
+                    pw.SizedBox(height: 4),
+                    pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                    pw.SizedBox(height: 2),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(skuText, style: pw.TextStyle(font: font, fontSize: 8)),
+                        pw.Text('Sana: $dateStr', style: pw.TextStyle(font: font, fontSize: 8)),
+                      ],
+                    ),
+                    pw.SizedBox(height: 18 * PdfPageFormat.mm),
+                  ],
+                ),
+              );
+            },
           ),
-          build: (pw.Context ctx) {
-            return pw.Container(
-              padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                mainAxisSize: pw.MainAxisSize.min,
+        );
+      } else {
+        // Stiker etiketka formati (50x30 / 58x40 mm)
+        final is58 = _selectedFormat == 'sticker_58x40';
+        doc.addPage(
+          pw.Page(
+            pageFormat: pageFormat,
+            build: (pw.Context ctx) {
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  pw.Text('NAMUNA TOSH JILO',
-                      style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 13 : 11)),
-                  pw.Text('Tosh ishlab chiqarish majmuasi',
-                      style: pw.TextStyle(font: font, fontSize: is80mm ? 8 : 7)),
-                  pw.SizedBox(height: 3),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
-                  pw.SizedBox(height: 4),
-                  pw.BarcodeWidget(
-                    data: cleanCode,
-                    barcode: pw.Barcode.qrCode(),
-                    width: is80mm ? 80 : 60,
-                    height: is80mm ? 80 : 60,
-                  ),
-                  pw.SizedBox(height: 4),
                   pw.Text(
-                    cleanCode,
-                    style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 11 : 9.5),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Text(
-                    cleanName,
+                    'NAMUNA TOSH JILO',
                     textAlign: pw.TextAlign.center,
-                    style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 12 : 10),
+                    style: pw.TextStyle(font: fontBold, fontSize: is58 ? 8 : 7),
                   ),
-                  pw.SizedBox(height: 2),
-                  pw.Text(
-                    '${money(price)} / $unit',
-                    style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 11 : 9.5),
+                  pw.Container(
+                    height: 0.5,
+                    color: PdfColors.black,
+                    margin: const pw.EdgeInsets.symmetric(vertical: 1),
                   ),
-                  pw.SizedBox(height: 4),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
-                  pw.SizedBox(height: 2),
+                  pw.Expanded(
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        pw.Column(
+                          mainAxisAlignment: pw.MainAxisAlignment.center,
+                          children: [
+                            pw.BarcodeWidget(
+                              data: cleanCode,
+                              barcode: pw.Barcode.qrCode(),
+                              width: (is58 ? 22.0 : 17.0) * PdfPageFormat.mm,
+                              height: (is58 ? 22.0 : 17.0) * PdfPageFormat.mm,
+                            ),
+                            pw.SizedBox(height: 1),
+                            pw.Text(
+                              cleanCode,
+                              style: pw.TextStyle(font: fontBold, fontSize: is58 ? 6.5 : 5.5),
+                            ),
+                          ],
+                        ),
+                        pw.SizedBox(width: 2 * PdfPageFormat.mm),
+                        pw.Expanded(
+                          child: pw.Column(
+                            mainAxisAlignment: pw.MainAxisAlignment.center,
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                cleanName,
+                                maxLines: 2,
+                                style: pw.TextStyle(font: fontBold, fontSize: is58 ? 8.5 : 7.5),
+                              ),
+                              pw.SizedBox(height: 2),
+                              pw.Text(
+                                '$cleanPrice / ${widget.unit}',
+                                style: pw.TextStyle(font: fontBold, fontSize: is58 ? 9.5 : 8.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.Container(
+                    height: 0.5,
+                    color: PdfColors.grey700,
+                    margin: const pw.EdgeInsets.symmetric(vertical: 1),
+                  ),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text(sku.isNotEmpty ? 'SKU: $sku' : 'NTJ ERP',
-                          style: pw.TextStyle(font: font, fontSize: is80mm ? 8 : 7)),
-                      pw.Text(
-                        'Sana: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
-                        style: pw.TextStyle(font: font, fontSize: is80mm ? 8 : 7),
-                      ),
+                      pw.Text(skuText, style: pw.TextStyle(font: font, fontSize: 5)),
+                      pw.Text(dateStr, style: pw.TextStyle(font: font, fontSize: 5)),
                     ],
                   ),
-                  // Kesish pichog'i uchun bo'sh joy
-                  pw.SizedBox(height: 20 * PdfPageFormat.mm),
                 ],
-              ),
-            );
-          },
-        ),
-      );
+              );
+            },
+          ),
+        );
+      }
 
       if (kIsWeb) {
         await Printing.layoutPdf(
