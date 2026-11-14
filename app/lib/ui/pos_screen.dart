@@ -108,6 +108,11 @@ class _PosScreenState extends State<PosScreen> {
 
   ProductRepository get _repo => context.read<AppRepositories>().products;
 
+  final StringBuffer _scannerBuffer = StringBuffer();
+  DateTime _lastScannerKeystroke = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _isScannerBurst = false;
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
@@ -123,12 +128,54 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   bool _handleKeyEvent(KeyEvent event) {
-    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.f2) {
+    if (event is! KeyDownEvent) return false;
+
+    // F2 tugmasi: Kamera QR skaneri oynasi
+    if (event.logicalKey == LogicalKeyboardKey.f2) {
       if (!_isScannerOpen && mounted) {
         _openQrScanner();
       }
       return true;
     }
+
+    final now = DateTime.now();
+    final elapsedMs = now.difference(_lastScannerKeystroke).inMilliseconds;
+    _lastScannerKeystroke = now;
+
+    // Agar klavishlar orasidagi vaqt 500ms dan ko'p bo'lsa, yangi skanerlash deb hisoblaymiz
+    if (elapsedMs > 500) {
+      _scannerBuffer.clear();
+      _isScannerBurst = false;
+    } else if (elapsedMs < 75) {
+      // 75ms dan tez kelyapti -> 100% apparat shtrix-kod skaneri
+      _isScannerBurst = true;
+    }
+
+    // Enter yoki NumpadEnter: Skaner uzatishni tugatdi!
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      final code = _scannerBuffer.toString().trim();
+      _scannerBuffer.clear();
+      _isScannerBurst = false;
+
+      // Agar skaner orqali kod kelgan bo'lsa
+      if (code.isNotEmpty && code.length >= 2) {
+        _search.clear();
+        _onSubmit(code);
+        return true;
+      }
+      return false;
+    }
+
+    // Bosilgan belgilarni buferga yig'ish (harflar, sonlar, tire va hk.)
+    final char = event.character;
+    if (char != null && char.isNotEmpty) {
+      final codeUnit = char.codeUnitAt(0);
+      if (codeUnit >= 32 && codeUnit <= 126) {
+        _scannerBuffer.write(char);
+      }
+    }
+
     return false;
   }
 
@@ -176,35 +223,55 @@ class _PosScreenState extends State<PosScreen> {
 
   Future<void> _onSubmit(String text) async {
     final code = text.trim();
-    if (code.isEmpty) return;
-
-    if (isReceiptQr(code)) {
-      final saleId = extractSaleId(code);
-      if (saleId != null) {
-        try {
-          final sales = await context.read<AppRepositories>().sales.listSales(limit: 500);
-          final matched = sales.where((s) => s.id == saleId).firstOrNull;
-          if (matched != null && mounted) {
-            _search.clear();
-            await ReceiptDialog.show(context, matched);
-            return;
-          }
-        } catch (_) {}
-      }
-    }
+    if (code.isEmpty || _isSubmitting) return;
+    _isSubmitting = true;
 
     try {
-      final p = await _repo.findByCode(code);
+      if (isReceiptQr(code)) {
+        final saleId = extractSaleId(code);
+        if (saleId != null) {
+          try {
+            final sales = await context.read<AppRepositories>().sales.listSales(limit: 500);
+            final matched = sales.where((s) => s.id == saleId).firstOrNull;
+            if (matched != null && mounted) {
+              _search.clear();
+              await ReceiptDialog.show(context, matched);
+              return;
+            }
+          } catch (_) {}
+        }
+      }
+
+      Product? p = await _repo.findByCode(code);
+      if (p == null) {
+        // Mahalliy ro'yxatdan ham qidirib ko'ramiz (SKU, QR kod, ID)
+        final list = await _future;
+        final clean = code.toLowerCase();
+        p = list.where((item) =>
+          item.qrCode.trim().toLowerCase() == clean ||
+          item.sku.trim().toLowerCase() == clean ||
+          item.id.toString() == clean ||
+          'stx-${item.id}' == clean ||
+          'stx${item.id}' == clean
+        ).firstOrNull;
+      }
+
       if (!mounted) return;
       if (p != null) {
         context.read<CartController>().add(p);
         _search.clear();
         _reload();
+        try {
+          HapticFeedback.mediumImpact();
+        } catch (_) {}
+        showMessage(context, '✅ “${p.name}” savatga qo‘shildi!');
       } else {
-        showMessage(context, 'Bu kod bo‘yicha mahsulot topilmadi', error: true);
+        showMessage(context, 'Bu kod bo‘yicha mahsulot topilmadi: "$code"', error: true);
       }
     } catch (e) {
       if (mounted) showMessage(context, e.toString(), error: true);
+    } finally {
+      _isSubmitting = false;
     }
   }
 

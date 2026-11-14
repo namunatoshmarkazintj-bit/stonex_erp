@@ -1,10 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -13,12 +17,14 @@ import '../core/theme.dart';
 import '../core/units.dart';
 import '../data/api_client.dart';
 import '../data/local_image_store.dart';
+import '../data/local_printer_store.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
 import '../state/cart_controller.dart';
 import 'common.dart';
 import 'deleted_products_screen.dart';
 import 'qr_scanner_screen.dart';
+import 'receipt_html_printer.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -2651,9 +2657,7 @@ class ProductQrLabelDialog extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () {
-                        showMessage(context, '🖨️ Yorliq chop etishga yuborildi: [$productName]');
-                      },
+                      onPressed: () => _printLabel(context),
                       icon: const Icon(Icons.print_rounded, size: 16),
                       label: const Text('Chop etish', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
                       style: FilledButton.styleFrom(
@@ -2691,5 +2695,223 @@ class ProductQrLabelDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _cleanAsciiLabel(String input) {
+    return input
+        .replaceAll('‘', "'")
+        .replaceAll('’', "'")
+        .replaceAll('`', "'")
+        .replaceAll('ʻ', "'")
+        .replaceAll('ʼ', "'")
+        .replaceAll('“', '"')
+        .replaceAll('”', '"')
+        .replaceAll('—', '-')
+        .replaceAll('–', '-')
+        .replaceAll('№', 'No.')
+        .replaceAll('²', '2')
+        .replaceAll('³', '3')
+        .replaceAll('€', 'EUR')
+        .replaceAll('£', 'GBP')
+        .replaceAll('Ў', "O'")
+        .replaceAll('ў', "o'")
+        .replaceAll('Ғ', "G'")
+        .replaceAll('ғ', "g'")
+        .replaceAll('Ш', "Sh")
+        .replaceAll('ш', "sh")
+        .replaceAll('Ч', "Ch")
+        .replaceAll('ch', "ch")
+        .replaceAll('Ю', "Yu")
+        .replaceAll('ю', "yu")
+        .replaceAll('Я', "Ya")
+        .replaceAll('я', "ya")
+        .replaceAll('Ё', "Yo")
+        .replaceAll('ё', "yo")
+        .replaceAll('Ц', "Ts")
+        .replaceAll('ц', "ts");
+  }
+
+  String _buildLabelHtml(String cleanCode, bool is58mm) {
+    final widthCss = is58mm ? '54mm' : '72mm';
+    final pageSize = is58mm ? '58mm auto' : '80mm auto';
+    final qrData = Uri.encodeComponent(cleanCode);
+    final qrImgTag = '<img src="https://api.qrserver.com/v1/create-qr-code/?data=$qrData&size=180x180" width="${is58mm ? 100 : 130}" height="${is58mm ? 100 : 130}" style="margin: 4px auto; display: block;" alt="QR" />';
+    final dateStr = '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}';
+    final cleanName = _cleanAsciiLabel(productName);
+
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>QR-$cleanCode</title>
+  <style>
+    @page { size: $pageSize; margin: 0; }
+    @media print {
+      body { width: $widthCss; margin: 0 auto; padding: 2mm 0; }
+    }
+    body {
+      font-family: 'Courier New', Courier, 'Lucida Console', monospace;
+      font-size: 13px;
+      line-height: 1.32;
+      text-align: center;
+      color: #000;
+      background: #fff;
+      width: $widthCss;
+      margin: 0 auto;
+      padding: 6px;
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+    }
+    .bold { font-weight: bold; }
+    .title { font-size: 15px; font-weight: 800; letter-spacing: 0.8px; }
+    .dashed { border-top: 1px dashed #000; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div class="title bold">NAMUNA TOSH JILO</div>
+  <div style="font-size: 10px; color: #333;">Tosh ishlab chiqarish majmuasi</div>
+  <div class="dashed"></div>
+  $qrImgTag
+  <div class="bold" style="font-size: 14px; letter-spacing: 1px; margin: 4px 0;">$cleanCode</div>
+  <div class="bold" style="font-size: 14px; margin: 4px 0;">$cleanName</div>
+  <div class="bold" style="font-size: 13px; margin-bottom: 4px;">${money(price)} / $unit</div>
+  <div class="dashed"></div>
+  <div style="display: flex; justify-content: space-between; font-size: 9.5px;">
+    <span>${sku.isNotEmpty ? "SKU: $sku" : "NTJ ERP"}</span>
+    <span>Sana: $dateStr</span>
+  </div>
+  <div style="height: 18mm;"></div>
+</body>
+</html>
+''';
+  }
+
+  Future<void> _printLabel(BuildContext context) async {
+    final cleanCode = qrCode.trim().isNotEmpty ? qrCode.trim() : 'NO-CODE';
+    final cleanName = _cleanAsciiLabel(productName);
+    final is80mm = LocalPrinterStore.getSavedPaperWidth() >= 80;
+    final is58mm = !is80mm;
+    final pageWidthMm = is80mm ? 80.0 : 58.0;
+
+    // Web muhitida brauzer HTML orqali chiqarish
+    if (kIsWeb) {
+      final ok = await printReceiptViaWebHtml(_buildLabelHtml(cleanCode, is58mm));
+      if (ok) {
+        if (context.mounted) {
+          showMessage(context, '✓ QR Yorliq chop etish oynasi ochildi');
+        }
+        return;
+      }
+    }
+
+    try {
+      final doc = pw.Document();
+      final font = pw.Font.courier();
+      final fontBold = pw.Font.courierBold();
+
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat(
+            pageWidthMm * PdfPageFormat.mm,
+            double.infinity,
+            marginAll: 3 * PdfPageFormat.mm,
+          ),
+          build: (pw.Context ctx) {
+            return pw.Container(
+              padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                mainAxisSize: pw.MainAxisSize.min,
+                children: [
+                  pw.Text('NAMUNA TOSH JILO',
+                      style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 13 : 11)),
+                  pw.Text('Tosh ishlab chiqarish majmuasi',
+                      style: pw.TextStyle(font: font, fontSize: is80mm ? 8 : 7)),
+                  pw.SizedBox(height: 3),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                  pw.SizedBox(height: 4),
+                  pw.BarcodeWidget(
+                    data: cleanCode,
+                    barcode: pw.Barcode.qrCode(),
+                    width: is80mm ? 80 : 60,
+                    height: is80mm ? 80 : 60,
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    cleanCode,
+                    style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 11 : 9.5),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    cleanName,
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 12 : 10),
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    '${money(price)} / $unit',
+                    style: pw.TextStyle(font: fontBold, fontSize: is80mm ? 11 : 9.5),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                  pw.SizedBox(height: 2),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(sku.isNotEmpty ? 'SKU: $sku' : 'NTJ ERP',
+                          style: pw.TextStyle(font: font, fontSize: is80mm ? 8 : 7)),
+                      pw.Text(
+                        'Sana: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
+                        style: pw.TextStyle(font: font, fontSize: is80mm ? 8 : 7),
+                      ),
+                    ],
+                  ),
+                  // Kesish pichog'i uchun bo'sh joy
+                  pw.SizedBox(height: 20 * PdfPageFormat.mm),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      if (kIsWeb) {
+        await Printing.layoutPdf(
+          onLayout: (format) async => doc.save(),
+          name: 'QR_$cleanCode.pdf',
+        );
+        return;
+      }
+
+      final savedUrl = LocalPrinterStore.getSavedPrinterUrl();
+      Printer? target;
+      if (savedUrl != null && savedUrl.isNotEmpty) {
+        try {
+          final printers = await Printing.listPrinters();
+          target = printers.where((p) => p.url == savedUrl).firstOrNull;
+        } catch (_) {}
+      }
+
+      if (target != null) {
+        await Printing.directPrintPdf(
+          printer: target,
+          onLayout: (format) async => doc.save(),
+          name: 'QR_$cleanCode.pdf',
+        );
+        if (context.mounted) {
+          showMessage(context, '✓ QR yorliq "${target.name}" printeriga yuborildi');
+        }
+      } else {
+        await Printing.layoutPdf(
+          onLayout: (format) async => doc.save(),
+          name: 'QR_$cleanCode.pdf',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showMessage(context, 'Chop etishda xatolik: $e', error: true);
+      }
+    }
   }
 }
