@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme.dart';
@@ -20,20 +21,64 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
   String _enteredPin = '';
   String? _errorMessage;
   late AnimationController _shakeCtrl;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode();
     _shakeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _shakeCtrl.dispose();
     super.dispose();
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+
+    final char = event.character;
+    if (char != null && RegExp(r'^[0-9]$').hasMatch(char)) {
+      _onDigit(char);
+      return;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.digit0 || event.logicalKey == LogicalKeyboardKey.numpad0) {
+      _onDigit('0');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit1 || event.logicalKey == LogicalKeyboardKey.numpad1) {
+      _onDigit('1');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit2 || event.logicalKey == LogicalKeyboardKey.numpad2) {
+      _onDigit('2');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit3 || event.logicalKey == LogicalKeyboardKey.numpad3) {
+      _onDigit('3');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit4 || event.logicalKey == LogicalKeyboardKey.numpad4) {
+      _onDigit('4');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit5 || event.logicalKey == LogicalKeyboardKey.numpad5) {
+      _onDigit('5');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit6 || event.logicalKey == LogicalKeyboardKey.numpad6) {
+      _onDigit('6');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit7 || event.logicalKey == LogicalKeyboardKey.numpad7) {
+      _onDigit('7');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit8 || event.logicalKey == LogicalKeyboardKey.numpad8) {
+      _onDigit('8');
+    } else if (event.logicalKey == LogicalKeyboardKey.digit9 || event.logicalKey == LogicalKeyboardKey.numpad9) {
+      _onDigit('9');
+    } else if (event.logicalKey == LogicalKeyboardKey.backspace || event.logicalKey == LogicalKeyboardKey.delete) {
+      _onBackspace();
+    } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+      _onClear();
+    }
   }
 
   void _onDigit(String d) {
@@ -117,9 +162,16 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF070A0F),
-      body: SafeArea(
+    return KeyboardListener(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => _focusNode.requestFocus(),
+        child: Scaffold(
+          backgroundColor: const Color(0xFF070A0F),
+          body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -279,7 +331,9 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildKeypad() {

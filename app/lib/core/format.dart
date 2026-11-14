@@ -1,5 +1,5 @@
 /// 1234567.5 -> "1 234 568 so'm". Faqat ko'rsatish uchun.
-String money(double v) => '${_group(v.round())} so‘m';
+String money(double v) => '${_group(v.round())} so\'m';
 
 /// USD dollar ko'rsatish: 120 -> "$120", 120.5 -> "$120.50"
 String moneyUsd(double v) {

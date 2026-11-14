@@ -11,6 +11,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../core/config.dart';
 import '../core/format.dart';
+import '../core/qr_svg.dart';
 import '../core/theme.dart';
 import '../data/local_printer_store.dart';
 import '../domain/models.dart';
@@ -26,10 +27,20 @@ String _cleanAscii(String? text) {
       .replaceAll('`', "'")
       .replaceAll('ʻ', "'")
       .replaceAll('ʼ', "'")
+      .replaceAll('′', "'")
+      .replaceAll('‵', "'")
+      .replaceAll('´', "'")
       .replaceAll('“', '"')
       .replaceAll('”', '"')
+      .replaceAll('«', '"')
+      .replaceAll('»', '"')
       .replaceAll('—', '-')
       .replaceAll('–', '-')
+      .replaceAll('•', ' | ')
+      .replaceAll('·', ' | ')
+      .replaceAll('∙', ' | ')
+      .replaceAll('●', '-')
+      .replaceAll('▪', '-')
       .replaceAll('№', 'No.')
       .replaceAll('²', '2')
       .replaceAll('³', '3')
@@ -330,14 +341,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     final pageSize = is58mm ? '58mm auto' : '80mm auto';
     final fontSize = is58mm ? '11px' : '12.5px';
     final titleSize = is58mm ? '14px' : '16px';
-    final qrData = Uri.encodeComponent('NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS');
-    final qrImgTag = '<img src="https://api.qrserver.com/v1/create-qr-code/?data=$qrData&size=${is58mm ? 100 : 130}x${is58mm ? 100 : 130}" width="${is58mm ? 90 : 115}" height="${is58mm ? 90 : 115}" style="margin: 4px auto; display: block;" alt="QR" />';
+    final qrData = 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS';
+    final qrSvgTag = generateQrSvg(qrData, size: is58mm ? 95 : 120);
 
     final itemsHtml = StringBuffer();
     for (final item in sale.items) {
       final name = _cleanAscii(item.productName);
       final qty = item.quantity.toStringAsFixed(1);
-      final total = money(item.lineTotal);
+      final total = _cleanAscii(money(item.lineTotal));
       itemsHtml.writeln('''
         <tr>
           <td style="text-align: left; padding: 2px 0;">$name</td>
@@ -349,8 +360,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
     String usdHtml = '';
     if (sale.currencyRate != null && sale.currencyRate! > 0) {
-      final totalUsd = moneyUsd(sale.total / sale.currencyRate!);
-      final rate = money(sale.currencyRate!);
+      final totalUsd = _cleanAscii(moneyUsd(sale.total / sale.currencyRate!));
+      final rate = _cleanAscii(money(sale.currencyRate!));
       usdHtml = '''
         <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'};">
           <span>USD (\$):</span>
@@ -368,7 +379,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       debtHtml = '''
         <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'}; font-weight: bold; color: #b91c1c;">
           <span>Qarz (Nasiya):</span>
-          <span>${money(sale.debt)}</span>
+          <span>${_cleanAscii(money(sale.debt))}</span>
         </div>
       ''';
     }
@@ -455,14 +466,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
   <div class="flex-row bold" style="font-size: ${is58mm ? '13px' : '15px'};">
     <span>JAMI:</span>
-    <span>${money(sale.total)}</span>
+    <span>${_cleanAscii(money(sale.total))}</span>
   </div>
 
   $usdHtml
 
   <div class="flex-row">
     <span>To'landi:</span>
-    <span class="bold">${money(sale.paid)}</span>
+    <span class="bold">${_cleanAscii(money(sale.paid))}</span>
   </div>
 
   $debtHtml
@@ -477,7 +488,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   </div>
 
   <div class="text-center" style="margin-top: 6px;">
-    $qrImgTag
+    $qrSvgTag
   </div>
 
   <div class="text-center" style="margin-top: 6px; font-size: ${is58mm ? '10px' : '11.5px'};">
@@ -575,8 +586,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text(_cleanAscii('Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
+                      pw.Expanded(
+                        child: pw.Text(_cleanAscii('Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
+                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
+                      ),
+                      pw.SizedBox(width: 6),
                       pw.Text(_cleanAscii("To'lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}"),
                           style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
                     ],
@@ -637,7 +651,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                         pw.Expanded(
                           flex: 3,
                           child: pw.Text(
-                            money(item.lineTotal),
+                            _cleanAscii(money(item.lineTotal)),
                             textAlign: pw.TextAlign.right,
                             style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8),
                           ),
@@ -654,7 +668,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     children: [
                       pw.Text('JAMI:',
                           style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
-                      pw.Text(money(sale.total),
+                      pw.Text(_cleanAscii(money(sale.total)),
                           style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
                     ],
                   ),
@@ -665,7 +679,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       children: [
                         pw.Text('USD (\$):',
                             style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                        pw.Text(moneyUsd(sale.total / sale.currencyRate!),
+                        pw.Text(_cleanAscii(moneyUsd(sale.total / sale.currencyRate!)),
                             style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                       ],
                     ),
@@ -675,7 +689,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       children: [
                         pw.Text('Kurs (\$1 =):',
                             style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8)),
-                        pw.Text(money(sale.currencyRate!),
+                        pw.Text(_cleanAscii(money(sale.currencyRate!)),
                             style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8)),
                       ],
                     ),
@@ -686,7 +700,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     children: [
                       pw.Text("To'landi:",
                           style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
-                      pw.Text(money(sale.paid),
+                      pw.Text(_cleanAscii(money(sale.paid)),
                           style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
                     ],
                   ),
@@ -697,7 +711,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       children: [
                         pw.Text('Qarz (Nasiya):',
                             style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
-                        pw.Text(money(sale.debt),
+                        pw.Text(_cleanAscii(money(sale.debt)),
                             style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
                       ],
                     ),

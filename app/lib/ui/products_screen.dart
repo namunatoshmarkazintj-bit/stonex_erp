@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../core/format.dart';
+import '../core/qr_svg.dart';
 import '../core/theme.dart';
 import '../core/units.dart';
 import '../data/api_client.dart';
@@ -2734,8 +2735,7 @@ class ProductQrLabelDialog extends StatelessWidget {
   String _buildLabelHtml(String cleanCode, bool is58mm) {
     final widthCss = is58mm ? '54mm' : '72mm';
     final pageSize = is58mm ? '58mm auto' : '80mm auto';
-    final qrData = Uri.encodeComponent(cleanCode);
-    final qrImgTag = '<img src="https://api.qrserver.com/v1/create-qr-code/?data=$qrData&size=180x180" width="${is58mm ? 100 : 130}" height="${is58mm ? 100 : 130}" style="margin: 4px auto; display: block;" alt="QR" />';
+    final qrSvgTag = generateQrSvg(cleanCode, size: is58mm ? 100 : 130);
     final dateStr = '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}';
     final cleanName = _cleanAsciiLabel(productName);
 
@@ -2772,7 +2772,7 @@ class ProductQrLabelDialog extends StatelessWidget {
   <div class="title bold">NAMUNA TOSH JILO</div>
   <div style="font-size: 10px; color: #333;">Tosh ishlab chiqarish majmuasi</div>
   <div class="dashed"></div>
-  $qrImgTag
+  $qrSvgTag
   <div class="bold" style="font-size: 14px; letter-spacing: 1px; margin: 4px 0;">$cleanCode</div>
   <div class="bold" style="font-size: 14px; margin: 4px 0;">$cleanName</div>
   <div class="bold" style="font-size: 13px; margin-bottom: 4px;">${money(price)} / $unit</div>

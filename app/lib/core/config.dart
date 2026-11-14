@@ -27,6 +27,6 @@ class CompanyInfo {
   static String get address => LocalCompanyStore.getAddress() ?? defaultAddress;
   static List<String> get phones => LocalCompanyStore.getPhones() ?? defaultPhones;
   static String get phonesFormatted => phones.join('\n');
-  static String get phonesInline => phones.join(' • ');
+  static String get phonesInline => phones.join(' | ');
   static String get primaryPhone => phones.isNotEmpty ? phones[0] : '';
 }
