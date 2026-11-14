@@ -12,9 +12,9 @@ String generateQrSvg(String data, {int size = 110}) {
     final count = qrImage.moduleCount;
     final sb = StringBuffer();
     sb.write(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $count $count" '
+      '<svg class="qr-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $count $count" '
       'width="${size}px" height="${size}px" shape-rendering="crispEdges" '
-      'style="margin: 4px auto; display: block;">',
+      'style="margin: 2px auto; display: block;">',
     );
     sb.write('<rect width="100%" height="100%" fill="#ffffff"/>');
     for (var r = 0; r < count; r++) {

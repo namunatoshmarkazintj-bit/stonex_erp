@@ -21,7 +21,7 @@ import 'return_product_dialog.dart';
 
 String _cleanAscii(String? text) {
   if (text == null || text.isEmpty) return '';
-  return text
+  var s = text
       .replaceAll('‘', "'")
       .replaceAll('’', "'")
       .replaceAll('`', "'")
@@ -117,6 +117,7 @@ String _cleanAscii(String? text) {
       .replaceAll('э', "e")
       .replaceAll('Ы', "I")
       .replaceAll('ы', "i");
+  return s.replaceAll(RegExp(r'[^\x20-\x7E\r\n\t]'), ' ');
 }
 
 bool isReceiptQr(String code) {
@@ -797,9 +798,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       }
 
       if (targetPrinter != null) {
-        // Doimiy printerga to'g'ridan-to'g'ri (1-click, ortiqcha oynasiz) chiqarish!
-        await Printing.directPrintPdf(
-          printer: targetPrinter,
+        // Standart Windows GDI orqali chop etish — PDFni to'g'ridan-to'g'ri drayver tushunadigan
+        // bit-tasvirga aylantirib beradi (xitoycha iyerogliflar chiqishini 100% yo'qotadi)
+        await Printing.layoutPdf(
           onLayout: (format) async => doc.save(),
           name: 'Chek_${sale.id}.pdf',
         );
@@ -813,8 +814,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
           if (!mounted) return;
           final chosen = await _showPrinterPickerDialog(context);
           if (chosen != null) {
-            await Printing.directPrintPdf(
-              printer: chosen,
+            await Printing.layoutPdf(
               onLayout: (format) async => doc.save(),
               name: 'Chek_${sale.id}.pdf',
             );
