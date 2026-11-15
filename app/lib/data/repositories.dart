@@ -35,6 +35,7 @@ abstract class SalesRepository {
     String? customerPhotoUrl,
     String status = 'completed',
     String? note,
+    String paymentMethod = 'naqd',
   });
   Future<List<SaleResult>> listSales({int limit = 50, String? status, int? customerId});
   Future<List<SaleResult>> listDebts();

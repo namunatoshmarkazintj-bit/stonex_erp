@@ -169,6 +169,7 @@ class ApiSalesRepository implements SalesRepository {
     String? customerPhotoUrl,
     String status = 'completed',
     String? note,
+    String paymentMethod = 'naqd',
   }) async {
     final j = await _api.post('/sales', body: {
       'items': [
@@ -189,6 +190,7 @@ class ApiSalesRepository implements SalesRepository {
       if (paidUsd != null) 'paid_usd': paidUsd,
       'status': status,
       if (note != null && note.isNotEmpty) 'note': note,
+      'payment_method': paymentMethod,
       if (customerId != null) 'customer_id': customerId,
       if (customerName != null && customerName.isNotEmpty) 'customer_name': customerName,
       if (customerPhone != null && customerPhone.isNotEmpty) 'customer_phone': customerPhone,

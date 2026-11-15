@@ -137,7 +137,8 @@ def create_sale(db: Session, cashier: m.User, data: SaleIn) -> m.Sale:
             add_movement(db, product_id=product.id, qty_delta=-qty, kind=m.MV_SALE,
                          ref_type="sale", ref_id=sale.id, user_id=cashier.id)
     if paid > 0:
-        db.add(m.Payment(sale_id=sale.id, amount=paid, received_by=cashier.id))
+        p_method = getattr(data, "payment_method", "cash") or "cash"
+        db.add(m.Payment(sale_id=sale.id, amount=paid, received_by=cashier.id, method=p_method))
 
     # Avtomatik bildirishnoma yaratish
     if is_order:

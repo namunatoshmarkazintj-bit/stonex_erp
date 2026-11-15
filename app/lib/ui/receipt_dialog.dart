@@ -22,25 +22,41 @@ import 'return_product_dialog.dart';
 String _cleanAscii(String? text) {
   if (text == null || text.isEmpty) return '';
   var s = text
-      .replaceAll('‘', "'")
-      .replaceAll('’', "'")
-      .replaceAll('`', "'")
-      .replaceAll('ʻ', "'")
-      .replaceAll('ʼ', "'")
-      .replaceAll('′', "'")
-      .replaceAll('‵', "'")
-      .replaceAll('´', "'")
-      .replaceAll('“', '"')
-      .replaceAll('”', '"')
-      .replaceAll('«', '"')
-      .replaceAll('»', '"')
-      .replaceAll('—', '-')
-      .replaceAll('–', '-')
-      .replaceAll('•', ' | ')
-      .replaceAll('·', ' | ')
-      .replaceAll('∙', ' | ')
-      .replaceAll('●', '-')
-      .replaceAll('▪', '-')
+      .replaceAll('oʻ', "o'")
+      .replaceAll('Oʻ', "O'")
+      .replaceAll('oʼ', "o'")
+      .replaceAll('Oʼ', "O'")
+      .replaceAll('o‘', "o'")
+      .replaceAll('O‘', "O'")
+      .replaceAll('o’', "o'")
+      .replaceAll('O’', "O'")
+      .replaceAll('o`', "o'")
+      .replaceAll('O`', "O'")
+      .replaceAll('o´', "o'")
+      .replaceAll('O´', "O'")
+      .replaceAll('gʻ', "g'")
+      .replaceAll('Gʻ', "G'")
+      .replaceAll('gʼ', "g'")
+      .replaceAll('Gʼ', "G'")
+      .replaceAll('g‘', "g'")
+      .replaceAll('G‘', "G'")
+      .replaceAll('g’', "g'")
+      .replaceAll('G’', "G'")
+      .replaceAll('g`', "g'")
+      .replaceAll('G`', "G'");
+
+  // Belgilash va modifikatorli urg'ularni to'g'ri o' va g' ga o'tkazish
+  s = s.replaceAll(RegExp(r'[oO][\u0300-\u0315\u0358]'), "o'");
+  s = s.replaceAll(RegExp(r'[gG][\u0300-\u0315\u0358]'), "g'");
+
+  // Barcha turdagi apostroflarni standart bitta oddiy (') ga keltirish
+  s = s.replaceAll(RegExp(r'[\u2018\u2019\u02BB\u02BC\u02BD\u02BE\u02BF\u201B\u2032\u2035\u00B4\u0060]'), "'");
+  s = s.replaceAll(RegExp(r'[\u201C\u201D\u00AB\u00BB]'), '"');
+  s = s.replaceAll(RegExp(r'[\u2013\u2014]'), '-');
+  s = s.replaceAll(RegExp(r'[\u2022\u00B7\u2219]'), ' | ');
+  s = s.replaceAll(RegExp(r'[\u25CF\u25AA]'), '-');
+
+  s = s
       .replaceAll('№', 'No.')
       .replaceAll('²', '2')
       .replaceAll('³', '3')
@@ -117,6 +133,7 @@ String _cleanAscii(String? text) {
       .replaceAll('э', "e")
       .replaceAll('Ы', "I")
       .replaceAll('ы', "i");
+  s = s.replaceAll(RegExp(r'[\u0300-\u036F]'), '');
   return s.replaceAll(RegExp(r'[^\x20-\x7E\r\n\t]'), ' ');
 }
 
@@ -189,9 +206,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     }
     sb.writeln(dividerDbl);
     sb.writeln('Chek No   : #${sale.id.toString().padLeft(6, '0')}');
+    final String pMethodLabel = (sale.paymentMethod == 'karta' || sale.paymentMethod == 'card')
+        ? 'Karta'
+        : (sale.paymentMethod == 'bank' || sale.paymentMethod == 'transfer'
+            ? (sale.bankAccount != null && sale.bankAccount!.isNotEmpty
+                ? 'Bank (${_cleanAscii(sale.bankAccount!)})'
+                : 'Bank hisobi')
+            : 'Naqd');
     sb.writeln('Sana      : ${formatDateTime(sale.createdAt ?? DateTime.now())}');
     sb.writeln('Sotuvchi  : ${_cleanAscii(sale.cashierName ?? 'Kassir')}');
-    sb.writeln('To\'lov    : ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}');
+    sb.writeln('To\'lov    : $pMethodLabel');
     sb.writeln(
         'Xaridor   : ${_cleanAscii(sale.customerName?.isNotEmpty == true ? sale.customerName : 'Chakana xaridor')}');
     if (sale.customerPhone?.isNotEmpty == true) {
@@ -231,16 +255,20 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     } else {
       sb.writeln('JAMI SUMMA     : ${money(sale.total)}');
     }
-    sb.writeln(
-        'To\'landi       : ${money(sale.paid)} (${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'})');
+    sb.writeln('To\'landi       : ${money(sale.paid)} ($pMethodLabel)');
     if (sale.paidUsd != null && sale.paidUsd! > 0) {
-      sb.writeln('To\'lov tafsili : ${money(sale.paidUzs ?? 0)} + ${moneyUsd(sale.paidUsd!)}');
+      sb.writeln(
+          'To\'lov tafsili : ${money(sale.paidUzs ?? 0)} + ${moneyUsd(sale.paidUsd!)}');
     }
     if (sale.debt > 0.005) {
       sb.writeln('Qoldiq nasiya  : ${money(sale.debt)}');
+      if (sale.debtDueDate != null) {
+        sb.writeln('Nasiya muddati : ${formatDate(sale.debtDueDate!)}');
+      }
     }
     sb.writeln(dividerSgl);
-    sb.writeln('Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)');
+    sb.writeln(
+        'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)');
     sb.writeln('(Mahsulot butun va chek taqdim etilganda)');
     sb.writeln(dividerDbl);
     sb.writeln(center('Xaridingiz uchun tashakkur!'));
@@ -251,8 +279,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
   Future<Uint8List?> _captureReceiptPng() async {
     try {
-      final boundary =
-          _receiptKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _receiptKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
       if (boundary == null) return null;
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -287,7 +315,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black38, blurRadius: 20, offset: Offset(0, 8)),
+                  BoxShadow(
+                      color: Colors.black38,
+                      blurRadius: 20,
+                      offset: Offset(0, 8)),
                 ],
               ),
               child: ClipRRect(
@@ -336,7 +367,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     final address = _cleanAscii(CompanyInfo.address);
     final phones = _cleanAscii(CompanyInfo.phonesInline);
     final cashier = _cleanAscii(sale.cashierName ?? 'Kassir');
-    final customer = _cleanAscii(sale.customerName?.isNotEmpty == true ? sale.customerName : 'Chakana xaridor');
+    final customer = _cleanAscii(sale.customerName?.isNotEmpty == true
+        ? sale.customerName
+        : 'Chakana xaridor');
     final customerPhone = _cleanAscii(sale.customerPhone);
     final widthCss = is58mm ? '54mm' : '72mm';
     final pageSize = is58mm ? '58mm auto' : '80mm auto';
@@ -377,12 +410,28 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
     String debtHtml = '';
     if (sale.debt > 0.005) {
+      final dueStr = sale.debtDueDate != null
+          ? '<div style="font-size: ${is58mm ? '9.5px' : '11px'}; color: #b91c1c; font-weight: bold; margin-top: 2px;">Nasiya qaytarish sanasi: ${formatDate(sale.debtDueDate!)}</div>'
+          : '';
       debtHtml = '''
-        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'}; font-weight: bold; color: #b91c1c;">
+        <div class="flex-row bold" style="color: #b91c1c; margin-top: 2px;">
           <span>Qarz (Nasiya):</span>
           <span>${_cleanAscii(money(sale.debt))}</span>
         </div>
+        $dueStr
       ''';
+    }
+
+    final String paymentLabel;
+    final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
+    if (pm == 'karta' || pm == 'card') {
+      paymentLabel = 'Karta';
+    } else if (pm == 'bank' || pm == 'transfer') {
+      paymentLabel = sale.bankAccount != null && sale.bankAccount!.isNotEmpty
+          ? 'Bank (${sale.bankAccount})'
+          : 'Bank hisob raqami';
+    } else {
+      paymentLabel = 'Naqd';
     }
 
     return '''
@@ -426,6 +475,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     .double-line { border-top: 1px solid #000; border-bottom: 1px solid #000; height: 2px; margin: 5px 0; }
     .flex-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
     table { width: 100%; border-collapse: collapse; font-size: $fontSize; font-family: inherit; }
+    svg, .qr-svg { margin: 0 auto !important; display: block !important; text-align: center !important; }
   </style>
 </head>
 <body>
@@ -442,7 +492,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   </div>
   <div class="flex-row">
     <span>Sotuvchi       : $cashier</span>
-    <span>To'lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}</span>
+    <span>To'lov: $paymentLabel</span>
   </div>
   <div class="text-left" style="margin-bottom: 2px;">
     <span class="bold">Xaridor       :</span> $customer ${customerPhone.isNotEmpty ? "($customerPhone)" : ''}
@@ -488,8 +538,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     (Mahsulot butun va chek taqdim etilganda)
   </div>
 
-  <div class="text-center" style="margin-top: 6px;">
-    $qrSvgTag
+  <div style="width: 100%; text-align: center; margin: 6px auto; display: flex; justify-content: center; align-items: center;">
+    <center>
+      $qrSvgTag
+    </center>
   </div>
 
   <div class="text-center" style="margin-top: 6px; font-size: ${is58mm ? '10px' : '11.5px'};">
@@ -504,7 +556,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 ''';
   }
 
-  Future<void> _printPdf(BuildContext context, {bool forcePickPrinter = false, bool forcePdf = false}) async {
+  Future<void> _printPdf(BuildContext context,
+      {bool forcePickPrinter = false, bool forcePdf = false}) async {
     final sale = widget.sale;
     setState(() => _isPrinting = true);
 
@@ -514,10 +567,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
       // Web muhitida birinchi navbatda Brauzer HTML chop etish ishlatiladi (drayversiz ham toza monospaced chiqadi)
       if (kIsWeb && !forcePickPrinter && !forcePdf) {
-        final ok = await printReceiptViaWebHtml(_buildReceiptHtml(sale, is58mm));
+        final ok =
+            await printReceiptViaWebHtml(_buildReceiptHtml(sale, is58mm));
         if (ok) {
           if (mounted) {
-            showMessage(context, '✓ Brauzer chop etish oynasi ochildi (Oddiy shrift)');
+            showMessage(
+                context, '✓ Brauzer chop etish oynasi ochildi (Oddiy shrift)');
           }
           return;
         }
@@ -532,6 +587,18 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       final pdfPageWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
       final pdfMargin = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
 
+      final String paymentLabel;
+      final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
+      if (pm == 'karta' || pm == 'card') {
+        paymentLabel = 'Karta';
+      } else if (pm == 'bank' || pm == 'transfer') {
+        paymentLabel = sale.bankAccount != null && sale.bankAccount!.isNotEmpty
+            ? 'Bank (${sale.bankAccount})'
+            : 'Bank hisob raqami';
+      } else {
+        paymentLabel = 'Naqd';
+      }
+
       doc.addPage(
         pw.Page(
           pageFormat: PdfPageFormat(
@@ -541,6 +608,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
           ),
           build: (pw.Context ctx) {
             return pw.Container(
+              width: double.infinity,
+              alignment: pw.Alignment.topCenter,
               padding: pw.EdgeInsets.all(is58mm ? 2 : 4),
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -558,7 +627,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.SizedBox(height: 1),
                   pw.Text(
                     _cleanAscii(CompanyInfo.businessType),
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 7.0 : 8.5),
+                    style:
+                        pw.TextStyle(font: font, fontSize: is58mm ? 7.0 : 8.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
@@ -577,10 +647,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text(_cleanAscii('Chek No: #${sale.id.toString().padLeft(6, '0')}'),
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                      pw.Text(
+                          _cleanAscii(
+                              'Chek No: #${sale.id.toString().padLeft(6, '0')}'),
+                          style: pw.TextStyle(
+                              font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                       pw.Text(formatDateTime(sale.createdAt ?? DateTime.now()),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
+                          style: pw.TextStyle(
+                              font: font, fontSize: is58mm ? 6.8 : 8)),
                     ],
                   ),
                   pw.SizedBox(height: 2),
@@ -588,12 +662,18 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Expanded(
-                        child: pw.Text(_cleanAscii('Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
+                        child: pw.Text(
+                            _cleanAscii(
+                                'Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
+                            style: pw.TextStyle(
+                                font: font, fontSize: is58mm ? 6.8 : 8)),
                       ),
                       pw.SizedBox(width: 6),
-                      pw.Text(_cleanAscii("To'lov: ${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}"),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
+                      pw.Text(
+                          _cleanAscii(
+                              "To'lov: $paymentLabel"),
+                          style: pw.TextStyle(
+                              font: font, fontSize: is58mm ? 6.8 : 8)),
                     ],
                   ),
                   if (sale.customerName?.isNotEmpty == true) ...[
@@ -601,8 +681,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     pw.Align(
                       alignment: pw.Alignment.centerLeft,
                       child: pw.Text(
-                        _cleanAscii('Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}'),
-                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8),
+                        _cleanAscii(
+                            'Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}'),
+                        style: pw.TextStyle(
+                            font: fontBold, fontSize: is58mm ? 6.8 : 8),
                       ),
                     ),
                   ],
@@ -615,19 +697,22 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       pw.Expanded(
                         flex: 5,
                         child: pw.Text('Nomi',
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5)),
+                            style: pw.TextStyle(
+                                font: fontBold, fontSize: is58mm ? 7 : 8.5)),
                       ),
                       pw.Expanded(
                         flex: 2,
                         child: pw.Text('Miqdor',
                             textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5)),
+                            style: pw.TextStyle(
+                                font: fontBold, fontSize: is58mm ? 7 : 8.5)),
                       ),
                       pw.Expanded(
                         flex: 3,
                         child: pw.Text('Summa',
                             textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5)),
+                            style: pw.TextStyle(
+                                font: fontBold, fontSize: is58mm ? 7 : 8.5)),
                       ),
                     ],
                   ),
@@ -639,14 +724,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                         pw.Expanded(
                           flex: 5,
                           child: pw.Text(_cleanAscii(item.productName),
-                              style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8)),
+                              style: pw.TextStyle(
+                                  font: font, fontSize: is58mm ? 6.8 : 8)),
                         ),
                         pw.Expanded(
                           flex: 2,
                           child: pw.Text(
                             item.quantity.toStringAsFixed(1),
                             textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8),
+                            style: pw.TextStyle(
+                                font: font, fontSize: is58mm ? 6.8 : 8),
                           ),
                         ),
                         pw.Expanded(
@@ -654,7 +741,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           child: pw.Text(
                             _cleanAscii(money(item.lineTotal)),
                             textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.8 : 8),
+                            style: pw.TextStyle(
+                                font: font, fontSize: is58mm ? 6.8 : 8),
                           ),
                         ),
                       ],
@@ -668,9 +756,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text('JAMI:',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
+                          style: pw.TextStyle(
+                              font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
                       pw.Text(_cleanAscii(money(sale.total)),
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
+                          style: pw.TextStyle(
+                              font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
                     ],
                   ),
                   if (sale.currencyRate != null && sale.currencyRate! > 0) ...[
@@ -679,9 +769,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('USD (\$):',
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                        pw.Text(_cleanAscii(moneyUsd(sale.total / sale.currencyRate!)),
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                            style: pw.TextStyle(
+                                font: fontBold, fontSize: is58mm ? 7.5 : 9)),
+                        pw.Text(
+                            _cleanAscii(
+                                moneyUsd(sale.total / sale.currencyRate!)),
+                            style: pw.TextStyle(
+                                font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                       ],
                     ),
                     pw.SizedBox(height: 1),
@@ -689,9 +783,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('Kurs (\$1 =):',
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8)),
+                            style: pw.TextStyle(
+                                font: font, fontSize: is58mm ? 6.5 : 8)),
                         pw.Text(_cleanAscii(money(sale.currencyRate!)),
-                            style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8)),
+                            style: pw.TextStyle(
+                                font: font, fontSize: is58mm ? 6.5 : 8)),
                       ],
                     ),
                   ],
@@ -700,9 +796,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text("To'landi:",
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
+                          style: pw.TextStyle(
+                              font: font, fontSize: is58mm ? 7.5 : 9)),
                       pw.Text(_cleanAscii(money(sale.paid)),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 7.5 : 9)),
+                          style: pw.TextStyle(
+                              font: font, fontSize: is58mm ? 7.5 : 9)),
                     ],
                   ),
                   if (sale.debt > 0.005) ...[
@@ -711,48 +809,87 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
                         pw.Text('Qarz (Nasiya):',
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
+                            style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: is58mm ? 7.5 : 9,
+                                color: PdfColors.red800)),
                         pw.Text(_cleanAscii(money(sale.debt)),
-                            style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 9, color: PdfColors.red800)),
+                            style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: is58mm ? 7.5 : 9,
+                                color: PdfColors.red800)),
                       ],
                     ),
+                    if (sale.debtDueDate != null) ...[
+                      pw.SizedBox(height: 1),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Nasiya qaytarish sanasi:',
+                              style: pw.TextStyle(
+                                  font: fontBold,
+                                  fontSize: is58mm ? 6.5 : 7.8,
+                                  color: PdfColors.red800)),
+                          pw.Text(formatDate(sale.debtDueDate!),
+                              style: pw.TextStyle(
+                                  font: fontBold,
+                                  fontSize: is58mm ? 6.5 : 7.8,
+                                  color: PdfColors.red800)),
+                        ],
+                      ),
+                    ],
                   ],
                   pw.SizedBox(height: 5),
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 2.5, horizontal: 4),
+                    padding: const pw.EdgeInsets.symmetric(
+                        vertical: 2.5, horizontal: 4),
                     decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
-                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+                      border:
+                          pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                      borderRadius:
+                          const pw.BorderRadius.all(pw.Radius.circular(3)),
                     ),
                     child: pw.Column(
                       children: [
                         pw.Text(
-                          _cleanAscii('Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)'),
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.2 : 7.8),
+                          _cleanAscii(
+                              'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)'),
+                          style: pw.TextStyle(
+                              font: fontBold, fontSize: is58mm ? 6.2 : 7.8),
                           textAlign: pw.TextAlign.center,
                         ),
                         pw.SizedBox(height: 1),
                         pw.Text(
-                          _cleanAscii('(Mahsulot butun va chek taqdim etilganda)'),
-                          style: pw.TextStyle(font: font, fontSize: is58mm ? 5.5 : 6.5, color: PdfColors.grey700),
+                          _cleanAscii(
+                              '(Mahsulot butun va chek taqdim etilganda)'),
+                          style: pw.TextStyle(
+                              font: font,
+                              fontSize: is58mm ? 5.5 : 6.5,
+                              color: PdfColors.grey700),
                           textAlign: pw.TextAlign.center,
                         ),
                       ],
                     ),
                   ),
                   pw.SizedBox(height: 5),
-                  pw.BarcodeWidget(
-                    data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
-                    barcode: pw.Barcode.qrCode(),
-                    width: is58mm ? 40 : 54,
-                    height: is58mm ? 40 : 54,
+                  pw.Center(
+                    child: pw.BarcodeWidget(
+                      data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
+                      barcode: pw.Barcode.qrCode(),
+                      width: is58mm ? 42 : 56,
+                      height: is58mm ? 42 : 56,
+                    ),
                   ),
                   pw.SizedBox(height: 4),
                   pw.Text('Xaridingiz uchun tashakkur!',
-                      style: pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8.5),
+                      style:
+                          pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8.5),
                       textAlign: pw.TextAlign.center),
                   pw.Text('NTJ - Namuna Tosh Jilo',
-                      style: pw.TextStyle(font: font, fontSize: is58mm ? 6 : 7.5, color: PdfColors.grey700),
+                      style: pw.TextStyle(
+                          font: font,
+                          fontSize: is58mm ? 6 : 7.5,
+                          color: PdfColors.grey700),
                       textAlign: pw.TextAlign.center),
                   // Kesish pichog'i uchun bo'sh joy
                   pw.SizedBox(height: 20 * PdfPageFormat.mm),
@@ -805,7 +942,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
           name: 'Chek_${sale.id}.pdf',
         );
         if (mounted) {
-          showMessage(context, '✓ "${targetPrinter.name}" printeriga yuborildi');
+          showMessage(
+              context, '✓ "${targetPrinter.name}" printeriga yuborildi');
         }
       } else {
         // Birinchi marta tizimda printerlar bo'lsa, tanlashni taklif qilamiz
@@ -857,9 +995,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.info_outline_rounded, color: AppColors.warning, size: 24),
+            Icon(Icons.info_outline_rounded,
+                color: AppColors.warning, size: 24),
             SizedBox(width: 10),
-            Text('Printer Ulanishi', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+            Text('Printer Ulanishi',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
           ],
         ),
         content: const Column(
@@ -873,7 +1013,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
             SizedBox(height: 10),
             Text(
               'Hozir esa chek rasmini to‘liq ko‘rishingiz, nusxa olishingiz yoki mijozga Telegram orqali yuborishingiz mumkin!',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.green),
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.green),
             ),
           ],
         ),
@@ -918,7 +1061,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
           backgroundColor: context.dialogBg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
               Container(
@@ -927,11 +1071,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   color: const Color(0xFF10B981).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.print_rounded, color: Color(0xFF10B981), size: 22),
+                child: const Icon(Icons.print_rounded,
+                    color: Color(0xFF10B981), size: 22),
               ),
               const SizedBox(width: 12),
               const Expanded(
-                child: Text('Chek printerini tanlang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                child: Text('Chek printerini tanlang',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -955,7 +1102,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     children: [
                       const Text(
                         'Qog‘oz lentasi o‘lchami:',
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
+                        style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF475569)),
                       ),
                       const SizedBox(height: 6),
                       Row(
@@ -964,11 +1114,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             child: ChoiceChip(
                               label: const Text('58 mm (Xprinter)'),
                               selected: currentWidth == 58,
-                              selectedColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              selectedColor: const Color(0xFF10B981)
+                                  .withValues(alpha: 0.2),
                               labelStyle: TextStyle(
                                 fontSize: 11,
-                                fontWeight: currentWidth == 58 ? FontWeight.w800 : FontWeight.w500,
-                                color: currentWidth == 58 ? const Color(0xFF047857) : Colors.black87,
+                                fontWeight: currentWidth == 58
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                                color: currentWidth == 58
+                                    ? const Color(0xFF047857)
+                                    : Colors.black87,
                               ),
                               onSelected: (val) {
                                 if (val) {
@@ -983,11 +1138,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             child: ChoiceChip(
                               label: const Text('80 mm (Katta)'),
                               selected: currentWidth == 80,
-                              selectedColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              selectedColor: const Color(0xFF10B981)
+                                  .withValues(alpha: 0.2),
                               labelStyle: TextStyle(
                                 fontSize: 11,
-                                fontWeight: currentWidth == 80 ? FontWeight.w800 : FontWeight.w500,
-                                color: currentWidth == 80 ? const Color(0xFF047857) : Colors.black87,
+                                fontWeight: currentWidth == 80
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                                color: currentWidth == 80
+                                    ? const Color(0xFF047857)
+                                    : Colors.black87,
                               ),
                               onSelected: (val) {
                                 if (val) {
@@ -1007,7 +1167,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text(
                       'Tizimda ulangan printer topilmadi. Tizim oynasi orqali chop etishingiz mumkin.',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade600),
                     ),
                   )
                 else
@@ -1018,39 +1179,57 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (ctx, idx) {
                         final p = printers[idx];
-                        final isSaved = p.url == LocalPrinterStore.getSavedPrinterUrl();
+                        final isSaved =
+                            p.url == LocalPrinterStore.getSavedPrinterUrl();
                         return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           leading: Icon(
-                            p.isDefault ? Icons.star_rounded : Icons.print_outlined,
-                            color: isSaved ? const Color(0xFF10B981) : (p.isDefault ? const Color(0xFFF59E0B) : Colors.grey.shade700),
+                            p.isDefault
+                                ? Icons.star_rounded
+                                : Icons.print_outlined,
+                            color: isSaved
+                                ? const Color(0xFF10B981)
+                                : (p.isDefault
+                                    ? const Color(0xFFF59E0B)
+                                    : Colors.grey.shade700),
                           ),
                           title: Text(
                             p.name,
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: isSaved ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight:
+                                  isSaved ? FontWeight.w800 : FontWeight.w600,
                               color: isSaved ? const Color(0xFF10B981) : null,
                             ),
                           ),
                           subtitle: Text(
-                            p.isDefault ? 'Standart printer' : (p.model ?? 'Ulangan printer'),
+                            p.isDefault
+                                ? 'Standart printer'
+                                : (p.model ?? 'Ulangan printer'),
                             style: const TextStyle(fontSize: 11),
                           ),
                           trailing: isSaved
                               ? Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Text('Doimiy', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
+                                  child: const Text('Doimiy',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF10B981))),
                                 )
                               : null,
                           onTap: () {
                             selected = p;
                             if (remember) {
-                              LocalPrinterStore.savePrinter(p.url, p.name, currentWidth);
+                              LocalPrinterStore.savePrinter(
+                                  p.url, p.name, currentWidth);
                               if (mounted) setState(() {});
                             }
                             Navigator.pop(ctx);
@@ -1074,10 +1253,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('Tizim oynasi orqali chop etish', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  label: const Text('Tizim oynasi orqali chop etish',
+                      style:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                   onPressed: () {
                     selected = null;
                     Navigator.pop(ctx);
@@ -1102,12 +1284,19 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   void _copyToClipboard(BuildContext context) {
     final text = _buildPlainText();
     Clipboard.setData(ClipboardData(text: text));
-    showMessage(context, 'Chek matni nusxalandi (Telegram yoki SMS uchun tayyor)');
+    showMessage(
+        context, 'Chek matni nusxalandi (Telegram yoki SMS uchun tayyor)');
   }
 
   @override
   Widget build(BuildContext context) {
     final sale = widget.sale;
+    final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
+    final pLabel = (pm == 'karta' || pm == 'card')
+        ? 'Karta'
+        : ((pm == 'bank' || pm == 'transfer')
+            ? (sale.bankAccount != null && sale.bankAccount!.isNotEmpty ? 'Bank (${sale.bankAccount})' : 'Bank hisob')
+            : 'Naqd');
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -1131,10 +1320,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
               children: [
                 // Top header with close button
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
                     color: Color(0xFF1E242B),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1162,7 +1353,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                        icon: const Icon(Icons.close_rounded,
+                            color: Colors.white70),
                         tooltip: 'Yopish',
                         onPressed: () => Navigator.pop(context),
                       ),
@@ -1177,7 +1369,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     child: RepaintBoundary(
                       key: _receiptKey,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 20),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
@@ -1325,14 +1518,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             // Items
                             for (final item in sale.items) ...[
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 3),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 3),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
                                       flex: 5,
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             item.productName,
@@ -1396,7 +1591,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               fontSize: 15,
                               valueColor: const Color(0xFF111827),
                             ),
-                            if (sale.currencyRate != null && sale.currencyRate! > 0) ...[
+                            if (sale.currencyRate != null &&
+                                sale.currencyRate! > 0) ...[
                               const SizedBox(height: 3),
                               _receiptRow(
                                 'AQSH DOLLARI:',
@@ -1415,7 +1611,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             ],
                             const SizedBox(height: 5),
                             _receiptRow(
-                              'To‘landi (${sale.paymentMethod == 'karta' ? 'Karta' : 'Naqd'}):',
+                              'To‘landi ($pLabel):',
                               money(sale.paid),
                               fontSize: 13,
                               valueColor: const Color(0xFF059669),
@@ -1438,22 +1634,37 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 fontSize: 13,
                                 valueColor: const Color(0xFFDC2626),
                               ),
+                              if (sale.debtDueDate != null) ...[
+                                const SizedBox(height: 3),
+                                _receiptRow(
+                                  'Nasiya qaytarish sanasi:',
+                                  formatDate(sale.debtDueDate!),
+                                  isBold: true,
+                                  fontSize: 12,
+                                  valueColor: const Color(0xFFDC2626),
+                                ),
+                              ],
                             ],
 
                             const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 6),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border:
+                                    Border.all(color: const Color(0xFFE2E8F0)),
                               ),
                               child: Column(
                                 children: [
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.assignment_return_outlined, size: 13, color: Color(0xFF1E293B)),
+                                      const Icon(
+                                          Icons.assignment_return_outlined,
+                                          size: 13,
+                                          color: Color(0xFF1E293B)),
                                       const SizedBox(width: 5),
                                       Flexible(
                                         child: Text(
@@ -1489,7 +1700,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 width: 85,
                                 height: 85,
                                 child: QrImageView(
-                                  data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
+                                  data:
+                                      'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
                                   version: QrVersions.auto,
                                   size: 85.0,
                                   eyeStyle: const QrEyeStyle(
@@ -1527,7 +1739,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   padding: const EdgeInsets.all(14),
                   decoration: const BoxDecoration(
                     color: Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+                    borderRadius:
+                        BorderRadius.vertical(bottom: Radius.circular(20)),
                   ),
                   child: Wrap(
                     spacing: 8,
@@ -1539,27 +1752,35 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1E293B),
                           side: const BorderSide(color: Color(0xFFCBD5E1)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.copy_rounded, size: 15),
                         label: const Text(
                           'Nusxa olish',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 12),
                         ),
                       ),
                       OutlinedButton.icon(
-                        onPressed: _isCapturing ? null : () => _viewReceiptImage(context),
+                        onPressed: _isCapturing
+                            ? null
+                            : () => _viewReceiptImage(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1E293B),
                           side: const BorderSide(color: Color(0xFFCBD5E1)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.image_rounded, size: 15),
                         label: const Text(
                           'Chek Rasmi',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 12),
                         ),
                       ),
                       if (widget.sale.status != 'cancelled')
@@ -1568,37 +1789,51 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               ? null
                               : () {
                                   Navigator.pop(context);
-                                  ReturnProductDialog.show(context, widget.sale);
+                                  ReturnProductDialog.show(
+                                      context, widget.sale);
                                 },
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFFD97706),
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey.shade400,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.assignment_return_rounded, size: 15),
+                          icon: const Icon(Icons.assignment_return_rounded,
+                              size: 15),
                           label: Text(
-                            widget.sale.status == 'returned' ? 'Qaytarilgan' : 'Qaytarish (10 kun)',
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                            widget.sale.status == 'returned'
+                                ? 'Qaytarilgan'
+                                : 'Qaytarish (10 kun)',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 12),
                           ),
                         ),
                       Builder(
                         builder: (ctx) {
-                          final savedPrinterName = LocalPrinterStore.getSavedPrinterName();
+                          final savedPrinterName =
+                              LocalPrinterStore.getSavedPrinterName();
                           return Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               FilledButton.icon(
-                                onPressed: _isPrinting ? null : () => _printPdf(context),
+                                onPressed: _isPrinting
+                                    ? null
+                                    : () => _printPdf(context),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: const Color(0xFF10B981),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.horizontal(
                                       left: const Radius.circular(12),
-                                      right: (savedPrinterName != null && !kIsWeb) ? Radius.zero : const Radius.circular(12),
+                                      right:
+                                          (savedPrinterName != null && !kIsWeb)
+                                              ? Radius.zero
+                                              : const Radius.circular(12),
                                     ),
                                   ),
                                 ),
@@ -1606,7 +1841,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                     ? const SizedBox(
                                         width: 14,
                                         height: 14,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white),
                                       )
                                     : const Icon(Icons.print_rounded, size: 15),
                                 label: Text(
@@ -1615,7 +1852,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       : (savedPrinterName != null
                                           ? 'Chop etish (${savedPrinterName.length > 14 ? "${savedPrinterName.substring(0, 12)}.." : savedPrinterName})'
                                           : 'Chop etish'),
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12),
                                 ),
                               ),
                               if (savedPrinterName != null && !kIsWeb)
@@ -1623,19 +1862,26 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                   height: 38,
                                   decoration: const BoxDecoration(
                                     color: Color(0xFF059669),
-                                    borderRadius: BorderRadius.horizontal(right: Radius.circular(12)),
+                                    borderRadius: BorderRadius.horizontal(
+                                        right: Radius.circular(12)),
                                   ),
                                   child: IconButton(
-                                    icon: const Icon(Icons.tune_rounded, size: 16, color: Colors.white),
-                                    tooltip: 'Printerni almashtirish ($savedPrinterName)',
-                                    onPressed: _isPrinting ? null : () => _printPdf(context, forcePickPrinter: true),
+                                    icon: const Icon(Icons.tune_rounded,
+                                        size: 16, color: Colors.white),
+                                    tooltip:
+                                        'Printerni almashtirish ($savedPrinterName)',
+                                    onPressed: _isPrinting
+                                        ? null
+                                        : () => _printPdf(context,
+                                            forcePickPrinter: true),
                                   ),
                                 ),
                               if (kIsWeb) ...[
                                 const SizedBox(width: 4),
                                 PopupMenuButton<String>(
                                   tooltip: 'Chop etish turi',
-                                  icon: const Icon(Icons.more_vert_rounded, size: 18),
+                                  icon: const Icon(Icons.more_vert_rounded,
+                                      size: 18),
                                   onSelected: (val) {
                                     if (val == 'html') {
                                       _printPdf(context, forcePdf: false);
@@ -1648,9 +1894,15 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       value: 'html',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.print_rounded, size: 16, color: Color(0xFF10B981)),
+                                          Icon(Icons.print_rounded,
+                                              size: 16,
+                                              color: Color(0xFF10B981)),
                                           SizedBox(width: 8),
-                                          Text('Brauzer orqali (Tavsiya / Oddiy)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                          Text(
+                                              'Brauzer orqali (Tavsiya / Oddiy)',
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600)),
                                         ],
                                       ),
                                     ),
@@ -1658,9 +1910,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       value: 'pdf',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.picture_as_pdf_rounded, size: 16, color: Color(0xFFEF4444)),
+                                          Icon(Icons.picture_as_pdf_rounded,
+                                              size: 16,
+                                              color: Color(0xFFEF4444)),
                                           SizedBox(width: 8),
-                                          Text('PDF orqali chop etish', style: TextStyle(fontSize: 12)),
+                                          Text('PDF orqali chop etish',
+                                              style: TextStyle(fontSize: 12)),
                                         ],
                                       ),
                                     ),

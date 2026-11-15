@@ -285,6 +285,7 @@ class SaleIn(BaseModel):
     customer_passport: str | None = None
     customer_photo_url: str | None = None
     status: str = "completed"  # completed | order
+    payment_method: str = "cash"
     note: str | None = None
 
 

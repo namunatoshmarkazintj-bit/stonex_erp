@@ -347,6 +347,7 @@ class MockSalesRepository implements SalesRepository {
     String? customerPhotoUrl,
     String status = 'completed',
     String? note,
+    String paymentMethod = 'naqd',
   }) async {
     if (lines.isEmpty) throw ApiException('Savat bo‘sh', 400);
     final isOrder = status == 'order';
@@ -404,7 +405,7 @@ class MockSalesRepository implements SalesRepository {
       customerPhotoUrl: customerPhotoUrl,
       cashierId: 1,
       cashierName: 'Alisher (Kassir)',
-      paymentMethod: 'cash',
+      paymentMethod: paymentMethod,
       createdAt: DateTime.now(),
       items: lines.map((l) => SaleItemRecord(
         productId: l.product.id,

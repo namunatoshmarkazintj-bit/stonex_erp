@@ -1329,6 +1329,7 @@ class _CartPanel extends StatelessWidget {
         currencyRate: result.currencyRate,
         paidUzs: result.paidUzs,
         paidUsd: result.paidUsd,
+        paymentMethod: result.paymentMethod,
         status: result.status,
         note: result.note,
         customerId: result.customerId,
@@ -1883,6 +1884,9 @@ class _CheckoutInput {
   final double? paidUzs;
   final double? paidUsd;
   final String status;
+  final String paymentMethod;
+  final String? bankAccount;
+  final DateTime? debtDueDate;
   final String? note;
   final int? customerId;
   final String? name;
@@ -1896,6 +1900,9 @@ class _CheckoutInput {
     this.paidUzs,
     this.paidUsd,
     this.status = 'completed',
+    this.paymentMethod = 'naqd',
+    this.bankAccount,
+    this.debtDueDate,
     this.note,
     this.customerId,
     this.name,
@@ -1919,6 +1926,9 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
   final _phone = TextEditingController();
   final _passport = TextEditingController();
   final _note = TextEditingController();
+  final _bankAccountCtrl = TextEditingController();
+  String _paymentMethod = 'naqd'; // 'naqd', 'karta', 'bank'
+  DateTime? _debtDueDate = DateTime.now().add(const Duration(days: 14));
   int _returnDays = 14;
   late final _returnDaysCtrl = TextEditingController(text: '14');
   bool _isOrder = false;
@@ -1954,6 +1964,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
     _passport.dispose();
     _note.dispose();
     _returnDaysCtrl.dispose();
+    _bankAccountCtrl.dispose();
     super.dispose();
   }
 
@@ -2079,6 +2090,12 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
     final effectivePaid = totalEquivalent > widget.total ? widget.total : totalEquivalent;
     final combinedNote = StringBuffer();
     combinedNote.write('[Qaytarish: $_returnDays kun]');
+    if ((debt > 0.5 || _isOrder) && _debtDueDate != null) {
+      combinedNote.write(' [Nasiya muddati: ${formatDate(_debtDueDate!)}]');
+    }
+    if (_paymentMethod == 'bank' && _bankAccountCtrl.text.trim().isNotEmpty) {
+      combinedNote.write(' [Hisob: ${_bankAccountCtrl.text.trim()}]');
+    }
     if (_note.text.trim().isNotEmpty) {
       combinedNote.write(' ${_note.text.trim()}');
     }
@@ -2090,12 +2107,63 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
         paidUzs: paidUzsVal,
         paidUsd: paidUsdVal,
         status: _isOrder ? 'order' : 'completed',
+        paymentMethod: _paymentMethod,
+        bankAccount: _bankAccountCtrl.text.trim().isNotEmpty ? _bankAccountCtrl.text.trim() : null,
+        debtDueDate: (debt > 0.5 || _isOrder) ? _debtDueDate : null,
         note: combinedNote.toString(),
         customerId: _selectedCustomerId,
         name: _name.text.trim().isNotEmpty ? _name.text.trim() : null,
         phone: _phone.text.trim().isNotEmpty ? _phone.text.trim() : null,
         passport: _passport.text.trim().isNotEmpty ? _passport.text.trim() : null,
         photoUrl: _photoUrl,
+      ),
+    );
+  }
+
+  Widget _paymentMethodTab({
+    required String id,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSel = _paymentMethod == id;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => setState(() => _paymentMethod = id),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSel
+                ? (isDark ? AppColors.neonLime : AppColors.darkCard)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: isSel
+                    ? (isDark ? AppColors.ink : Colors.white)
+                    : Theme.of(context).hintColor,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                  color: isSel
+                      ? (isDark ? AppColors.ink : Colors.white)
+                      : Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2230,7 +2298,50 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
+
+            // To'lov turi (Naqd, Karta, Bank hisob raqami)
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: context.isDark ? const Color(0xFF21262D) : const Color(0xFFEFF2F6),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  _paymentMethodTab(
+                    id: 'naqd',
+                    label: 'Naqd',
+                    icon: Icons.payments_rounded,
+                  ),
+                  _paymentMethodTab(
+                    id: 'karta',
+                    label: 'Karta',
+                    icon: Icons.credit_card_rounded,
+                  ),
+                  _paymentMethodTab(
+                    id: 'bank',
+                    label: 'Bank hisobi',
+                    icon: Icons.account_balance_rounded,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            if (_paymentMethod == 'bank') ...[
+              TextField(
+                controller: _bankAccountCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Bank hisob raqami / To‘lov topshirig‘i',
+                  hintText: '20208000... yoki to‘lov hujjati raqami',
+                  prefixIcon: Icon(Icons.account_balance_rounded, size: 18),
+                  helperText: 'Bank o‘tkazmasi (perechisleniye) uchun hisob raqam',
+                  helperStyle: TextStyle(fontSize: 10.5, color: AppColors.muted),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
 
             // To'lov kiritish (So'm va Dollar ikkalasi ham mavjud)
             Row(
@@ -2375,7 +2486,100 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                   ),
                 ]),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+
+            // Nasiya qaytarilish sanasi (qarz yoki buyurtma bo'lsa)
+            if (hasDebt || _isOrder) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.isDark ? const Color(0xFF2D2415) : const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.event_available_rounded, size: 18, color: Color(0xFFD97706)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Nasiya qaytarilish sanasi:',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: context.inkColor,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () async {
+                            final now = DateTime.now();
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _debtDueDate ?? now.add(const Duration(days: 14)),
+                              firstDate: now,
+                              lastDate: now.add(const Duration(days: 730)),
+                            );
+                            if (picked != null) {
+                              setState(() => _debtDueDate = picked);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD97706).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFD97706).withOpacity(0.4)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.edit_calendar_rounded, size: 14, color: Color(0xFFD97706)),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _debtDueDate != null ? formatDate(_debtDueDate!) : 'Sanani tanlash',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final d in [7, 14, 30, 60, 90])
+                          ChoiceChip(
+                            label: Text('+$d kun', style: const TextStyle(fontSize: 11)),
+                            selected: _debtDueDate != null &&
+                                (_debtDueDate!.difference(DateTime.now()).inDays - d).abs() <= 1,
+                            onSelected: (sel) {
+                              if (sel) {
+                                setState(() {
+                                  _debtDueDate = DateTime.now().add(Duration(days: d));
+                                });
+                              }
+                            },
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
 
             // Buyurtma izohi / topshirish muddati
             if (_isOrder) ...[

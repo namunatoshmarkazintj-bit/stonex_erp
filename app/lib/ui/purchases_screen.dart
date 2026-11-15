@@ -120,30 +120,83 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         child: Text(errorText!, style: const TextStyle(color: Colors.red, fontSize: 13)),
                       ),
 
-                    // Mahsulot tanlash
-                    DropdownButtonFormField<Product>(
-                      value: selected,
-                      isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Xarid qilinayotgan tovar / xomashyo'),
-                      items: products.map((p) => DropdownMenuItem(
-                        value: p,
-                        child: Text(
-                          '${p.name} (Hozir: ${p.stock.toStringAsFixed(1)} ${p.unit})',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      )).toList(),
-                      onChanged: (p) {
-                        if (p != null) {
+                    // Mahsulot tanlash (Qidiruv oynali zamonaviy tanlov)
+                    InkWell(
+                      onTap: () async {
+                        final chosen = await showDialog<Product>(
+                          context: context,
+                          builder: (c) => _PurchaseProductPickerDialog(
+                            products: products,
+                            current: selected,
+                          ),
+                        );
+                        if (chosen != null) {
                           setS(() {
-                            selected = p;
+                            selected = chosen;
                             inDona = false;
                             inPachka = false;
-                            if (p.costPrice > 0) {
-                              costCtrl.text = p.costPrice.round().toString();
+                            if (chosen.costPrice > 0) {
+                              costCtrl.text = chosen.costPrice.round().toString();
                             }
                           });
                         }
                       },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: context.isDark ? const Color(0xFF21262D) : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: context.borderColor),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: AppColors.greenSoft,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.inventory_2_rounded, color: AppColors.green, size: 20),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Xarid qilinayotgan tovar / xomashyo:',
+                                    style: TextStyle(fontSize: 11, color: context.mutedColor, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${selected.name} (Hozir: ${selected.stock.toStringAsFixed(1)} ${selected.unit})',
+                                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: context.inkColor),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: context.isDark ? const Color(0xFF30363D) : const Color(0xFFF1F3F5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.search_rounded, size: 14),
+                                  SizedBox(width: 4),
+                                  Text('Qidirish', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
@@ -727,6 +780,289 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mahsulot tanlash uchun qidiruv oynasi (Searchable Picker)
+// ---------------------------------------------------------------------------
+
+class _PurchaseProductPickerDialog extends StatefulWidget {
+  const _PurchaseProductPickerDialog({
+    required this.products,
+    required this.current,
+  });
+
+  final List<Product> products;
+  final Product current;
+
+  @override
+  State<_PurchaseProductPickerDialog> createState() => _PurchaseProductPickerDialogState();
+}
+
+class _PurchaseProductPickerDialogState extends State<_PurchaseProductPickerDialog> {
+  final _searchCtrl = TextEditingController();
+  String _selectedCategory = 'Barchasi';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _searchCtrl.text.trim().toLowerCase();
+    final categories = <String>{'Barchasi'};
+    for (final p in widget.products) {
+      if (p.category != null && p.category!.trim().isNotEmpty) {
+        categories.add(p.category!.trim());
+      }
+    }
+
+    final filtered = widget.products.where((p) {
+      if (_selectedCategory != 'Barchasi' && (p.category ?? '').trim() != _selectedCategory) {
+        return false;
+      }
+      if (query.isNotEmpty) {
+        final nameMatch = p.name.toLowerCase().contains(query);
+        final skuMatch = p.sku.toLowerCase().contains(query);
+        final qrMatch = p.qrCode.toLowerCase().contains(query);
+        final catMatch = (p.category ?? '').toLowerCase().contains(query);
+        return nameMatch || skuMatch || qrMatch || catMatch;
+      }
+      return true;
+    }).toList();
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Container(
+        width: 520,
+        constraints: const BoxConstraints(maxHeight: 600),
+        decoration: BoxDecoration(
+          color: context.dialogBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Sarlavha
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 12, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.greenSoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.inventory_2_rounded, color: AppColors.green, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Xarid uchun mahsulotni tanlang',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: context.inkColor,
+                          ),
+                        ),
+                        Text(
+                          'Jami: ${widget.products.length} ta mahsulot mavjud',
+                          style: TextStyle(fontSize: 11.5, color: context.mutedColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // Qidiruv maydoni
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Mahsulot nomi, kodi yoki artikul bo‘yicha qidirish...',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: () => setState(() => _searchCtrl.clear()),
+                        )
+                      : null,
+                  filled: true,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: context.borderColor),
+                  ),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+
+            // Kategoriya chip-filtrlari
+            if (categories.length > 2) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 32,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: categories.map((cat) {
+                    final sel = _selectedCategory == cat;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        label: Text(cat, style: TextStyle(fontSize: 11.5, fontWeight: sel ? FontWeight.w800 : FontWeight.w500)),
+                        selected: sel,
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (_) => setState(() => _selectedCategory = cat),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 10),
+            const Divider(height: 1),
+
+            // Mahsulotlar ro'yxati
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search_off_rounded, size: 40, color: context.mutedColor),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Hech qanday mahsulot topilmadi',
+                            style: TextStyle(fontSize: 13, color: context.mutedColor, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filtered.length,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      itemBuilder: (ctx, idx) {
+                        final p = filtered[idx];
+                        final isSel = p.id == widget.current.id;
+
+                        return InkWell(
+                          onTap: () => Navigator.pop(context, p),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSel
+                                  ? (context.isDark ? const Color(0xFF1B2E24) : const Color(0xFFE8F5E9))
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSel ? AppColors.green : Colors.transparent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: context.isDark ? const Color(0xFF21262D) : const Color(0xFFF1F3F5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.inventory_2_outlined,
+                                      size: 18,
+                                      color: isSel ? AppColors.green : context.mutedColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        p.name,
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: isSel ? AppColors.green : context.inkColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: p.stock > 0
+                                                  ? AppColors.greenSoft
+                                                  : Colors.orange.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              'Hozir: ${p.stock.toStringAsFixed(1)} ${p.unit}',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: p.stock > 0 ? AppColors.green : Colors.orange[800],
+                                              ),
+                                            ),
+                                          ),
+                                          if (p.costPrice > 0) ...[
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Tannarx: ${money(p.costPrice)}',
+                                              style: TextStyle(fontSize: 11, color: context.mutedColor),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSel)
+                                  const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 20),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

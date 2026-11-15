@@ -1079,9 +1079,41 @@ class SaleResult {
     return base.add(Duration(days: returnDays));
   }
 
+  DateTime? get debtDueDate {
+    if (note != null && note!.isNotEmpty) {
+      final m = RegExp(r'\[Nasiya muddati:\s*(\d{2}\.\d{2}\.\d{4})\]', caseSensitive: false).firstMatch(note!);
+      if (m != null) {
+        final parts = m.group(1)!.split('.');
+        if (parts.length == 3) {
+          final d = int.tryParse(parts[0]);
+          final mth = int.tryParse(parts[1]);
+          final y = int.tryParse(parts[2]);
+          if (d != null && mth != null && y != null) {
+            return DateTime(y, mth, d);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  String? get bankAccount {
+    if (note != null && note!.isNotEmpty) {
+      final m = RegExp(r'\[Hisob:\s*([^\]]+)\]', caseSensitive: false).firstMatch(note!);
+      if (m != null) {
+        return m.group(1)!.trim();
+      }
+    }
+    return null;
+  }
+
   String? get cleanNote {
     if (note == null) return null;
-    final cleaned = note!.replaceAll(RegExp(r'\[Qaytarish:\s*\d+\s*kun\]\s*', caseSensitive: false), '').trim();
+    var cleaned = note!
+        .replaceAll(RegExp(r'\[Qaytarish:\s*\d+\s*kun\]\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[Nasiya muddati:\s*\d{2}\.\d{2}\.\d{4}\]\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\[Hisob:\s*[^\]]+\]\s*', caseSensitive: false), '')
+        .trim();
     return cleaned.isEmpty ? null : cleaned;
   }
 
