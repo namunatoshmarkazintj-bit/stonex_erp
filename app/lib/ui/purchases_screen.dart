@@ -58,6 +58,89 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     }
   }
 
+  static Widget _buildPaymentMethodCard({
+    required BuildContext context,
+    required String id,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final isDark = context.isDark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: isDark ? 0.22 : 0.12)
+                : (isDark ? const Color(0xFF1E232B) : const Color(0xFFF8FAFC)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? color
+                  : (isDark ? const Color(0xFF333A44) : const Color(0xFFE2E8F0)),
+              width: isSelected ? 1.8 : 1.0,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? color.withValues(alpha: 0.25)
+                      : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? color : context.subtextColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected
+                        ? (isDark ? Colors.white : color)
+                        : context.inkColor,
+                  ),
+                ),
+              ),
+              if (isSelected)
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: 16,
+                  color: color,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openNewPurchaseDialog(List<Product> products) async {
     if (products.isEmpty) {
       showMessage(context, 'Kirim qilish uchun avval mahsulot qo‘shilgan bo‘lishi kerak', error: true);
@@ -284,23 +367,81 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // To'lov turi
-                    DropdownButtonFormField<String>(
-                      value: paymentMethod,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'To‘lov usuli',
-                        prefixIcon: Icon(Icons.payment_rounded, size: 20),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'cash', child: Text('Naqd pul', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'debt', child: Text('Qarz (Nasiyaga olingan)', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'bank', child: Text('Bank o‘tkazmasi (Hisob raqam)', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'card', child: Text('Korporativ karta', overflow: TextOverflow.ellipsis)),
+                    // To'lov turi tanlash (Zamonaviy stil)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.payments_outlined, size: 16, color: context.subtextColor),
+                            const SizedBox(width: 6),
+                            Text(
+                              'To‘lov usuli:',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: context.inkColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildPaymentMethodCard(
+                                context: context,
+                                id: 'cash',
+                                label: 'Naqd pul',
+                                icon: Icons.payments_rounded,
+                                color: const Color(0xFF10B981),
+                                isSelected: paymentMethod == 'cash',
+                                onTap: () => setS(() => paymentMethod = 'cash'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildPaymentMethodCard(
+                                context: context,
+                                id: 'debt',
+                                label: 'Qarz (Nasiya)',
+                                icon: Icons.handshake_rounded,
+                                color: const Color(0xFFF59E0B),
+                                isSelected: paymentMethod == 'debt',
+                                onTap: () => setS(() => paymentMethod = 'debt'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildPaymentMethodCard(
+                                context: context,
+                                id: 'bank',
+                                label: 'Bank o‘tkazmasi',
+                                icon: Icons.account_balance_rounded,
+                                color: const Color(0xFF0284C7),
+                                isSelected: paymentMethod == 'bank',
+                                onTap: () => setS(() => paymentMethod = 'bank'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildPaymentMethodCard(
+                                context: context,
+                                id: 'card',
+                                label: 'Karta',
+                                icon: Icons.credit_card_rounded,
+                                color: const Color(0xFF8B5CF6),
+                                isSelected: paymentMethod == 'card',
+                                onTap: () => setS(() => paymentMethod = 'card'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
-                      onChanged: (v) {
-                        if (v != null) setS(() => paymentMethod = v);
-                      },
                     ),
                     const SizedBox(height: 12),
 
@@ -309,9 +450,16 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: context.isDark ? const Color(0xFF2D2415) : const Color(0xFFFFFBEB),
+                          color: context.isDark ? const Color(0xFF2B2211) : const Color(0xFFFFFBEB),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.45)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,9 +495,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD97706).withOpacity(0.15),
+                                      color: const Color(0xFFD97706).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFD97706).withOpacity(0.4)),
+                                      border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.4)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -377,9 +525,25 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                               children: [
                                 for (final d in [7, 14, 30, 60])
                                   ChoiceChip(
-                                    label: Text('+$d kun', style: const TextStyle(fontSize: 11)),
+                                    label: Text(
+                                      '+$d kun',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: (debtDueDate != null && (debtDueDate!.difference(DateTime.now()).inDays - d).abs() <= 1)
+                                            ? Colors.white
+                                            : context.inkColor,
+                                      ),
+                                    ),
                                     selected: debtDueDate != null &&
                                         (debtDueDate!.difference(DateTime.now()).inDays - d).abs() <= 1,
+                                    selectedColor: const Color(0xFFD97706),
+                                    backgroundColor: context.isDark ? const Color(0xFF1E232B) : Colors.white,
+                                    side: BorderSide(
+                                      color: (debtDueDate != null && (debtDueDate!.difference(DateTime.now()).inDays - d).abs() <= 1)
+                                          ? const Color(0xFFD97706)
+                                          : (context.isDark ? const Color(0xFF3B3322) : const Color(0xFFFDE68A)),
+                                    ),
                                     onSelected: (sel) {
                                       if (sel) {
                                         setS(() {
