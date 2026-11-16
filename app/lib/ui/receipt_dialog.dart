@@ -371,7 +371,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         ? sale.customerName
         : 'Chakana xaridor');
     final customerPhone = _cleanAscii(sale.customerPhone);
-    final widthCss = is58mm ? '54mm' : '72mm';
+    final widthCss = is58mm ? '54mm' : '74mm';
     final pageSize = is58mm ? '58mm auto' : '80mm auto';
     final fontSize = is58mm ? '11px' : '12.5px';
     final titleSize = is58mm ? '14px' : '16px';
@@ -385,9 +385,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       final total = _cleanAscii(money(item.lineTotal));
       itemsHtml.writeln('''
         <tr>
-          <td style="text-align: left; padding: 2px 0;">$name</td>
-          <td style="text-align: center; padding: 2px 0;">$qty</td>
-          <td style="text-align: right; padding: 2px 0;">$total</td>
+          <td style="text-align: left; padding: 2px 0; color: #000000; font-weight: 700;">$name</td>
+          <td style="text-align: center; padding: 2px 0; color: #000000; font-weight: 700;">$qty</td>
+          <td style="text-align: right; padding: 2px 0; color: #000000; font-weight: 800;">$total</td>
         </tr>
       ''');
     }
@@ -397,11 +397,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       final totalUsd = _cleanAscii(moneyUsd(sale.total / sale.currencyRate!));
       final rate = _cleanAscii(money(sale.currencyRate!));
       usdHtml = '''
-        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'};">
+        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '11px' : '12px'}; color: #000000; font-weight: bold;">
           <span>USD (\$):</span>
-          <span style="font-weight: bold;">$totalUsd</span>
+          <span>$totalUsd</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '10px' : '11px'}; color: #333;">
+        <div style="display: flex; justify-content: space-between; font-size: ${is58mm ? '10px' : '11px'}; color: #000000; font-weight: bold;">
           <span>Kurs (\$1 =):</span>
           <span>$rate</span>
         </div>
@@ -411,10 +411,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     String debtHtml = '';
     if (sale.debt > 0.005) {
       final dueStr = sale.debtDueDate != null
-          ? '<div style="font-size: ${is58mm ? '9.5px' : '11px'}; color: #000; font-weight: bold; margin-top: 2px;">Nasiya qaytarish sanasi: ${formatDate(sale.debtDueDate!)}</div>'
+          ? '<div style="font-size: ${is58mm ? '9.5px' : '11px'}; color: #000000; font-weight: bold; margin-top: 2px;">Nasiya qaytarish sanasi: ${formatDate(sale.debtDueDate!)}</div>'
           : '';
       debtHtml = '''
-        <div class="flex-row bold" style="color: #000; margin-top: 2px;">
+        <div class="flex-row bold" style="color: #000000; margin-top: 2px;">
           <span>Qarz (Nasiya):</span>
           <span>${_cleanAscii(money(sale.debt))}</span>
         </div>
@@ -449,53 +449,53 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       html, body {
         width: $widthCss;
         margin: 0 auto;
-        padding: 2mm 0;
+        padding: 2mm 3mm;
       }
       .no-print { display: none !important; }
     }
     body {
       font-family: 'Courier New', Courier, 'Lucida Console', monospace;
       font-size: $fontSize;
-      font-weight: 700;
+      font-weight: 800;
       line-height: 1.32;
       letter-spacing: 0px;
       color: #000000;
       background: #fff;
       width: $widthCss;
       margin: 0 auto;
-      padding: 4px;
+      padding: 2mm 3mm;
       box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .text-center { text-align: center; }
-    .text-left { text-align: left; }
-    .text-right { text-align: right; }
-    .bold { font-weight: bold; }
-    .dashed { border-top: 1px dashed #000; margin: 5px 0; }
-    .double-line { border-top: 1px solid #000; border-bottom: 1px solid #000; height: 2px; margin: 5px 0; }
-    .flex-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
-    table { width: 100%; border-collapse: collapse; font-size: $fontSize; font-family: inherit; }
+    .text-center { text-align: center; color: #000000; }
+    .text-left { text-align: left; color: #000000; }
+    .text-right { text-align: right; color: #000000; }
+    .bold { font-weight: 900; color: #000000; }
+    .dashed { border-top: 1.5px dashed #000000; margin: 5px 0; }
+    .double-line { border-top: 1.5px solid #000000; border-bottom: 1.5px solid #000000; height: 2px; margin: 5px 0; }
+    .flex-row { display: flex; justify-content: space-between; margin-bottom: 2px; color: #000000; }
+    table { width: 100%; border-collapse: collapse; font-size: $fontSize; font-family: inherit; color: #000000; }
     svg, .qr-svg { margin: 0 auto !important; display: block !important; text-align: center !important; }
   </style>
 </head>
 <body>
   <div class="text-center bold" style="font-size: $titleSize; letter-spacing: 0.5px;">$companyName</div>
-  <div class="text-center" style="font-size: ${is58mm ? '9px' : '10.5px'};">$businessType</div>
-  <div class="text-center" style="font-size: ${is58mm ? '8.5px' : '10px'};">Manzil: $address</div>
-  <div class="text-center" style="font-size: ${is58mm ? '8.5px' : '10px'};">Tel: $phones</div>
+  <div class="text-center bold" style="font-size: ${is58mm ? '9px' : '10.5px'};">$businessType</div>
+  <div class="text-center bold" style="font-size: ${is58mm ? '8.5px' : '10px'};">Manzil: $address</div>
+  <div class="text-center bold" style="font-size: ${is58mm ? '8.5px' : '10px'};">Tel: $phones</div>
 
   <div class="double-line"></div>
 
   <div class="flex-row">
     <span class="bold">Chek No        : #${sale.id.toString().padLeft(6, '0')}</span>
-    <span>${formatDateTime(sale.createdAt ?? DateTime.now())}</span>
+    <span class="bold">${formatDateTime(sale.createdAt ?? DateTime.now())}</span>
   </div>
   <div class="flex-row">
-    <span>Sotuvchi       : $cashier</span>
-    <span>To'lov: $paymentLabel</span>
+    <span class="bold">Sotuvchi       : $cashier</span>
+    <span class="bold">To'lov: $paymentLabel</span>
   </div>
-  <div class="text-left" style="margin-bottom: 2px;">
+  <div class="text-left" style="margin-bottom: 2px; font-weight: bold;">
     <span class="bold">Xaridor       :</span> $customer ${customerPhone.isNotEmpty ? "($customerPhone)" : ''}
   </div>
 
@@ -503,10 +503,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
   <table>
     <thead>
-      <tr style="border-bottom: 1px dashed #000;">
-        <th style="text-align: left; padding-bottom: 3px;">Nomi</th>
-        <th style="text-align: center; padding-bottom: 3px;">Miqdor</th>
-        <th style="text-align: right; padding-bottom: 3px;">Summa</th>
+      <tr style="border-bottom: 1.5px dashed #000000;">
+        <th style="text-align: left; padding-bottom: 3px; font-weight: 900;">Nomi</th>
+        <th style="text-align: center; padding-bottom: 3px; font-weight: 900;">Miqdor</th>
+        <th style="text-align: right; padding-bottom: 3px; font-weight: 900;">Summa</th>
       </tr>
     </thead>
     <tbody>
@@ -516,14 +516,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
   <div class="dashed"></div>
 
-  <div class="flex-row bold" style="font-size: ${is58mm ? '13px' : '15px'};">
+  <div class="flex-row bold" style="font-size: ${is58mm ? '13px' : '15px'}; font-weight: 900;">
     <span>JAMI:</span>
     <span>${_cleanAscii(money(sale.total))}</span>
   </div>
 
   $usdHtml
 
-  <div class="flex-row">
+  <div class="flex-row bold">
     <span>To'landi:</span>
     <span class="bold">${_cleanAscii(money(sale.paid))}</span>
   </div>
@@ -532,10 +532,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
   <div class="dashed"></div>
 
-  <div class="text-center bold" style="font-size: ${is58mm ? '9px' : '10.5px'}; margin-top: 4px;">
+  <div class="text-center bold" style="font-size: ${is58mm ? '9px' : '10.5px'}; margin-top: 4px; font-weight: 900;">
     Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)
   </div>
-  <div class="text-center" style="font-size: ${is58mm ? '8px' : '9.5px'}; color: #333;">
+  <div class="text-center bold" style="font-size: ${is58mm ? '8px' : '9.5px'}; color: #000000;">
     (Mahsulot butun va chek taqdim etilganda)
   </div>
 
@@ -545,9 +545,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     </center>
   </div>
 
-  <div class="text-center" style="margin-top: 6px; font-size: ${is58mm ? '10px' : '11.5px'};">
-    <div class="bold">Xaridingiz uchun tashakkur!</div>
-    <div style="color: #444; font-size: ${is58mm ? '8.5px' : '10px'};">NTJ - Namuna Tosh Jilo</div>
+  <div class="text-center" style="margin-top: 6px; font-size: ${is58mm ? '10px' : '11.5px'}; color: #000000;">
+    <div class="bold" style="font-weight: 900;">Xaridingiz uchun tashakkur!</div>
+    <div style="color: #000000; font-weight: 900; font-size: ${is58mm ? '8.5px' : '10px'};">NTJ - Namuna Tosh Jilo</div>
   </div>
 
   <!-- Avto-kesgich (Cutter) uchun bo'sh joy -->
@@ -585,7 +585,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       final fontBold = pw.Font.courierBold();
 
       final pdfPageWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
-      final pdfMargin = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
+      // 80 mm qog'ozda 2 yonida aynan 3 mm joy qolishi uchun:
+      final marginLeft = (is58mm ? 2.0 : 3.0) * PdfPageFormat.mm;
+      final marginRight = (is58mm ? 2.0 : 3.0) * PdfPageFormat.mm;
+      final marginTop = 2.0 * PdfPageFormat.mm;
+      final marginBottom = 2.0 * PdfPageFormat.mm;
 
       final String paymentLabel;
       final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
@@ -604,13 +608,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
           pageFormat: PdfPageFormat(
             pdfPageWidth,
             double.infinity,
-            marginAll: pdfMargin,
+            marginLeft: marginLeft,
+            marginRight: marginRight,
+            marginTop: marginTop,
+            marginBottom: marginBottom,
           ),
           build: (pw.Context ctx) {
             return pw.Container(
               width: double.infinity,
               alignment: pw.Alignment.topCenter,
-              padding: pw.EdgeInsets.all(is58mm ? 2 : 4),
+              padding: pw.EdgeInsets.zero,
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 mainAxisSize: pw.MainAxisSize.min,
@@ -1404,7 +1411,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                   fontFamily: 'Courier',
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF111827),
+                                  color: Colors.black,
                                   letterSpacing: 0.5,
                                 ),
                                 textAlign: TextAlign.center,
@@ -1417,7 +1424,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 11,
-                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
                                 ),
                               ),
                             ),
@@ -1428,7 +1436,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
-                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -1440,7 +1449,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 style: const TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
-                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -1459,11 +1469,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             _receiptRow(
                               'Sana va vaqt:',
                               formatDateTime(sale.createdAt ?? DateTime.now()),
+                              isBold: true,
                             ),
                             const SizedBox(height: 4),
                             _receiptRow(
                               'Sotuvchi (Kassir):',
                               sale.cashierName ?? 'Kassir',
+                              isBold: true,
                             ),
                             const SizedBox(height: 4),
                             _receiptRow(
@@ -1471,15 +1483,15 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               sale.customerName?.isNotEmpty == true
                                   ? sale.customerName!
                                   : 'Chakana xaridor',
-                              isBold: sale.customerName?.isNotEmpty == true,
+                              isBold: true,
                             ),
                             if (sale.customerPhone?.isNotEmpty == true) ...[
                               const SizedBox(height: 4),
-                              _receiptRow('Telefon:', sale.customerPhone!),
+                              _receiptRow('Telefon:', sale.customerPhone!, isBold: true),
                             ],
                             if (sale.customerPassport?.isNotEmpty == true) ...[
                               const SizedBox(height: 4),
-                              _receiptRow('Pasport:', sale.customerPassport!),
+                              _receiptRow('Pasport:', sale.customerPassport!, isBold: true),
                             ],
 
                             const SizedBox(height: 12),
@@ -1495,8 +1507,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       style: TextStyle(
                                           fontFamily: 'Courier',
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF374151))),
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black)),
                                 ),
                                 Expanded(
                                   flex: 2,
@@ -1505,8 +1517,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       style: TextStyle(
                                           fontFamily: 'Courier',
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF374151))),
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black)),
                                 ),
                                 Expanded(
                                   flex: 4,
@@ -1515,13 +1527,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       style: TextStyle(
                                           fontFamily: 'Courier',
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF374151))),
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black)),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 6),
-                            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                            const Divider(height: 1, color: Colors.black, thickness: 1.2),
                             const SizedBox(height: 6),
 
                             // Items
@@ -1543,8 +1555,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                             style: const TextStyle(
                                               fontFamily: 'Courier',
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF1F2937),
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.black,
                                             ),
                                           ),
                                           Text(
@@ -1552,7 +1564,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                             style: const TextStyle(
                                               fontFamily: 'Courier',
                                               fontSize: 10,
-                                              color: Color(0xFF9CA3AF),
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.black,
                                             ),
                                           ),
                                         ],
@@ -1566,7 +1579,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                         style: const TextStyle(
                                           fontFamily: 'Courier',
                                           fontSize: 12,
-                                          color: Color(0xFF374151),
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black,
                                         ),
                                       ),
                                     ),
@@ -1578,8 +1592,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                         style: const TextStyle(
                                           fontFamily: 'Courier',
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF111827),
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black,
                                         ),
                                       ),
                                     ),
@@ -1598,7 +1612,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               money(sale.total),
                               isBold: true,
                               fontSize: 15,
-                              valueColor: const Color(0xFF111827),
+                              valueColor: Colors.black,
                             ),
                             if (sale.currencyRate != null &&
                                 sale.currencyRate! > 0) ...[
@@ -1608,14 +1622,15 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 moneyUsd(sale.total / sale.currencyRate!),
                                 isBold: true,
                                 fontSize: 13,
-                                valueColor: const Color(0xFF047857),
+                                valueColor: Colors.black,
                               ),
                               const SizedBox(height: 2),
                               _receiptRow(
                                 'Kurs (\$1 =):',
                                 money(sale.currencyRate!),
                                 fontSize: 11,
-                                valueColor: const Color(0xFF6B7280),
+                                isBold: true,
+                                valueColor: Colors.black,
                               ),
                             ],
                             const SizedBox(height: 5),
@@ -1623,7 +1638,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               'To‘landi ($pLabel):',
                               money(sale.paid),
                               fontSize: 13,
-                              valueColor: const Color(0xFF059669),
+                              isBold: true,
+                              valueColor: Colors.black,
                             ),
                             if (sale.paidUsd != null && sale.paidUsd! > 0) ...[
                               const SizedBox(height: 2),
@@ -1631,7 +1647,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 'To‘lov tafsili:',
                                 '${money(sale.paidUzs ?? 0)} + ${moneyUsd(sale.paidUsd!)}',
                                 fontSize: 11,
-                                valueColor: const Color(0xFF4B5563),
+                                isBold: true,
+                                valueColor: Colors.black,
                               ),
                             ],
                             if (sale.debt > 0.005) ...[
@@ -1641,7 +1658,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 money(sale.debt),
                                 isBold: true,
                                 fontSize: 13,
-                                valueColor: const Color(0xFFDC2626),
+                                valueColor: Colors.black,
                               ),
                               if (sale.debtDueDate != null) ...[
                                 const SizedBox(height: 3),
@@ -1650,7 +1667,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                   formatDate(sale.debtDueDate!),
                                   isBold: true,
                                   fontSize: 12,
-                                  valueColor: const Color(0xFFDC2626),
+                                  valueColor: Colors.black,
                                 ),
                               ],
                             ],
@@ -1660,10 +1677,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
                                 border:
-                                    Border.all(color: const Color(0xFFE2E8F0)),
+                                    Border.all(color: Colors.black, width: 1.2),
                               ),
                               child: Column(
                                 children: [
@@ -1673,7 +1690,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       const Icon(
                                           Icons.assignment_return_outlined,
                                           size: 13,
-                                          color: Color(0xFF1E293B)),
+                                          color: Colors.black),
                                       const SizedBox(width: 5),
                                       Flexible(
                                         child: Text(
@@ -1681,8 +1698,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                           style: const TextStyle(
                                             fontFamily: 'Courier',
                                             fontSize: 9.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF0F172A),
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.black,
                                           ),
                                           textAlign: TextAlign.center,
                                         ),
@@ -1695,7 +1712,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                     style: TextStyle(
                                       fontFamily: 'Courier',
                                       fontSize: 8.5,
-                                      color: Color(0xFF64748B),
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -1715,11 +1733,11 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                   size: 85.0,
                                   eyeStyle: const QrEyeStyle(
                                     eyeShape: QrEyeShape.square,
-                                    color: Color(0xFF1F2937),
+                                    color: Colors.black,
                                   ),
                                   dataModuleStyle: const QrDataModuleStyle(
                                     dataModuleShape: QrDataModuleShape.square,
-                                    color: Color(0xFF1F2937),
+                                    color: Colors.black,
                                   ),
                                 ),
                               ),
@@ -1731,7 +1749,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 style: TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,
-                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -1928,9 +1947,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
             count,
             (_) => const SizedBox(
               width: 4,
-              height: 1.2,
+              height: 1.4,
               child: DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFCBD5E1)),
+                decoration: BoxDecoration(color: Colors.black),
               ),
             ),
           ),
@@ -1957,7 +1976,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
             style: TextStyle(
               fontFamily: 'Courier',
               fontSize: fontSize,
-              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.w800,
+              color: Colors.black,
             ),
           ),
         ),
@@ -1970,8 +1990,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
             style: TextStyle(
               fontFamily: 'Courier',
               fontSize: fontSize,
-              fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-              color: valueColor ?? const Color(0xFF1E293B),
+              fontWeight: isBold ? FontWeight.w900 : FontWeight.w800,
+              color: valueColor ?? Colors.black,
             ),
           ),
         ),
