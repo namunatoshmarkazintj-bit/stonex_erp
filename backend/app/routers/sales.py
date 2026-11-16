@@ -196,6 +196,49 @@ def clean_old_sales(
         raise HTTPException(500, f"Tozalashda xatolik: {e}")
 
 
+@router.post("/restore-sale-49")
+def restore_sale_49(db: Session = Depends(get_db)):
+    """Sinov uchun bekor qilingan / qaytarilgan #49 chekni asl holatiga qaytarish."""
+    from sqlalchemy import text
+    try:
+        # 1. 49-savdoni qayta tiklash
+        db.execute(text("""
+            UPDATE sales
+            SET status = 'completed',
+                total = 378000.00,
+                paid = 378000.00,
+                debt = 0.00,
+                paid_uzs = 378000.00,
+                paid_usd = 0.00,
+                note = '[Qaytarish: 14 kun]'
+            WHERE id = 49;
+        """))
+
+        # 2. Savdo mahsulotlarini tiklash
+        db.execute(text("""
+            UPDATE sale_items
+            SET quantity = 3.600,
+                line_total = 378000.00
+            WHERE sale_id = 49;
+        """))
+
+        # 3. Omborga noto'g'ri qaytarilgan harakatni o'chirish
+        res = db.execute(text("""
+            DELETE FROM stock_movements
+            WHERE ref_type = 'sale' AND ref_id = 49 AND kind = 'return';
+        """))
+
+        db.commit()
+        return {
+            "status": "ok",
+            "message": "Chek #49 muvaffaqiyatli asl holatiga qaytarildi!",
+            "deleted_return_movements": res.rowcount
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Chekni qaytarishda xatolik: {e}")
+
+
 @router.post("/reset-all-data")
 def reset_all_sales_and_customers(
     db: Session = Depends(get_db),

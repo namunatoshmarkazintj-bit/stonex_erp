@@ -99,7 +99,7 @@ List<_Dest> _destinationsFor(Role role,
   const products = _Dest(
       'Mahsulotlar', Icons.inventory_2_rounded, ProductsScreen.new,
       actionLabel: '+ Mahsulot');
-  const stock = _Dest('Ombor', Icons.warehouse_rounded, StockScreen.new,
+  final stock = _Dest('Ombor', Icons.warehouse_rounded, () => StockScreen(currentUser: currentUser),
       actionLabel: '+ Xarid kirimi');
   final isManager = role == Role.admin || role == Role.ishBoshqaruvchi;
   final prod = _Dest(

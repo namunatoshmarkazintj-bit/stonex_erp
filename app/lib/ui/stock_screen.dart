@@ -9,7 +9,8 @@ import '../domain/models.dart';
 import 'common.dart';
 
 class StockScreen extends StatefulWidget {
-  const StockScreen({super.key});
+  const StockScreen({super.key, this.currentUser});
+  final AppUser? currentUser;
 
   @override
   State<StockScreen> createState() => _StockScreenState();
@@ -21,11 +22,81 @@ class _StockScreenState extends State<StockScreen> {
   late Future<List<dynamic>> _combinedFuture;
   String _selectedFilter = 'Barchasi';
   String _selectedProdCategory = 'Barchasi';
+  String _movementDateFilter = 'Barchasi';
+  DateTimeRange? _movementDateRange;
   String _activeTab = 'products'; // 'products' (birlamchi) yoki 'movements'
   final _searchCtrl = TextEditingController();
 
+  bool get _isOwner => widget.currentUser?.role == Role.admin || widget.currentUser?.role == Role.master || widget.currentUser == null;
+
+  Future<void> _pickMovementDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2023),
+      lastDate: now.add(const Duration(days: 365)),
+      initialDateRange: _movementDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 7)),
+            end: now,
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: context.isDark
+                ? const ColorScheme.dark(
+                    primary: AppColors.neonLime,
+                    onPrimary: AppColors.ink,
+                    surface: Color(0xFF1E2228),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.darkCard,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColors.ink,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _movementDateFilter = 'Sana oralig‘i';
+        _movementDateRange = picked;
+      });
+    }
+  }
+
   StockRepository get _stockRepo => context.read<AppRepositories>().stock;
   ProductRepository get _productRepo => context.read<AppRepositories>().products;
+
+  bool _matchesMovementDate(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dtDay = DateTime(dt.year, dt.month, dt.day);
+
+    switch (_movementDateFilter) {
+      case 'Bugun':
+        return dtDay.isAtSameMomentAs(today);
+      case 'Kecha':
+        final yesterday = today.subtract(const Duration(days: 1));
+        return dtDay.isAtSameMomentAs(yesterday);
+      case 'Shu hafta':
+        final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+        return dtDay.isAfter(startOfWeek.subtract(const Duration(seconds: 1)));
+      case 'Shu oy':
+        return dt.year == now.year && dt.month == now.month;
+      case 'Sana oralig‘i':
+        if (_movementDateRange == null) return true;
+        final start = DateTime(_movementDateRange!.start.year, _movementDateRange!.start.month, _movementDateRange!.start.day);
+        final end = DateTime(_movementDateRange!.end.year, _movementDateRange!.end.month, _movementDateRange!.end.day, 23, 59, 59);
+        return dt.isAfter(start.subtract(const Duration(seconds: 1))) && dt.isBefore(end.add(const Duration(seconds: 1)));
+      default:
+        return true;
+    }
+  }
 
   @override
   void initState() {
@@ -306,6 +377,9 @@ class _StockScreenState extends State<StockScreen> {
             displayList = displayList.where((m) => m.kind == 'adjustment').toList();
           }
 
+          // Vaqt davri bo'yicha filter
+          displayList = displayList.where((m) => _matchesMovementDate(m.createdAt)).toList();
+
           if (q.isNotEmpty) {
             displayList = displayList.where((m) {
               final pName = (productMap[m.productId]?.name ?? '').toLowerCase();
@@ -336,6 +410,16 @@ class _StockScreenState extends State<StockScreen> {
             'Ishlab chiqarish',
             'Tuzatishlar',
           ];
+          final dateFilters = [
+            'Barchasi',
+            'Bugun',
+            'Kecha',
+            'Shu hafta',
+            'Shu oy',
+            'Sana oralig‘i',
+          ];
+
+          final currentActiveTab = _isOwner ? _activeTab : 'products';
 
           return RefreshIndicator(
             onRefresh: () async => _reload(),
@@ -346,49 +430,51 @@ class _StockScreenState extends State<StockScreen> {
                 return ListView(
                   padding: EdgeInsets.fromLTRB(isDesktop ? 28.0 : 12.0, 12, isDesktop ? 28.0 : 12.0, 80),
                   children: [
-                    // Asosiy ko'rinish tanlagichi (Ombor qoldiqlari vs Harakatlar tarixi)
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: context.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: context.borderColor),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final isCompact = constraints.maxWidth < 170;
-                                return _buildTabPill(
-                                  label: isCompact ? 'Qoldiqlar ($totalMatCount)' : 'Ombor qoldiqlari ($totalMatCount)',
-                                  icon: Icons.inventory_2_rounded,
-                                  active: _activeTab == 'products',
-                                  onTap: () => setState(() => _activeTab == 'products'),
-                                );
-                              },
+                    // Asosiy ko'rinish tanlagichi (Faqat xo'jayin uchun: Ombor qoldiqlari vs Harakatlar tarixi)
+                    if (_isOwner) ...[
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: context.cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: context.borderColor),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isCompact = constraints.maxWidth < 170;
+                                  return _buildTabPill(
+                                    label: isCompact ? 'Qoldiqlar ($totalMatCount)' : 'Ombor qoldiqlari ($totalMatCount)',
+                                    icon: Icons.inventory_2_rounded,
+                                    active: currentActiveTab == 'products',
+                                    onTap: () => setState(() => _activeTab = 'products'),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final isCompact = constraints.maxWidth < 170;
-                                return _buildTabPill(
-                                  label: isCompact ? 'Tarix (${allMovements.length})' : 'Harakatlar tarixi (${allMovements.length})',
-                                  icon: Icons.swap_horiz_rounded,
-                                  active: _activeTab == 'movements',
-                                  onTap: () => setState(() => _activeTab == 'movements'),
-                                );
-                              },
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isCompact = constraints.maxWidth < 170;
+                                  return _buildTabPill(
+                                    label: isCompact ? 'Tarix (${allMovements.length})' : 'Harakatlar tarixi (${allMovements.length})',
+                                    icon: Icons.swap_horiz_rounded,
+                                    active: currentActiveTab == 'movements',
+                                    onTap: () => setState(() => _activeTab == 'movements'),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
 
-                    if (_activeTab == 'products') ...[
+                    if (currentActiveTab == 'products') ...[
                       // Yuqori statistika paneli (Mahsulotlar qoldiqlari)
                       if (isDesktop)
                         Row(
@@ -602,9 +688,20 @@ class _StockScreenState extends State<StockScreen> {
                                   filled: true,
                                   fillColor: context.cardColor,
                                   isDense: true,
-                                  hintText: 'Harakat bo‘yicha qidirish...',
+                                  hintText: 'Harakat, mahsulot yoki izoh bo‘yicha qidirish...',
                                   hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.normal),
                                   prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
+                                  suffixIcon: _searchCtrl.text.isEmpty
+                                      ? null
+                                      : IconButton(
+                                          icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                                          onPressed: () {
+                                            _searchCtrl.clear();
+                                            setState(() {});
+                                          },
+                                          splashRadius: 18,
+                                          padding: EdgeInsets.zero,
+                                        ),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30),
@@ -639,17 +736,115 @@ class _StockScreenState extends State<StockScreen> {
 
                       const SizedBox(height: 14),
 
-                      // Harakatlar filtrlari
+                      // Vaqt davri filtrlari
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              margin: const EdgeInsets.only(right: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.calendar_today_rounded, size: 14, color: context.mutedColor),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Vaqt:',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            for (final d in dateFilters) ...[
+                              GestureDetector(
+                                onTap: () async {
+                                  if (d == 'Sana oralig‘i') {
+                                    await _pickMovementDateRange();
+                                  } else {
+                                    setState(() {
+                                      _movementDateFilter = d;
+                                      _movementDateRange = null;
+                                    });
+                                  }
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: _movementDateFilter == d
+                                        ? (context.isDark ? AppColors.neonLime : AppColors.darkCard)
+                                        : context.cardColor,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: _movementDateFilter == d
+                                          ? (context.isDark ? AppColors.neonLime : AppColors.darkCard)
+                                          : context.borderColor,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        d == 'Sana oralig‘i' && _movementDateRange != null && _movementDateFilter == 'Sana oralig‘i'
+                                            ? '${_movementDateRange!.start.day}.${_movementDateRange!.start.month} - ${_movementDateRange!.end.day}.${_movementDateRange!.end.month}'
+                                            : d,
+                                        style: TextStyle(
+                                          color: _movementDateFilter == d
+                                              ? (context.isDark ? AppColors.ink : Colors.white)
+                                              : context.inkColor,
+                                          fontSize: 12,
+                                          fontWeight: _movementDateFilter == d ? FontWeight.w700 : FontWeight.w500,
+                                        ),
+                                      ),
+                                      if (d == 'Sana oralig‘i') ...[
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.date_range_rounded,
+                                          size: 14,
+                                          color: _movementDateFilter == d
+                                              ? (context.isDark ? AppColors.ink : Colors.white)
+                                              : context.mutedColor,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Harakat turi filtrlari
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              margin: const EdgeInsets.only(right: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.filter_list_rounded, size: 14, color: context.mutedColor),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Turi:',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.mutedColor),
+                                  ),
+                                ],
+                              ),
+                            ),
                             for (final f in movementFilters) ...[
                               GestureDetector(
                                 onTap: () => setState(() => _selectedFilter = f),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
                                   decoration: BoxDecoration(
                                     color: _selectedFilter == f
                                         ? (context.isDark ? AppColors.neonLime : AppColors.darkCard)
@@ -895,7 +1090,7 @@ class _StockScreenState extends State<StockScreen> {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () => _showProductMovementsDialog(p, prodMovements),
+        onTap: () => _adjustDialog(p),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -992,33 +1187,16 @@ class _StockScreenState extends State<StockScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () => _showProductMovementsDialog(p, prodMovements),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          visualDensity: VisualDensity.compact,
-                          side: BorderSide(color: context.borderColor),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.history_rounded, size: 14),
-                        label: const Text('Tarix', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                      ),
-                      const SizedBox(width: 6),
-                      OutlinedButton.icon(
-                        onPressed: () => _adjustDialog(p),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          visualDensity: VisualDensity.compact,
-                          side: BorderSide(color: context.borderColor),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.tune_rounded, size: 14),
-                        label: const Text('Tuzatish', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                      ),
-                    ],
+                  OutlinedButton.icon(
+                    onPressed: () => _adjustDialog(p),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      visualDensity: VisualDensity.compact,
+                      side: BorderSide(color: context.borderColor),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.tune_rounded, size: 14),
+                    label: const Text('Tuzatish', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
