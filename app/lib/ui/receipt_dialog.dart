@@ -17,6 +17,7 @@ import '../data/local_printer_store.dart';
 import '../domain/models.dart';
 import 'common.dart';
 import 'receipt_html_printer.dart';
+import 'receipt_logo_data.dart';
 import 'return_product_dialog.dart';
 
 String _cleanAscii(String? text) {
@@ -480,8 +481,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   </style>
 </head>
 <body>
-  <div class="text-center bold" style="font-size: $titleSize; letter-spacing: 0.5px;">$companyName</div>
-  <div class="text-center bold" style="font-size: ${is58mm ? '9px' : '10.5px'};">$businessType</div>
+  <div style="text-align: center; margin: 0 auto 6px auto;">
+    <img src="data:image/png;base64,${ReceiptLogoData.base64PngWhite}" style="width: ${is58mm ? '105px' : '135px'}; height: auto; display: block; margin: 0 auto;" alt="NTJ" />
+  </div>
   <div class="text-center bold" style="font-size: ${is58mm ? '8.5px' : '10px'};">Manzil: $address</div>
   <div class="text-center bold" style="font-size: ${is58mm ? '8.5px' : '10px'};">Tel: $phones</div>
 
@@ -622,22 +624,14 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 mainAxisSize: pw.MainAxisSize.min,
                 children: [
-                  pw.Text(
-                    _cleanAscii(CompanyInfo.name),
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: is58mm ? 11 : 13,
-                      fontWeight: pw.FontWeight.bold,
+                  pw.Center(
+                    child: pw.Image(
+                      pw.MemoryImage(ReceiptLogoData.bytesWhite),
+                      width: is58mm ? 75 : 100,
+                      fit: pw.BoxFit.contain,
                     ),
-                    textAlign: pw.TextAlign.center,
                   ),
-                  pw.SizedBox(height: 1),
-                  pw.Text(
-                    _cleanAscii(CompanyInfo.businessType),
-                    style:
-                        pw.TextStyle(font: font, fontSize: is58mm ? 7.0 : 8.5),
-                    textAlign: pw.TextAlign.center,
-                  ),
+                  pw.SizedBox(height: 3),
                   pw.Text(
                     _cleanAscii('Manzil: ${CompanyInfo.address}'),
                     style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8),
@@ -1403,33 +1397,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Brand
+                            // Brand Logo
                             Center(
-                              child: Text(
-                                CompanyInfo.name,
-                                style: const TextStyle(
-                                  fontFamily: 'Courier',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.black,
-                                  letterSpacing: 0.5,
-                                ),
-                                textAlign: TextAlign.center,
+                              child: Image.memory(
+                                ReceiptLogoData.bytes,
+                                width: 140,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Center(
-                              child: Text(
-                                CompanyInfo.businessType,
-                                style: const TextStyle(
-                                  fontFamily: 'Courier',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 6),
                             Center(
                               child: Text(
                                 'Manzil: ${CompanyInfo.address}',
