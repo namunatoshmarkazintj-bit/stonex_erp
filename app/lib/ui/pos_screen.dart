@@ -1767,7 +1767,7 @@ class _CartLineTile extends StatelessWidget {
                   onSelected: (sel) {
                     if (sel && !l.inPachka) {
                       final box = p.effectiveBoxM2 ?? 1.0;
-                      final pQty = l.quantity / box;
+                      final pQty = (l.quantity <= 1.0) ? 1.0 : (l.quantity / box);
                       cart.update(l, inPachka: true, quantity: _roundClean(pQty));
                     }
                   },
@@ -2559,7 +2559,7 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
                       spacing: 6,
                       runSpacing: 6,
                       children: [
-                        for (final d in [7, 14, 30, 60, 90])
+                        for (final d in [7, 14, 30, 60])
                           ChoiceChip(
                             label: Text('+$d kun', style: const TextStyle(fontSize: 11)),
                             selected: _debtDueDate != null &&

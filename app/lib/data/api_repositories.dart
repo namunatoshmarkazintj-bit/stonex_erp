@@ -176,8 +176,8 @@ class ApiSalesRepository implements SalesRepository {
         for (final l in lines)
           {
             'product_id': l.product.id,
-            'quantity': l.quantity,
-            'unit': (l.inDona && l.product.hasDona) ? 'dona' : 'base',
+            'quantity': l.baseQty,
+            'unit': 'base',
             'price': l.unitPrice,
             if (l.sort != null) 'sort': l.sort,
             if (l.color != null) 'color': l.color,
@@ -255,7 +255,12 @@ class ApiSalesRepository implements SalesRepository {
   }
 
   @override
-  Future<SaleResult> returnSale(int saleId, {required List<({int productId, double quantity})> items, String? reason}) async {
+  Future<SaleResult> returnSale(
+    int saleId, {
+    required List<({int productId, double quantity})> items,
+    String? reason,
+    bool force = false,
+  }) async {
     final j = await _api.post('/sales/$saleId/return', body: {
       'items': [
         for (final it in items)
@@ -265,6 +270,7 @@ class ApiSalesRepository implements SalesRepository {
           }
       ],
       if (reason != null && reason.isNotEmpty) 'reason': reason,
+      if (force) 'force': true,
     }) as Map<String, dynamic>;
     return SaleResult.fromJson(j);
   }

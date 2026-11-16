@@ -595,4 +595,108 @@ void main() {
     final totalCustDebt = custSales.fold<double>(0, (sum, s) => sum + s.debt);
     expect(totalCustDebt, 200000);
   });
+
+  test('Pachka savdosi va qaytarish qoidalari (Sortli kafellar, xizmatlar va toshga ishlov berilgan mahsulotlar)', () async {
+    final s = MockStore();
+    final salesRepo = MockSalesRepository(s);
+    final prodRepo = MockProductRepository(s);
+
+    // Kafel yaratamiz: 1 pachka = 1.44 m2, narxi 100,000 so'm / m2
+    final tile = await prodRepo.create(const Product(
+      id: 0,
+      name: 'Keramogranit Royal',
+      unit: 'm2',
+      boxM2: 1.44,
+      boxPieces: 4,
+      tileLength: 60,
+      tileWidth: 60,
+      hasSorts: true,
+      price: 100000,
+      priceSort1: 100000,
+      costPrice: 70000,
+    ), initialStock: 144); // 144 m2
+
+    // 1. Pachkada savdo qilish: 5 pachka = 5 * 1.44 = 7.2 m2, narxi: 7.2 * 100000 = 720,000
+    final linePachka = CartLine(tile, quantity: 5, inPachka: true, sort: '1');
+    expect(linePachka.baseQty, 7.2);
+    expect(linePachka.lineTotal, 720000);
+    expect(linePachka.displayName.contains('[1-sort]'), true);
+    expect(linePachka.displayName.contains('5 pachka'), true);
+
+    // Xizmat qo'shamiz (Yetkazib berish xizmati)
+    final service = await prodRepo.create(const Product(
+      id: 0,
+      name: 'Yetkazib berish xizmati',
+      category: 'Xizmat',
+      unit: 'dona',
+      price: 50000,
+      costPrice: 0,
+    ), initialStock: 999);
+    final lineService = CartLine(service, quantity: 1);
+
+    // Savdoni rasmiylashtiramiz: Kafel + Xizmat = 720,000 + 50,000 = 770,000
+    final sale = await salesRepo.createSale(
+      lines: [linePachka, lineService],
+      paidAmount: 770000,
+    );
+    expect(sale.total, 770000);
+
+    // 2. Qaytarish: Sortli butun kafelni qaytarish muvaffaqiyatli bo'lishi kerak (xizmat bor bo'lsa ham)
+    // 2.88 m2 (2 pachka) qaytarish
+    final retResult = await salesRepo.returnSale(
+      sale.id,
+      items: [(productId: tile.id, quantity: 2.88)],
+      reason: '2 pachka ortib qoldi',
+    );
+    expect(retResult.total, 770000 - 288000);
+
+    // 3. Toshga ishlov berilgan mahsulot sinovi:
+    final cutStoneLine = CartLine(
+      tile,
+      quantity: 1,
+      cutSpec: 'Kesishga berildi (120 sm × 30 sm)',
+    );
+    final saleCut = await salesRepo.createSale(
+      lines: [cutStoneLine],
+      paidAmount: 100000,
+    );
+    final itemCut = saleCut.items.first;
+    expect(itemCut.isStoneProcessed, true);
+
+    // Majburlab tanlanmagan (force = false) holatda xato berishi shart
+    expect(
+      () => salesRepo.returnSale(
+        saleCut.id,
+        items: [(productId: tile.id, quantity: 1)],
+        force: false,
+      ),
+      throwsA(isA<Exception>()),
+    );
+
+    // Majburlab tanlanganda (force = true) muvaffaqiyatli qaytishi kerak
+    final forcedRet = await salesRepo.returnSale(
+      saleCut.id,
+      items: [(productId: tile.id, quantity: 1)],
+      force: true,
+      reason: 'Rahbar ruxsati bilan',
+    );
+    expect(forcedRet.status, 'returned');
+  });
+
+  test('Mahsulot narxi So‘m va Dollarda proporsional hisoblanishi', () {
+    final currencyCtrl = CurrencyController();
+    final rate = currencyCtrl.usdRate; // masalan 12023.0 yoki joriy kurs
+    expect(rate > 0, true);
+
+    // 1. So'mdan dollarga o'tish (masalan 120 230 so'm -> 10.0 USD)
+    const somPrice = 120230.0;
+    final usdPrice = somPrice / rate;
+    expect((usdPrice * rate - somPrice).abs() < 0.001, true);
+
+    // 2. Dollardan so'mga o'tish (masalan $15.5 -> 15.5 * rate)
+    const inputUsd = 15.5;
+    final convertedSom = inputUsd * rate;
+    expect(convertedSom > 0, true);
+    expect(convertedSom / rate, inputUsd);
+  });
 }

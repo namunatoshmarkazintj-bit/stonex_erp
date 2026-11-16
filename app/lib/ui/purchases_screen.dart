@@ -70,6 +70,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     final supplierCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
     String paymentMethod = 'cash';
+    DateTime? debtDueDate = DateTime.now().add(const Duration(days: 30));
     bool inDona = false;
     bool inPachka = false;
     bool busy = false;
@@ -287,9 +288,13 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     DropdownButtonFormField<String>(
                       value: paymentMethod,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'To‘lov usuli'),
+                      decoration: const InputDecoration(
+                        labelText: 'To‘lov usuli',
+                        prefixIcon: Icon(Icons.payment_rounded, size: 20),
+                      ),
                       items: const [
                         DropdownMenuItem(value: 'cash', child: Text('Naqd pul', overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'debt', child: Text('Qarz (Nasiyaga olingan)', overflow: TextOverflow.ellipsis)),
                         DropdownMenuItem(value: 'bank', child: Text('Bank o‘tkazmasi (Hisob raqam)', overflow: TextOverflow.ellipsis)),
                         DropdownMenuItem(value: 'card', child: Text('Korporativ karta', overflow: TextOverflow.ellipsis)),
                       ],
@@ -298,6 +303,99 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                       },
                     ),
                     const SizedBox(height: 12),
+
+                    // Qarz qaytarilish sanasi (agar to'lov turi Qarz bo'lsa)
+                    if (paymentMethod == 'debt') ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.isDark ? const Color(0xFF2D2415) : const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.event_available_rounded, size: 18, color: Color(0xFFD97706)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Qarz qaytarilish sanasi:',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: context.inkColor,
+                                    ),
+                                  ),
+                                ),
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(8),
+                                  onTap: () async {
+                                    final now = DateTime.now();
+                                    final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: debtDueDate ?? now.add(const Duration(days: 30)),
+                                      firstDate: now,
+                                      lastDate: now.add(const Duration(days: 730)),
+                                    );
+                                    if (picked != null) {
+                                      setS(() => debtDueDate = picked);
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD97706).withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFD97706).withOpacity(0.4)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.edit_calendar_rounded, size: 14, color: Color(0xFFD97706)),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          debtDueDate != null ? formatDate(debtDueDate!) : 'Sanani tanlash',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFFD97706),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                for (final d in [7, 14, 30, 60])
+                                  ChoiceChip(
+                                    label: Text('+$d kun', style: const TextStyle(fontSize: 11)),
+                                    selected: debtDueDate != null &&
+                                        (debtDueDate!.difference(DateTime.now()).inDays - d).abs() <= 1,
+                                    onSelected: (sel) {
+                                      if (sel) {
+                                        setS(() {
+                                          debtDueDate = DateTime.now().add(Duration(days: d));
+                                        });
+                                      }
+                                    },
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     // Qo'shimcha izoh / Yuk xati
                     TextField(
@@ -345,7 +443,16 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           fullNoteParts.add('Yetkazib beruvchi: ${supplierCtrl.text.trim()}');
                         }
                         if (paymentMethod != 'cash') {
-                          fullNoteParts.add('To‘lov: $paymentMethod');
+                          if (paymentMethod == 'debt') {
+                            final dueStr = debtDueDate != null ? formatDate(debtDueDate!) : 'muddatsiz';
+                            fullNoteParts.add('To‘lov: Nasiya/Qarz [Qaytarish: $dueStr]');
+                          } else if (paymentMethod == 'bank') {
+                            fullNoteParts.add('To‘lov: Bank o‘tkazmasi');
+                          } else if (paymentMethod == 'card') {
+                            fullNoteParts.add('To‘lov: Korporativ karta');
+                          } else {
+                            fullNoteParts.add('To‘lov: $paymentMethod');
+                          }
                         }
                         if (noteCtrl.text.trim().isNotEmpty) {
                           fullNoteParts.add(noteCtrl.text.trim());
@@ -731,12 +838,36 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.12),
+                      color: (m.note!.contains('Qarz') || m.note!.contains('Nasiya'))
+                          ? const Color(0xFFD97706).withOpacity(0.15)
+                          : Colors.black.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
+                      border: (m.note!.contains('Qarz') || m.note!.contains('Nasiya'))
+                          ? Border.all(color: const Color(0xFFD97706).withOpacity(0.4))
+                          : null,
                     ),
-                    child: Text(
-                      m.note!,
-                      style: TextStyle(color: context.subtextColor, fontSize: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (m.note!.contains('Qarz') || m.note!.contains('Nasiya')) ...[
+                          const Icon(Icons.event_available_rounded, size: 14, color: Color(0xFFD97706)),
+                          const SizedBox(width: 5),
+                        ],
+                        Flexible(
+                          child: Text(
+                            m.note!,
+                            style: TextStyle(
+                              color: (m.note!.contains('Qarz') || m.note!.contains('Nasiya'))
+                                  ? const Color(0xFFD97706)
+                                  : context.subtextColor,
+                              fontSize: 12,
+                              fontWeight: (m.note!.contains('Qarz') || m.note!.contains('Nasiya'))
+                                  ? FontWeight.w700
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -492,6 +492,10 @@ class Product {
   bool get hasPachka =>
       unit == 'm2' ||
       unit == 'm²' ||
+      unit == 'kv' ||
+      isTileOrCeramic ||
+      (boxPieces != null && boxPieces! > 0) ||
+      (boxM2 != null && boxM2! > 0) ||
       (effectiveBoxM2 != null && effectiveBoxM2! > 0);
   double? get effectiveBoxM2 {
     if (boxM2 != null && boxM2! > 0) return boxM2;
@@ -860,15 +864,20 @@ class CartLine {
   double get unitPrice => unitPriceOverride ?? product.priceForSort(sort);
   double get baseQty {
     if (inPachka && product.effectiveBoxM2 != null) {
-      return quantity * product.effectiveBoxM2!;
+      return double.parse((quantity * product.effectiveBoxM2!).toStringAsFixed(3));
     }
     if (inDona && product.hasDona) {
-      return quantity * (product.effectiveDonaM2 ?? product.donaM2 ?? 1.0);
+      return double.parse((quantity * (product.effectiveDonaM2 ?? product.donaM2 ?? 1.0)).toStringAsFixed(3));
     }
     return quantity;
   }
 
   double get lineTotal => baseQty * unitPrice;
+
+  static String _formatQty(double v) {
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+  }
 
   String get displayName {
     final col = (color != null &&
@@ -878,7 +887,9 @@ class CartLine {
         : '';
     final s = (sort != null && sort!.isNotEmpty) ? ' [$sort-sort]' : '';
     final c = (cutSpec != null && cutSpec!.isNotEmpty) ? ' [$cutSpec]' : '';
-    return '${product.name}$col$s$c';
+    final qStr = _formatQty(quantity);
+    final p = inPachka ? ' ($qStr pachka)' : (inDona ? ' ($qStr dona)' : '');
+    return '${product.name}$col$s$c$p';
   }
 
   CartLine copy() => CartLine(
@@ -929,27 +940,37 @@ class SaleItemRecord {
     required this.lineTotal,
   });
 
-  bool get isCut {
+  bool get isStoneProcessed {
     final lower = productName.toLowerCase();
-    if (lower.contains('kesil') ||
-        lower.contains('kesish') ||
+
+    // Faqat xaridor talabiga ko'ra toshga ishlov berilgan / kesilgan mahsulotlar
+    if (lower.contains('kesishga berildi') ||
+        lower.contains('kesib berildi') ||
+        lower.contains('kesilgan tosh') ||
+        lower.contains('kesilgan kafel') ||
+        lower.contains('kesilgan plita') ||
         lower.contains('maxsus razmer') ||
-        lower.contains('ishlov')) {
+        lower.contains('ishlov berilgan tosh')) {
       return true;
     }
+
+    // Qavs ichidagi maxsus razmer/kesish parametrlari: [120 sm × 60 sm], [1.2×0.6m (4 dona)]
+    // Lekin [1-sort], [1.5-sort], [2-sort], [oliy], dona/pachka yoki oddiy xizmatlar kirmaydi!
     final matches = RegExp(r'\[(.*?)\]').allMatches(productName);
     for (final m in matches) {
       final inside = (m.group(1) ?? '').toLowerCase();
       if (inside.contains('sort')) continue;
-      if (RegExp(r'\d+\s*[×xX*]\s*\d+').hasMatch(inside) ||
-          inside.contains('kes') ||
-          inside.contains('sm') ||
-          inside.contains('m2')) {
+      if (inside.contains('kesish') || inside.contains('kesib') || inside.contains('kesil')) {
+        return true;
+      }
+      if (RegExp(r'\d+(\.\d+)?\s*[×xX*]\s*\d+').hasMatch(inside)) {
         return true;
       }
     }
     return false;
   }
+
+  bool get isCut => isStoneProcessed;
 
   factory SaleItemRecord.fromJson(Map<String, dynamic> j) => SaleItemRecord(
         productId: (j['product_id'] as num?)?.toInt() ?? 0,

@@ -600,7 +600,12 @@ class MockSalesRepository implements SalesRepository {
   }
 
   @override
-  Future<SaleResult> returnSale(int saleId, {required List<({int productId, double quantity})> items, String? reason}) async {
+  Future<SaleResult> returnSale(
+    int saleId, {
+    required List<({int productId, double quantity})> items,
+    String? reason,
+    bool force = false,
+  }) async {
     final entry = _s.sales.firstWhere(
       (e) => e.result.id == saleId,
       orElse: () => throw ApiException('Savdo topilmadi', 404),
@@ -626,6 +631,11 @@ class MockSalesRepository implements SalesRepository {
       final itemIdx = updatedItems.indexWhere((it) => it.productId == ret.productId);
       if (itemIdx < 0) throw ApiException('Mahsulot ushbu chekda topilmadi', 400);
       final it = updatedItems[itemIdx];
+
+      // Faqat toshga ishlov berilgan mahsulotlar bloklanadi (majburlab tanlanmagan bo'lsa)
+      if (it.isStoneProcessed && !force) {
+        throw ApiException('\'${it.productName}\' maxsus razmerda kesib/ishlov berilgan! Kesilgan kafellar qaytarib olinmaydi.', 400);
+      }
 
       if (ret.quantity > it.quantity) {
         throw ApiException('Qaytarish miqdori (${ret.quantity}) sotilgan miqdordan (${it.quantity}) ko‘p bo‘lishi mumkin emas', 400);

@@ -20,6 +20,7 @@ import '../data/local_image_store.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
 import '../state/cart_controller.dart';
+import '../state/currency_controller.dart';
 import 'common.dart';
 import 'deleted_products_screen.dart';
 import 'qr_scanner_screen.dart';
@@ -993,6 +994,8 @@ class _ProductDialogState extends State<ProductDialog> {
   );
   late final _price = TextEditingController(text: widget.product == null ? '' : qty(widget.product!.price));
   late final _cost = TextEditingController(text: widget.product == null ? '' : qty(widget.product!.costPrice));
+  final _priceUsd = TextEditingController();
+  final _costUsd = TextEditingController();
   late final _thickness = TextEditingController(text: widget.product?.thickness != null ? qty(widget.product!.thickness!) : '');
   late final _tileLength = TextEditingController(text: widget.product?.tileLength != null ? qty(widget.product!.tileLength!) : '');
   late final _tileWidth = TextEditingController(text: widget.product?.tileWidth != null ? qty(widget.product!.tileWidth!) : '');
@@ -1042,9 +1045,27 @@ class _ProductDialogState extends State<ProductDialog> {
     return v.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
   }
 
+  static String _formatUsd(double v) {
+    if (v == v.roundToDouble()) {
+      return v.toInt().toString();
+    }
+    return v.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+  }
+
   @override
   void initState() {
     super.initState();
+    final rate = context.read<CurrencyController>().usdRate;
+    if (rate > 0) {
+      final pUzs = parseInput(_price.text);
+      if (pUzs != null && pUzs > 0) {
+        _priceUsd.text = _formatUsd(pUzs / rate);
+      }
+      final cUzs = parseInput(_cost.text);
+      if (cUzs != null && cUzs > 0) {
+        _costUsd.text = _formatUsd(cUzs / rate);
+      }
+    }
     final boxM2 = widget.product?.effectiveBoxM2;
     if (boxM2 != null && boxM2 > 0) {
       final minM2 = parseInput(_minStock.text);
@@ -1060,6 +1081,8 @@ class _ProductDialogState extends State<ProductDialog> {
     _sku.dispose();
     _price.dispose();
     _cost.dispose();
+    _priceUsd.dispose();
+    _costUsd.dispose();
     _thickness.dispose();
     _tileLength.dispose();
     _tileWidth.dispose();
@@ -1071,6 +1094,90 @@ class _ProductDialogState extends State<ProductDialog> {
     _minStockPachka.dispose();
     _sort.dispose();
     super.dispose();
+  }
+
+  void _onPriceUzsChanged(String val) {
+    final rate = context.read<CurrencyController>().usdRate;
+    if (rate <= 0) return;
+    final uzs = parseInput(val);
+    if (uzs != null && uzs > 0) {
+      final usd = uzs / rate;
+      final formatted = _formatUsd(usd);
+      if (_priceUsd.text != formatted) {
+        _priceUsd.value = TextEditingValue(
+          text: formatted,
+          selection: TextSelection.collapsed(offset: formatted.length),
+        );
+      }
+    } else if (val.trim().isEmpty) {
+      if (_priceUsd.text.isNotEmpty) {
+        _priceUsd.value = const TextEditingValue(text: '');
+      }
+    }
+    setState(() {});
+  }
+
+  void _onPriceUsdChanged(String val) {
+    final rate = context.read<CurrencyController>().usdRate;
+    if (rate <= 0) return;
+    final usd = parseInput(val);
+    if (usd != null && usd > 0) {
+      final uzs = usd * rate;
+      final formatted = _formatNum(uzs);
+      if (_price.text != formatted) {
+        _price.value = TextEditingValue(
+          text: formatted,
+          selection: TextSelection.collapsed(offset: formatted.length),
+        );
+      }
+    } else if (val.trim().isEmpty) {
+      if (_price.text.isNotEmpty) {
+        _price.value = const TextEditingValue(text: '');
+      }
+    }
+    setState(() {});
+  }
+
+  void _onCostUzsChanged(String val) {
+    final rate = context.read<CurrencyController>().usdRate;
+    if (rate <= 0) return;
+    final uzs = parseInput(val);
+    if (uzs != null && uzs > 0) {
+      final usd = uzs / rate;
+      final formatted = _formatUsd(usd);
+      if (_costUsd.text != formatted) {
+        _costUsd.value = TextEditingValue(
+          text: formatted,
+          selection: TextSelection.collapsed(offset: formatted.length),
+        );
+      }
+    } else if (val.trim().isEmpty) {
+      if (_costUsd.text.isNotEmpty) {
+        _costUsd.value = const TextEditingValue(text: '');
+      }
+    }
+    setState(() {});
+  }
+
+  void _onCostUsdChanged(String val) {
+    final rate = context.read<CurrencyController>().usdRate;
+    if (rate <= 0) return;
+    final usd = parseInput(val);
+    if (usd != null && usd > 0) {
+      final uzs = usd * rate;
+      final formatted = _formatNum(uzs);
+      if (_cost.text != formatted) {
+        _cost.value = TextEditingValue(
+          text: formatted,
+          selection: TextSelection.collapsed(offset: formatted.length),
+        );
+      }
+    } else if (val.trim().isEmpty) {
+      if (_cost.text.isNotEmpty) {
+        _cost.value = const TextEditingValue(text: '');
+      }
+    }
+    setState(() {});
   }
 
   double? _effectiveBoxM2() {
@@ -1352,6 +1459,142 @@ class _ProductDialogState extends State<ProductDialog> {
               ),
             ],
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDualPriceCard({
+    required String title,
+    required String subtitle,
+    required TextEditingController uzsController,
+    required TextEditingController usdController,
+    required ValueChanged<String> onUzsChanged,
+    required ValueChanged<String> onUsdChanged,
+    required IconData icon,
+    required Color iconColor,
+    required double rate,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: context.isDark ? const Color(0xFF192028) : const Color(0xFFF7F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: iconColor),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        style: const TextStyle(color: AppColors.muted, fontSize: 10.5),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 11),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. So'mda (UZS)
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "So‘mda (UZS)",
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: uzsController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                      decoration: InputDecoration(
+                        hintText: "0",
+                        suffixText: "so‘m",
+                        suffixStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        isDense: true,
+                        filled: true,
+                        fillColor: context.cardColor,
+                      ),
+                      onChanged: onUzsChanged,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Markazdagi proporsional bog'lanish ikonkasi
+              Padding(
+                padding: const EdgeInsets.only(top: 18),
+                child: Tooltip(
+                  message: "1 USD = ${money(rate)} (Proporsional bog'langan)",
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: context.isDark ? const Color(0xFF222B36) : const Color(0xFFE2E8F0),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.sync_alt_rounded, size: 14, color: AppColors.muted),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 2. Dollarda (USD)
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Dollarda (\$ USD)",
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: usdController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                      decoration: InputDecoration(
+                        hintText: "0.00",
+                        prefixText: "\$ ",
+                        prefixStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF10B981)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        isDense: true,
+                        filled: true,
+                        fillColor: context.cardColor,
+                      ),
+                      onChanged: onUsdChanged,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1989,6 +2232,7 @@ class _ProductDialogState extends State<ProductDialog> {
   @override
   Widget build(BuildContext context) {
     final isNew = widget.product == null;
+    final rate = context.watch<CurrencyController>().usdRate;
 
     return AlertDialog(
       backgroundColor: context.dialogBg,
@@ -2336,19 +2580,60 @@ class _ProductDialogState extends State<ProductDialog> {
                 ),
               ],
               const SizedBox(height: 12),
-              TextField(
-                controller: _price,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Sotuv narxi (so‘m / $_unit)',
+              // Valyuta kursi banneri
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                decoration: BoxDecoration(
+                  color: (context.isDark ? AppColors.neonLime : const Color(0xFF0284C7)).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: (context.isDark ? AppColors.neonLime : const Color(0xFF0284C7)).withValues(alpha: 0.25),
+                  ),
                 ),
-                onChanged: (_) => setState(() {}),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.currency_exchange_rounded,
+                      size: 15,
+                      color: context.isDark ? AppColors.neonLime : const Color(0xFF0284C7),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        'Valyuta kursi: 1 USD = ${money(rate)}  •  So‘m va Dollar o‘zaro proporsional',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: context.isDark ? AppColors.neonLime : const Color(0xFF0369A1),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _cost,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Tannarx (so‘m)'),
+              _buildDualPriceCard(
+                title: 'Sotuv narxi',
+                subtitle: '1 $_unit uchun sotish narxi (So‘m va Dollarda)',
+                uzsController: _price,
+                usdController: _priceUsd,
+                onUzsChanged: _onPriceUzsChanged,
+                onUsdChanged: _onPriceUsdChanged,
+                icon: Icons.sell_outlined,
+                iconColor: const Color(0xFF10B981),
+                rate: rate,
+              ),
+              const SizedBox(height: 12),
+              _buildDualPriceCard(
+                title: 'Tannarx',
+                subtitle: 'Mahsulotning kelish yoki xarid tannarxi (ixtiyoriy)',
+                uzsController: _cost,
+                usdController: _costUsd,
+                onUzsChanged: _onCostUzsChanged,
+                onUsdChanged: _onCostUsdChanged,
+                icon: Icons.account_balance_wallet_outlined,
+                iconColor: const Color(0xFF6366F1),
+                rate: rate,
               ),
               if (isNew) ...[
                 const SizedBox(height: 12),

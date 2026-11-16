@@ -411,10 +411,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     String debtHtml = '';
     if (sale.debt > 0.005) {
       final dueStr = sale.debtDueDate != null
-          ? '<div style="font-size: ${is58mm ? '9.5px' : '11px'}; color: #b91c1c; font-weight: bold; margin-top: 2px;">Nasiya qaytarish sanasi: ${formatDate(sale.debtDueDate!)}</div>'
+          ? '<div style="font-size: ${is58mm ? '9.5px' : '11px'}; color: #000; font-weight: bold; margin-top: 2px;">Nasiya qaytarish sanasi: ${formatDate(sale.debtDueDate!)}</div>'
           : '';
       debtHtml = '''
-        <div class="flex-row bold" style="color: #b91c1c; margin-top: 2px;">
+        <div class="flex-row bold" style="color: #000; margin-top: 2px;">
           <span>Qarz (Nasiya):</span>
           <span>${_cleanAscii(money(sale.debt))}</span>
         </div>
@@ -456,16 +456,17 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     body {
       font-family: 'Courier New', Courier, 'Lucida Console', monospace;
       font-size: $fontSize;
-      font-weight: 500;
+      font-weight: 700;
       line-height: 1.32;
       letter-spacing: 0px;
-      color: #000;
+      color: #000000;
       background: #fff;
       width: $widthCss;
       margin: 0 auto;
       padding: 4px;
       box-sizing: border-box;
       -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
@@ -579,9 +580,8 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       }
 
       final doc = pw.Document();
-      // "Oddiy shrift" (standart Courier monospaced) — hech qanday internet yuklashlarsiz,
-      // baytlar chalkashmasdan, xitoycha iyerogliflarsiz toza chiqadi!
-      final font = pw.Font.courier();
+      // To'q, aniq va chuqur qora (bold monospaced) — termal printerlarda hira chiqishini 100% yo'qotadi
+      final font = pw.Font.courierBold();
       final fontBold = pw.Font.courierBold();
 
       final pdfPageWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
@@ -642,7 +642,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.SizedBox(height: 4),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
                   pw.SizedBox(height: 3),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -689,7 +689,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     ),
                   ],
                   pw.SizedBox(height: 4),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
                   pw.SizedBox(height: 3),
                   // Mahsulotlar ro'yxati
                   pw.Row(
@@ -750,7 +750,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     pw.SizedBox(height: 2),
                   ],
                   pw.SizedBox(height: 3),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
                   pw.SizedBox(height: 3),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -784,10 +784,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                       children: [
                         pw.Text('Kurs (\$1 =):',
                             style: pw.TextStyle(
-                                font: font, fontSize: is58mm ? 6.5 : 8)),
+                                font: fontBold, fontSize: is58mm ? 6.5 : 8)),
                         pw.Text(_cleanAscii(money(sale.currencyRate!)),
                             style: pw.TextStyle(
-                                font: font, fontSize: is58mm ? 6.5 : 8)),
+                                font: fontBold, fontSize: is58mm ? 6.5 : 8)),
                       ],
                     ),
                   ],
@@ -797,10 +797,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     children: [
                       pw.Text("To'landi:",
                           style: pw.TextStyle(
-                              font: font, fontSize: is58mm ? 7.5 : 9)),
+                              font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                       pw.Text(_cleanAscii(money(sale.paid)),
                           style: pw.TextStyle(
-                              font: font, fontSize: is58mm ? 7.5 : 9)),
+                              font: fontBold, fontSize: is58mm ? 7.5 : 9)),
                     ],
                   ),
                   if (sale.debt > 0.005) ...[
@@ -812,12 +812,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             style: pw.TextStyle(
                                 font: fontBold,
                                 fontSize: is58mm ? 7.5 : 9,
-                                color: PdfColors.red800)),
+                                color: PdfColors.black)),
                         pw.Text(_cleanAscii(money(sale.debt)),
                             style: pw.TextStyle(
                                 font: fontBold,
                                 fontSize: is58mm ? 7.5 : 9,
-                                color: PdfColors.red800)),
+                                color: PdfColors.black)),
                       ],
                     ),
                     if (sale.debtDueDate != null) ...[
@@ -829,12 +829,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               style: pw.TextStyle(
                                   font: fontBold,
                                   fontSize: is58mm ? 6.5 : 7.8,
-                                  color: PdfColors.red800)),
+                                  color: PdfColors.black)),
                           pw.Text(formatDate(sale.debtDueDate!),
                               style: pw.TextStyle(
                                   font: fontBold,
                                   fontSize: is58mm ? 6.5 : 7.8,
-                                  color: PdfColors.red800)),
+                                  color: PdfColors.black)),
                         ],
                       ),
                     ],
@@ -845,7 +845,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                         vertical: 2.5, horizontal: 4),
                     decoration: pw.BoxDecoration(
                       border:
-                          pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                          pw.Border.all(color: PdfColors.black, width: 0.8),
                       borderRadius:
                           const pw.BorderRadius.all(pw.Radius.circular(3)),
                     ),
@@ -863,9 +863,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           _cleanAscii(
                               '(Mahsulot butun va chek taqdim etilganda)'),
                           style: pw.TextStyle(
-                              font: font,
+                              font: fontBold,
                               fontSize: is58mm ? 5.5 : 6.5,
-                              color: PdfColors.grey700),
+                              color: PdfColors.black),
                           textAlign: pw.TextAlign.center,
                         ),
                       ],
@@ -876,6 +876,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                     child: pw.BarcodeWidget(
                       data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
                       barcode: pw.Barcode.qrCode(),
+                      color: PdfColors.black,
                       width: is58mm ? 42 : 56,
                       height: is58mm ? 42 : 56,
                     ),
@@ -883,13 +884,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.SizedBox(height: 4),
                   pw.Text('Xaridingiz uchun tashakkur!',
                       style:
-                          pw.TextStyle(font: font, fontSize: is58mm ? 7 : 8.5),
+                          pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5),
                       textAlign: pw.TextAlign.center),
                   pw.Text('NTJ - Namuna Tosh Jilo',
                       style: pw.TextStyle(
-                          font: font,
+                          font: fontBold,
                           fontSize: is58mm ? 6 : 7.5,
-                          color: PdfColors.grey700),
+                          color: PdfColors.black),
                       textAlign: pw.TextAlign.center),
                   // Kesish pichog'i uchun bo'sh joy
                   pw.SizedBox(height: 20 * PdfPageFormat.mm),
@@ -935,12 +936,20 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       }
 
       if (targetPrinter != null) {
-        // Standart Windows GDI orqali chop etish — PDFni to'g'ridan-to'g'ri drayver tushunadigan
-        // bit-tasvirga aylantirib beradi (xitoycha iyerogliflar chiqishini 100% yo'qotadi)
-        await Printing.layoutPdf(
-          onLayout: (format) async => doc.save(),
-          name: 'Chek_${sale.id}.pdf',
-        );
+        // Printerga to'g'ridan-to'g'ri (direct) yuborish — Windows print preview drayveri siqishidan
+        // o'tmasdan, maksimal aniqlikda (sharp va to'q qora) chiqishini ta'minlaydi
+        try {
+          await Printing.directPrintPdf(
+            printer: targetPrinter,
+            onLayout: (format) async => doc.save(),
+            name: 'Chek_${sale.id}.pdf',
+          );
+        } catch (_) {
+          await Printing.layoutPdf(
+            onLayout: (format) async => doc.save(),
+            name: 'Chek_${sale.id}.pdf',
+          );
+        }
         if (mounted) {
           showMessage(
               context, '✓ "${targetPrinter.name}" printeriga yuborildi');

@@ -57,7 +57,7 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
   double get _totalRefund {
     double sum = 0;
     for (final it in widget.sale.items) {
-      if (it.isCut && !_forcedCutReturnIds.contains(it.productId)) continue;
+      if (it.isStoneProcessed && !_forcedCutReturnIds.contains(it.productId)) continue;
       final q = _returnQuantities[it.productId] ?? 0.0;
       sum += q * it.unitPrice;
     }
@@ -88,7 +88,7 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
     try {
       final itemsToReturn = <({int productId, double quantity})>[];
       for (final it in widget.sale.items) {
-        if (it.isCut && !_forcedCutReturnIds.contains(it.productId)) continue;
+        if (it.isStoneProcessed && !_forcedCutReturnIds.contains(it.productId)) continue;
         final q = _returnQuantities[it.productId] ?? 0.0;
         if (q > 0) {
           itemsToReturn.add((productId: it.productId, quantity: q));
@@ -103,11 +103,16 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
         return;
       }
 
+      final hasForced = widget.sale.items.any(
+        (it) => it.isStoneProcessed && _forcedCutReturnIds.contains(it.productId) && (_returnQuantities[it.productId] ?? 0) > 0,
+      );
+
       final repo = context.read<AppRepositories>().sales;
       final updated = await repo.returnSale(
         widget.sale.id,
         items: itemsToReturn,
         reason: _reasonCtrl.text.trim(),
+        force: hasForced,
       );
 
       if (!mounted) return;
@@ -406,7 +411,7 @@ class _ReturnProductDialogState extends State<ReturnProductDialog> {
 
   Widget _buildItemReturnCard(BuildContext context, SaleItemRecord it) {
     final isDark = context.isDark;
-    final isCut = it.isCut;
+    final isCut = it.isStoneProcessed;
     final isForced = _forcedCutReturnIds.contains(it.productId);
     final selectedQty = _returnQuantities[it.productId] ?? 0.0;
 

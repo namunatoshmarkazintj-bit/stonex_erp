@@ -51,7 +51,12 @@ abstract class SalesRepository {
     String? payMethod,
   });
   Future<SaleResult> cancelOrder(int saleId);
-  Future<SaleResult> returnSale(int saleId, {required List<({int productId, double quantity})> items, String? reason});
+  Future<SaleResult> returnSale(
+    int saleId, {
+    required List<({int productId, double quantity})> items,
+    String? reason,
+    bool force = false,
+  });
 }
 
 abstract class CustomerRepository {
