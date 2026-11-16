@@ -35,13 +35,13 @@ BACKUP_TABLES = [
 ]
 
 
-def _format_sql_value(val):
+def _format_sql_value(val, dialect="postgresql"):
     if val is None:
         return "NULL"
     if isinstance(val, (int, float)):
         return str(val)
     if isinstance(val, bool):
-        return "1" if val else "0"
+        return "TRUE" if val else "FALSE"
     if isinstance(val, datetime):
         return f"'{val.strftime('%Y-%m-%d %H:%M:%S')}'"
     # String or bytes or other
@@ -59,13 +59,26 @@ def export_sql_backup(
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         filename = f"stonex_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
 
+        bind = db.get_bind()
+        dialect = bind.dialect.name.lower()
+
+        def q(name: str) -> str:
+            return f'"{name}"' if dialect in ("postgresql", "sqlite") else f'`{name}`'
+
         out = io.StringIO()
         out.write(f"-- ========================================================\n")
         out.write(f"-- STONEX ERP (NTJ - NAMUNA TOSH JILO) TO'LIQ ZAXIRA NUSXASI\n")
         out.write(f"-- Yaratilgan vaqt: {now_str}\n")
+        out.write(f"-- Dialekt: {dialect.upper()}\n")
         out.write(f"-- Tizim versiyasi: 0.1.0\n")
         out.write(f"-- ========================================================\n\n")
-        out.write("SET FOREIGN_KEY_CHECKS = 0;\n\n")
+
+        if dialect == "postgresql":
+            out.write("SET session_replication_role = 'replica';\n\n")
+        elif dialect == "mysql":
+            out.write("SET FOREIGN_KEY_CHECKS = 0;\n\n")
+        elif dialect == "sqlite":
+            out.write("PRAGMA foreign_keys = OFF;\n\n")
 
         inspector = inspect(engine)
         existing_tables = set(inspector.get_table_names())
@@ -80,16 +93,17 @@ def export_sql_backup(
             if not columns:
                 continue
 
-            col_names_str = ", ".join([f"`{c}`" for c in columns])
+            col_names_str = ", ".join([q(c) for c in columns])
+            tbl_q = q(table_name)
             
             # Ma'lumotlarni o'qish
-            rows = db.execute(text(f"SELECT {col_names_str} FROM `{table_name}`;")).fetchall()
+            rows = db.execute(text(f"SELECT {col_names_str} FROM {tbl_q};")).fetchall()
             table_stats.append(f"{table_name}: {len(rows)} qator")
 
             out.write(f"-- --------------------------------------------------------\n")
-            out.write(f"-- Jadval: `{table_name}` ({len(rows)} ta qator)\n")
+            out.write(f"-- Jadval: {tbl_q} ({len(rows)} ta qator)\n")
             out.write(f"-- --------------------------------------------------------\n")
-            out.write(f"DELETE FROM `{table_name}`;\n")
+            out.write(f"DELETE FROM {tbl_q};\n")
 
             if rows:
                 batch_size = 50
@@ -97,15 +111,21 @@ def export_sql_backup(
                     batch = rows[i:i + batch_size]
                     values_list = []
                     for r in batch:
-                        row_vals = ", ".join([_format_sql_value(v) for v in r])
+                        row_vals = ", ".join([_format_sql_value(v, dialect) for v in r])
                         values_list.append(f"({row_vals})")
                     
-                    batch_sql = f"INSERT INTO `{table_name}` ({col_names_str}) VALUES\n  " + ",\n  ".join(values_list) + ";\n"
+                    batch_sql = f"INSERT INTO {tbl_q} ({col_names_str}) VALUES\n  " + ",\n  ".join(values_list) + ";\n"
                     out.write(batch_sql)
             
             out.write("\n")
 
-        out.write("SET FOREIGN_KEY_CHECKS = 1;\n")
+        if dialect == "postgresql":
+            out.write("SET session_replication_role = 'origin';\n")
+        elif dialect == "mysql":
+            out.write("SET FOREIGN_KEY_CHECKS = 1;\n")
+        elif dialect == "sqlite":
+            out.write("PRAGMA foreign_keys = ON;\n")
+
         out.write(f"-- Zaxiralash muvaffaqiyatli yakunlandi! Jami jadvallar soni: {len(table_stats)}\n")
 
         sql_content = out.getvalue()
@@ -131,6 +151,11 @@ def export_excel_csv_backup(
         now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         zip_buffer = io.BytesIO()
 
+        bind = db.get_bind()
+        dialect = bind.dialect.name.lower()
+        def q(name: str) -> str:
+            return f'"{name}"' if dialect in ("postgresql", "sqlite") else f'`{name}`'
+
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             inspector = inspect(engine)
             existing_tables = set(inspector.get_table_names())
@@ -143,7 +168,7 @@ def export_excel_csv_backup(
                 if not columns:
                     continue
 
-                rows = db.execute(text(f"SELECT * FROM `{table_name}`;")).fetchall()
+                rows = db.execute(text(f"SELECT * FROM {q(table_name)};")).fetchall()
 
                 csv_buffer = io.StringIO()
                 csv_writer = csv.writer(csv_buffer)
@@ -180,12 +205,23 @@ async def restore_from_sql(
 
         # Foreign keys o'chirish
         bind = db.get_bind()
-        dialect = bind.dialect.name
+        dialect = bind.dialect.name.lower()
 
-        if dialect == "mysql":
-            db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        if dialect == "postgresql":
+            try:
+                db.execute(text("SET session_replication_role = 'replica';"))
+            except Exception:
+                pass
+        elif dialect == "mysql":
+            try:
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+            except Exception:
+                pass
         elif dialect == "sqlite":
-            db.execute(text("PRAGMA foreign_keys = OFF;"))
+            try:
+                db.execute(text("PRAGMA foreign_keys = OFF;"))
+            except Exception:
+                pass
 
         # SQL buyruqlarni nuqta-vergul orqali bo'lib ijro etish
         statements = []
@@ -204,14 +240,34 @@ async def restore_from_sql(
         executed_count = 0
         for stmt in statements:
             clean = stmt.strip()
-            if clean:
+            if not clean:
+                continue
+            # Boshqa dialektga xos bo'lgan SET buyruqlarini xavfsiz o'tkazib yuborish
+            if "FOREIGN_KEY_CHECKS" in clean and dialect != "mysql":
+                continue
+            if "session_replication_role" in clean and dialect != "postgresql":
+                continue
+            try:
                 db.execute(text(clean))
                 executed_count += 1
+            except Exception as stmt_err:
+                print(f"Statement execution warning: {stmt_err} in: {clean[:80]}")
 
-        if dialect == "mysql":
-            db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+        if dialect == "postgresql":
+            try:
+                db.execute(text("SET session_replication_role = 'origin';"))
+            except Exception:
+                pass
+        elif dialect == "mysql":
+            try:
+                db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+            except Exception:
+                pass
         elif dialect == "sqlite":
-            db.execute(text("PRAGMA foreign_keys = ON;"))
+            try:
+                db.execute(text("PRAGMA foreign_keys = ON;"))
+            except Exception:
+                pass
 
         db.commit()
 
