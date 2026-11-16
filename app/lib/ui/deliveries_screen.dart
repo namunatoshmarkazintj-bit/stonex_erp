@@ -646,7 +646,7 @@ class DeliveriesScreenState extends State<DeliveriesScreen> {
                     FilledButton.icon(
                       onPressed: isDriver ? _loadDeliveries : () => openNewDeliveryDialog(),
                       icon: Icon(isDriver ? Icons.refresh_rounded : Icons.add_rounded, size: 18),
-                      label: Text(isDriver ? 'Qayta tekshirish' : '+ Yangi Yetkazish'),
+                      label: Text(isDriver ? 'Qayta tekshirish' : 'Yangi Yetkazish'),
                       style: FilledButton.styleFrom(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                       ),
