@@ -53,6 +53,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
         return dt.isAfter(zeroStart);
       case 'Shu oy':
         return dt.year == now.year && dt.month == now.month;
+      case 'Nasiyalar':
+        return true;
       default:
         return true;
     }
@@ -337,24 +339,83 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Jami xarid summasi indikatori
-                    if (totalEst > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.neonLime.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.neonLime.withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Jami xarid summasi:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                            Text(money(totalEst), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.neonLime)),
+                    // Jami xarid summasi va Qarz oynasi
+                    if (totalEst > 0) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                              decoration: BoxDecoration(
+                                color: AppColors.neonLime.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.neonLime.withValues(alpha: 0.35)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.shopping_bag_outlined, size: 13, color: AppColors.neonLime),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Jami xarid:',
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: context.subtextColor),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      money(totalEst),
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppColors.neonLime),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (paymentMethod == 'debt') ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.45)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.handshake_rounded, size: 13, color: Color(0xFFD97706)),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Qarz summasi:',
+                                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFFD97706)),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        money(totalEst),
+                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFD97706)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
-                        ),
+                        ],
                       ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                    ],
 
                     // Yetkazib beruvchi / Ta'minotchi
                     TextField(
@@ -692,6 +753,10 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
           final filtered = purchases.where((p) {
             if (!_matchesDate(p.createdAt)) return false;
+            if (_dateFilter == 'Nasiyalar') {
+              final isDebt = p.note != null && (p.note!.contains('Qarz') || p.note!.contains('Nasiya'));
+              if (!isDebt) return false;
+            }
             if (query.isNotEmpty) {
               final prod = prodMap[p.productId];
               final pName = p.productName ?? prod?.name ?? '';
@@ -708,10 +773,18 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
           // Statistika
           double totalSpent = 0;
+          double totalDebt = 0;
+          int debtCount = 0;
           for (final p in filtered) {
             final prod = prodMap[p.productId];
             final cost = p.unitCost ?? prod?.costPrice ?? 0;
-            totalSpent += p.qtyDelta.abs() * cost;
+            final lineTotal = p.qtyDelta.abs() * cost;
+            totalSpent += lineTotal;
+            final isDebt = p.note != null && (p.note!.contains('Qarz') || p.note!.contains('Nasiya'));
+            if (isDebt) {
+              totalDebt += lineTotal;
+              debtCount++;
+            }
           }
 
           return RefreshIndicator(
@@ -761,7 +834,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                     final isSmall = constraints.maxWidth < 440;
                     final cardWidth = isSmall
                         ? (constraints.maxWidth < 360 ? constraints.maxWidth : (constraints.maxWidth - 12) / 2)
-                        : (constraints.maxWidth < 800 ? (constraints.maxWidth - 24) / 3 : 220.0);
+                        : (constraints.maxWidth < 950 ? (constraints.maxWidth - 12) / 2 : 220.0);
                     return Wrap(
                       spacing: 12,
                       runSpacing: 12,
@@ -772,6 +845,14 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           value: money(totalSpent),
                           icon: Icons.account_balance_rounded,
                           color: AppColors.neonLime,
+                          width: cardWidth,
+                        ),
+                        _kpiCard(
+                          context,
+                          title: debtCount > 0 ? 'Nasiyaga Qarz ($debtCount ta)' : 'Nasiyaga Qarz',
+                          value: money(totalDebt),
+                          icon: Icons.handshake_rounded,
+                          color: const Color(0xFFF59E0B),
                           width: cardWidth,
                         ),
                         _kpiCard(
@@ -829,7 +910,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            for (final d in ['Barchasi', 'Bugun', 'Shu hafta', 'Shu oy'])
+                            for (final d in ['Barchasi', 'Bugun', 'Shu hafta', 'Shu oy', 'Nasiyalar'])
                               Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: ChoiceChip(
