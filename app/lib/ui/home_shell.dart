@@ -16,8 +16,10 @@ import '../domain/models.dart';
 import '../state/app_lock_controller.dart';
 import '../state/auth_controller.dart';
 import '../state/theme_controller.dart';
+import 'backup_restore_dialog.dart';
 import 'common.dart';
 import 'currency_badge.dart';
+import 'online_sync_badge.dart';
 import 'pin_lock_screen.dart';
 import 'customers_screen.dart';
 import 'dashboard_screen.dart';
@@ -1009,6 +1011,8 @@ class _HomeShellState extends State<HomeShell> {
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
         actions: [
+          Center(child: OnlineSyncBadge(isCompact: true, api: appApiClient)),
+          const SizedBox(width: 6),
           if (isDashboard) ...[
             const Center(child: CurrencyBadge(isCompact: true)),
             const SizedBox(width: 4),
@@ -1189,6 +1193,8 @@ class _VaultHeader extends StatelessWidget {
                   const SizedBox(width: 12),
                   const CurrencyBadge(),
                 ],
+                const SizedBox(width: 12),
+                OnlineSyncBadge(api: appApiClient),
               ],
             ),
           ),
@@ -2944,6 +2950,77 @@ class _SettingsBottomSheet extends StatelessWidget {
               );
             },
           ),
+          if (user.role == Role.admin || user.role == Role.master) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: context.cardSubtle,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.neonLime.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.security_rounded,
+                            size: 16, color: AppColors.neonLime),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          "Ma'lumotlar zaxirasi (Backup & Restore)",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Serverdagi barcha ma'lumotlarni SQL yoki Excel formatda yuklab oling yoki avvalgi SQL fayldan bazani to'liq qayta tiklang.",
+                    style: TextStyle(fontSize: 11.5, color: AppColors.muted),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isDark ? AppColors.neonLime : AppColors.ink,
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.neonLime.withValues(alpha: 0.5)
+                              : AppColors.border,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.cloud_sync_rounded, size: 16),
+                      label: const Text(
+                        "Zaxiralash va Tiklash oynasini ochish",
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        BackupRestoreDialog.show(context);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           // Tizim ma'lumotlari (ixcham qatorlar)

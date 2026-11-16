@@ -4,6 +4,8 @@ import '../domain/models.dart';
 import 'api_client.dart';
 import 'local_image_store.dart';
 import 'local_session_store.dart';
+import 'offline_cache_store.dart';
+import 'offline_sync_engine.dart';
 import 'repositories.dart';
 
 class ApiAuthRepository implements AuthRepository {
@@ -22,6 +24,8 @@ class ApiAuthRepository implements AuthRepository {
     _api.token = token;
     final user = AppUser.fromJson(j['user'] as Map<String, dynamic>);
     LocalSessionStore.saveSession(token: token, user: user);
+    OfflineSyncEngine.instance.init(_api);
+    OfflineSyncEngine.instance.preloadDataAsync(_api);
     return user;
   }
 
@@ -30,6 +34,8 @@ class ApiAuthRepository implements AuthRepository {
     final session = LocalSessionStore.loadSession();
     if (session == null) return null;
     _api.token = session.token;
+    OfflineSyncEngine.instance.init(_api);
+    OfflineSyncEngine.instance.preloadDataAsync(_api);
     try {
       final j = await _api.get('/auth/me');
       final user = AppUser.fromJson(j as Map<String, dynamic>);
@@ -57,18 +63,39 @@ class ApiProductRepository implements ProductRepository {
 
   @override
   Future<List<Product>> list({String? query}) async {
-    final j = await _api.get('/products',
-        query: (query == null || query.isEmpty) ? null : {'q': query}) as List;
-    final list = j.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
-    LocalImageStore.prefetchAll(list.map((p) => p.imageUrl).toList());
-    return list.map((p) {
-      if (p.imageUrl != null && p.imageUrl!.isNotEmpty) {
-        LocalImageStore.saveImage(p.id, p.imageUrl, p.name);
-        return p;
+    try {
+      final j = await _api.get('/products',
+          query: (query == null || query.isEmpty) ? null : {'q': query}) as List;
+      final rawList = j.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (query == null || query.isEmpty) {
+        OfflineCacheStore.saveProducts(rawList);
       }
-      final local = LocalImageStore.getImage(p.id, p.name);
-      return (local != null) ? p.copyWith(imageUrl: local) : p;
-    }).toList();
+      final list = rawList.map((e) => Product.fromJson(e)).toList();
+      LocalImageStore.prefetchAll(list.map((p) => p.imageUrl).toList());
+      return list.map((p) {
+        if (p.imageUrl != null && p.imageUrl!.isNotEmpty) {
+          LocalImageStore.saveImage(p.id, p.imageUrl, p.name);
+          return p;
+        }
+        final local = LocalImageStore.getImage(p.id, p.name);
+        return (local != null) ? p.copyWith(imageUrl: local) : p;
+      }).toList();
+    } catch (_) {
+      // Oflayn rejim: internet uzilganda keshdagi mahsulotlarni ko'rsatish
+      final cached = OfflineCacheStore.loadProducts();
+      if (cached.isNotEmpty) {
+        var list = cached.map((e) => Product.fromJson(e)).toList();
+        if (query != null && query.trim().isNotEmpty) {
+          final q = query.trim().toLowerCase();
+          list = list.where((p) =>
+              p.name.toLowerCase().contains(q) ||
+              p.sku.toLowerCase().contains(q) ||
+              p.qrCode.toLowerCase().contains(q)).toList();
+        }
+        return list;
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -84,7 +111,30 @@ class ApiProductRepository implements ProductRepository {
       return (local != null) ? p.copyWith(imageUrl: local) : p;
     } on ApiException catch (e) {
       if (e.status == 404) return null;
+      // Oflayn rejimda keshdan qidirish
+      final cached = OfflineCacheStore.loadProducts();
+      final target = code.trim().toLowerCase();
+      for (final raw in cached) {
+        final p = Product.fromJson(raw);
+        if (p.sku.toLowerCase() == target ||
+            p.qrCode.toLowerCase() == target ||
+            p.id.toString() == target) {
+          return p;
+        }
+      }
       rethrow;
+    } catch (_) {
+      final cached = OfflineCacheStore.loadProducts();
+      final target = code.trim().toLowerCase();
+      for (final raw in cached) {
+        final p = Product.fromJson(raw);
+        if (p.sku.toLowerCase() == target ||
+            p.qrCode.toLowerCase() == target ||
+            p.id.toString() == target) {
+          return p;
+        }
+      }
+      return null;
     }
   }
 
@@ -171,7 +221,7 @@ class ApiSalesRepository implements SalesRepository {
     String? note,
     String paymentMethod = 'naqd',
   }) async {
-    final j = await _api.post('/sales', body: {
+    final payload = <String, dynamic>{
       'items': [
         for (final l in lines)
           {
@@ -196,8 +246,59 @@ class ApiSalesRepository implements SalesRepository {
       if (customerPhone != null && customerPhone.isNotEmpty) 'customer_phone': customerPhone,
       if (customerPassport != null && customerPassport.isNotEmpty) 'customer_passport': customerPassport,
       if (customerPhotoUrl != null && customerPhotoUrl.isNotEmpty) 'customer_photo_url': customerPhotoUrl,
-    });
-    return SaleResult.fromJson(j as Map<String, dynamic>);
+    };
+
+    try {
+      final j = await _api.post('/sales', body: payload);
+      return SaleResult.fromJson(j as Map<String, dynamic>);
+    } catch (_) {
+      // Oflayn rejim: internet uzilganda savdoni lokal navbatga saqlash
+      final total = lines.fold<double>(0.0, (sum, l) => sum + l.lineTotal);
+      final debt = (total - paidAmount).clamp(0.0, double.infinity);
+      final offlineId = DateTime.now().millisecondsSinceEpoch % 1000000;
+
+      final items = [
+        for (final l in lines)
+          {
+            'product_id': l.product.id,
+            'product_name': l.displayName,
+            'quantity': l.baseQty,
+            'unit_price': l.unitPrice,
+            'line_total': l.lineTotal,
+          }
+      ];
+
+      // Oflayn navbatga qo'shish va tovar qoldig'ini lokal keshda kamaytirish
+      OfflineSyncEngine.instance.queueOfflineSale(payload, items: items);
+
+      return SaleResult(
+        id: offlineId,
+        customerName: customerName ?? (customerId != null ? 'Mijoz #$customerId' : 'Chakana xaridor'),
+        customerPhone: customerPhone,
+        cashierName: 'Kassir',
+        total: total,
+        paid: paidAmount,
+        debt: debt,
+        currencyRate: currencyRate,
+        paidUzs: paidUzs,
+        paidUsd: paidUsd,
+        status: status,
+        note: (note != null && note.isNotEmpty)
+            ? '$note [Oflayn saqlandi]'
+            : '[Oflayn saqlandi]',
+        createdAt: DateTime.now(),
+        items: items
+            .map((it) => SaleItemRecord(
+                  productId: it['product_id'] as int,
+                  productName: it['product_name'] as String,
+                  quantity: (it['quantity'] as num).toDouble(),
+                  unitPrice: (it['unit_price'] as num).toDouble(),
+                  lineTotal: (it['line_total'] as num).toDouble(),
+                ))
+            .toList(),
+        paymentMethod: paymentMethod,
+      );
+    }
   }
 
   @override
@@ -742,19 +843,39 @@ class ApiCustomerRepository implements CustomerRepository {
     if (query != null && query.trim().isNotEmpty) {
       q['q'] = query.trim();
     }
-    final j = await _api.get('/customers', query: q) as List;
-    final list = j.map((e) => Customer.fromJson(e as Map<String, dynamic>)).toList();
-    return list.map((c) {
-      if (c.photoUrl != null && c.photoUrl!.isNotEmpty && !c.photoUrl!.contains('/uploads/customers/')) {
-        LocalImageStore.saveCustomerImage(c.id, c.photoUrl, c.phone, c.name);
+    try {
+      final j = await _api.get('/customers', query: q) as List;
+      final rawList = j.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (query == null || query.trim().isEmpty) {
+        OfflineCacheStore.saveCustomers(rawList);
+      }
+      final list = rawList.map((e) => Customer.fromJson(e)).toList();
+      return list.map((c) {
+        if (c.photoUrl != null && c.photoUrl!.isNotEmpty && !c.photoUrl!.contains('/uploads/customers/')) {
+          LocalImageStore.saveCustomerImage(c.id, c.photoUrl, c.phone, c.name);
+          return c;
+        }
+        final local = LocalImageStore.getCustomerImage(c.id, c.phone, c.name);
+        if (local != null && local.isNotEmpty) {
+          return c.copyWith(photoUrl: local);
+        }
         return c;
+      }).toList();
+    } catch (_) {
+      // Oflayn rejim
+      final cached = OfflineCacheStore.loadCustomers();
+      if (cached.isNotEmpty) {
+        var list = cached.map((e) => Customer.fromJson(e)).toList();
+        if (query != null && query.trim().isNotEmpty) {
+          final queryStr = query.trim().toLowerCase();
+          list = list.where((c) =>
+              c.name.toLowerCase().contains(queryStr) ||
+              (c.phone != null && c.phone!.contains(queryStr))).toList();
+        }
+        return list;
       }
-      final local = LocalImageStore.getCustomerImage(c.id, c.phone, c.name);
-      if (local != null && local.isNotEmpty) {
-        return c.copyWith(photoUrl: local);
-      }
-      return c;
-    }).toList();
+      rethrow;
+    }
   }
 
   @override
