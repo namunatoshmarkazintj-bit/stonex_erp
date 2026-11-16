@@ -271,6 +271,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     sb.writeln(
         'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)');
     sb.writeln('(Mahsulot butun va chek taqdim etilganda)');
+    sb.writeln('(Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)');
     sb.writeln(dividerDbl);
     sb.writeln(center('Xaridingiz uchun tashakkur!'));
     sb.writeln(center('NTJ - Namuna Tosh Jilo'));
@@ -539,6 +540,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   </div>
   <div class="text-center bold" style="font-size: ${is58mm ? '8px' : '9.5px'}; color: #000000;">
     (Mahsulot butun va chek taqdim etilganda)
+  </div>
+  <div class="text-center bold" style="font-size: ${is58mm ? '8px' : '9.5px'}; color: #000000; margin-top: 2px;">
+    (Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)
   </div>
 
   <div style="width: 100%; text-align: center; margin: 6px auto; display: flex; justify-content: center; align-items: center;">
@@ -866,6 +870,16 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                           style: pw.TextStyle(
                               font: fontBold,
                               fontSize: is58mm ? 5.5 : 6.5,
+                              color: PdfColors.black),
+                          textAlign: pw.TextAlign.center,
+                        ),
+                        pw.SizedBox(height: 1),
+                        pw.Text(
+                          _cleanAscii(
+                              '(Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)'),
+                          style: pw.TextStyle(
+                              font: fontBold,
+                              fontSize: is58mm ? 5.2 : 6.3,
                               color: PdfColors.black),
                           textAlign: pw.TextAlign.center,
                         ),
@@ -1690,6 +1704,17 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                       fontFamily: 'Courier',
                                       fontSize: 8.5,
                                       fontWeight: FontWeight.w700,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '(Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)',
+                                    style: TextStyle(
+                                      fontFamily: 'Courier',
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w800,
                                       color: Colors.black,
                                     ),
                                     textAlign: TextAlign.center,
