@@ -419,8 +419,6 @@ class _StockScreenState extends State<StockScreen> {
             'Sana oralig‘i',
           ];
 
-          final currentActiveTab = _isOwner ? _activeTab : 'products';
-
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: LayoutBuilder(
@@ -448,8 +446,12 @@ class _StockScreenState extends State<StockScreen> {
                                   return _buildTabPill(
                                     label: isCompact ? 'Qoldiqlar ($totalMatCount)' : 'Ombor qoldiqlari ($totalMatCount)',
                                     icon: Icons.inventory_2_rounded,
-                                    active: currentActiveTab == 'products',
-                                    onTap: () => setState(() => _activeTab = 'products'),
+                                    active: _activeTab == 'products',
+                                    onTap: () {
+                                      setState(() {
+                                        _activeTab = 'products';
+                                      });
+                                    },
                                   );
                                 },
                               ),
@@ -462,8 +464,12 @@ class _StockScreenState extends State<StockScreen> {
                                   return _buildTabPill(
                                     label: isCompact ? 'Tarix (${allMovements.length})' : 'Harakatlar tarixi (${allMovements.length})',
                                     icon: Icons.swap_horiz_rounded,
-                                    active: currentActiveTab == 'movements',
-                                    onTap: () => setState(() => _activeTab == 'movements'),
+                                    active: _activeTab == 'movements',
+                                    onTap: () {
+                                      setState(() {
+                                        _activeTab = 'movements';
+                                      });
+                                    },
                                   );
                                 },
                               ),
@@ -474,7 +480,7 @@ class _StockScreenState extends State<StockScreen> {
                       const SizedBox(height: 16),
                     ],
 
-                    if (currentActiveTab == 'products') ...[
+                    if (_activeTab == 'products') ...[
                       // Yuqori statistika paneli (Mahsulotlar qoldiqlari)
                       if (isDesktop)
                         Row(
@@ -1025,44 +1031,47 @@ class _StockScreenState extends State<StockScreen> {
     required bool active,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: active
-              ? (context.isDark ? AppColors.neonLime : AppColors.darkCard)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: active
-                  ? (context.isDark ? AppColors.ink : Colors.white)
-                  : context.mutedColor,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                  color: active
-                      ? (context.isDark ? AppColors.ink : Colors.white)
-                      : context.mutedColor,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: active
+                ? (context.isDark ? AppColors.neonLime : AppColors.darkCard)
+                : (context.isDark ? const Color(0xFF22262B) : const Color(0xFFE2E8F0).withValues(alpha: 0.6)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: active
+                    ? (context.isDark ? AppColors.ink : Colors.white)
+                    : context.mutedColor,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                    color: active
+                        ? (context.isDark ? AppColors.ink : Colors.white)
+                        : context.mutedColor,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
