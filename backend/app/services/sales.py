@@ -22,7 +22,55 @@ def to_base_qty(product: m.Product, quantity: Decimal, unit: str) -> Decimal:
             return dona_to_base(quantity, product.dona_m2)
         except ValueError as e:
             raise HTTPException(400, f"{product.name}: {e}")
+    if unit == "pachka":
+        box_m2 = getattr(product, "box_m2", None)
+        if (box_m2 is None or Decimal(str(box_m2)) <= 0) and product.box_pieces and product.tile_length and product.tile_width:
+            box_m2 = Decimal(str(product.box_pieces)) * (Decimal(str(product.tile_length)) / Decimal(100)) * (Decimal(str(product.tile_width)) / Decimal(100))
+        if box_m2 is None or Decimal(str(box_m2)) <= 0:
+            box_m2 = Decimal("1.44")
+        return q3(Decimal(str(quantity)) * Decimal(str(box_m2)))
     return q3(quantity)
+
+
+def is_stone_processed(product_name: str) -> bool:
+    """Toshga ishlov berilgan / maxsus razmerda kesilgan mahsulotlarni aniqlash.
+    Butun toshlar, kafel/plitka, sortlar ([1-sort]), dona/pachka yoki oddiy xizmatlar
+    kesilgan hisoblanmaydi va qaytarib olinishi mumkin.
+    Faqat xaridor uchun maxsus kesilgan / ishlov berilgan toshlar qaytarilmaydi.
+    """
+    if not product_name:
+        return False
+    lower = product_name.lower()
+
+    # 1. Aniq maxsus kesish / ishlov berish kalit so'zlari
+    keywords = [
+        "kesishga berildi",
+        "kesib berildi",
+        "kesilgan tosh",
+        "kesilgan kafel",
+        "kesilgan plita",
+        "maxsus razmer",
+        "ishlov berilgan tosh",
+    ]
+    for kw in keywords:
+        if kw in lower:
+            return True
+
+    # 2. Qavs ichidagi [maxsus razmer / kesish] parametrlari
+    # Misol: [120 sm × 60 sm], [1.2×0.6m (4 dona)], [60x30 kesish]
+    # Lekin [1-sort], [1.5-sort], [2-sort], [oliy] hisobga olinmaydi
+    import re
+    bracket_matches = re.findall(r"\[(.*?)\]", product_name)
+    for inside in bracket_matches:
+        inside_lower = inside.lower()
+        if "sort" in inside_lower:
+            continue
+        if "kesish" in inside_lower or "kesib" in inside_lower or "kesil" in inside_lower:
+            return True
+        if re.search(r"\d+(\.\d+)?\s*[×xX*]\s*\d+", inside_lower):
+            return True
+
+    return False
 
 
 def create_sale(db: Session, cashier: m.User, data: SaleIn) -> m.Sale:
@@ -263,11 +311,11 @@ def cancel_order(db: Session, user: m.User, sale_id: int) -> m.Sale:
     db.refresh(sale)
     return sale
 
-def process_return(db: Session, user: m.User, sale_id: int, return_items: list, reason: str | None = None) -> m.Sale:
+def process_return(db: Session, user: m.User, sale_id: int, return_items: list, reason: str | None = None, force: bool = False) -> m.Sale:
     """Chek bo'yicha mahsulotni qaytarib olish (Vozvrat).
     Qoidalar:
     1. 10 kunlik muddat (savdo sanasidan 10 kundan oshsa qabul qilinmaydi).
-    2. Kesilgan kafel/toshlar qaytarilmaydi (faqat butun holatdagilar olinadi).
+    2. Toshga ishlov berilgan / kesilgan toshlar qaytarilmaydi (faqat butun holatdagilar olinadi).
     """
     sale = db.get(m.Sale, sale_id, with_for_update=True)
     if sale is None:
@@ -299,13 +347,12 @@ def process_return(db: Session, user: m.User, sale_id: int, return_items: list, 
             raise HTTPException(400, f"Mahsulot (ID: {p_id}) ushbu chekda topilmadi")
         s_item = sale_item_map[p_id]
 
-        # 2. Kesilgan kafel / tosh tekshiruvi
+        # 2. Toshga ishlov berilgan / kesilgan tosh tekshiruvi
         p_name = s_item.product_name
-        is_cut = (("[" in p_name and ("]" in p_name or "dona)" in p_name)) or "kesil" in p_name.lower() or "maxsus razmer" in p_name.lower())
-        if is_cut:
+        if is_stone_processed(p_name) and not force:
             raise HTTPException(
                 400,
-                f"'{p_name}' maxsus razmerda kesib berilgan! Kesilgan kafellar qaytarib olinmaydi.",
+                f"'{p_name}' maxsus razmerda kesib/ishlov berilgan! Kesilgan kafellar qaytarib olinmaydi.",
             )
 
         if qty > s_item.quantity:

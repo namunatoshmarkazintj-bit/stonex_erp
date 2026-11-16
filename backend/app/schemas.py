@@ -266,7 +266,7 @@ class CustomerOut(ORM):
 class SaleItemIn(BaseModel):
     product_id: int
     quantity: Decimal = Field(gt=0)
-    unit: Literal["base", "dona"] = "base"
+    unit: Literal["base", "dona", "pachka"] = "base"
     custom_name: str | None = None
     price: Decimal | None = None
     sort: str | None = None
@@ -297,6 +297,7 @@ class SaleReturnItemIn(BaseModel):
 class SaleReturnIn(BaseModel):
     items: list[SaleReturnItemIn] = Field(min_length=1)
     reason: str | None = None
+    force: bool = False
 
 
 class SaleItemOut(ORM):

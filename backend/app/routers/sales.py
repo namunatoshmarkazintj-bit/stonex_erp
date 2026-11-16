@@ -123,8 +123,77 @@ def cancel(sale_id: int, db: Session = Depends(get_db), user: m.User = Depends(r
 
 @router.post("/{sale_id}/return", response_model=SaleOut)
 def return_sale(sale_id: int, data: SaleReturnIn, db: Session = Depends(get_db),
-                user: m.User = Depends(require_roles(roles.ADMIN))):
-    return to_out(svc.process_return(db, user, sale_id, data.items, data.reason))
+                user: m.User = Depends(require_roles(roles.ADMIN, roles.CASHIER))):
+    return to_out(svc.process_return(db, user, sale_id, data.items, data.reason, force=data.force))
+
+
+@router.post("/clean-old-sales")
+def clean_old_sales(
+    db: Session = Depends(get_db),
+    user: m.User = Depends(require_roles(roles.ADMIN)),
+):
+    """
+    #44 chek va bugungi (2026-11-16) savdolardan tashqari barcha eski test savdolarni qaytarish va o'chirish.
+    Tovarlar ombor zaxirasiga to'liq qaytariladi.
+    """
+    from sqlalchemy import text
+    try:
+        bind = db.get_bind()
+        dialect = bind.dialect.name
+        if dialect == "sqlite":
+            db.execute(text("PRAGMA foreign_keys = OFF;"))
+        elif dialect == "mysql":
+            db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+
+        # 1. Saqlanishi kerak bo'lgan ID lar: 44 va 2026-11-16 (bugun) dagi barcha savdolar
+        keep_ids_res = db.execute(text(
+            "SELECT id FROM sales WHERE id = 44 OR created_at >= '2026-11-16 00:00:00';"
+        )).scalars().all()
+        keep_ids = set(keep_ids_res)
+        keep_ids.add(44)
+
+        # 2. O'chirilishi kerak bo'lgan ID lar
+        all_ids_res = db.execute(text("SELECT id FROM sales;")).scalars().all()
+        delete_ids = [sid for sid in all_ids_res if sid not in keep_ids]
+
+        if not delete_ids:
+            return {
+                "status": "ok",
+                "message": "O'chiriladigan eski savdolar topilmadi, barcha kerakli savdolar saqlangan",
+                "kept_sale_ids": sorted(list(keep_ids)),
+                "deleted_sale_ids": [],
+            }
+
+        del_ids_str = ",".join(str(i) for i in delete_ids)
+
+        # 3. Tovarlarni omborga qaytarish (Vozvrat):
+        # Ombordan ayirib olingan harakatlarni o'chirib, qoldiqni tiklaymiz
+        db.execute(text(f"DELETE FROM stock_movements WHERE ref_type = 'sale' AND ref_id IN ({del_ids_str});"))
+        db.execute(text(f"DELETE FROM delivery_items WHERE delivery_id IN (SELECT id FROM deliveries WHERE sale_id IN ({del_ids_str}));"))
+        db.execute(text(f"DELETE FROM deliveries WHERE sale_id IN ({del_ids_str});"))
+        db.execute(text(f"DELETE FROM payments WHERE sale_id IN ({del_ids_str});"))
+        db.execute(text(f"DELETE FROM sale_items WHERE sale_id IN ({del_ids_str});"))
+        db.execute(text(f"DELETE FROM sales WHERE id IN ({del_ids_str});"))
+
+        # Xabarnomalarni tozalash (faqat o'chirilgan savdolar bo'yicha)
+        for sid in delete_ids:
+            db.execute(text(f"DELETE FROM notifications WHERE message LIKE '%Chek #{sid}%' OR message LIKE '%Buyurtma #{sid}%';"))
+
+        if dialect == "sqlite":
+            db.execute(text("PRAGMA foreign_keys = ON;"))
+        elif dialect == "mysql":
+            db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+
+        db.commit()
+        return {
+            "status": "ok",
+            "message": f"{len(delete_ids)} ta eski savdo muvaffaqiyatli qaytarildi va bazadan to'liq o'chirildi. Tovarlar ombor qoldig'iga qaytdi.",
+            "deleted_sale_ids": delete_ids,
+            "kept_sale_ids": sorted(list(keep_ids)),
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Tozalashda xatolik: {e}")
 
 
 @router.post("/reset-all-data")
