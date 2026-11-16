@@ -100,6 +100,7 @@ class Product(Base):
     waste_ratio: Mapped[Decimal | None] = mapped_column(QTY, default=Decimal("1.15"), nullable=True)  # sarf koeffitsiyenti
     cutting_rate: Mapped[Decimal | None] = mapped_column(MONEY, default=Decimal(0), nullable=True)  # 1 m2 ishbay haq
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    stock: Mapped[Decimal] = mapped_column(QTY, default=Decimal(0))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     deleted_by_name: Mapped[str | None] = mapped_column(String(128), nullable=True)

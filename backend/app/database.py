@@ -46,6 +46,16 @@ def ensure_migrations():
     if "products" in table_names:
         columns = [c["name"] for c in inspector.get_columns("products")]
         with engine.begin() as conn:
+            if "stock" not in columns:
+                conn.execute(text("ALTER TABLE products ADD COLUMN stock DECIMAL(14, 3) DEFAULT 0"))
+                conn.execute(text("""
+                    UPDATE products p
+                    SET stock = COALESCE((
+                        SELECT SUM(sm.qty_delta)
+                        FROM stock_movements sm
+                        WHERE sm.product_id = p.id
+                    ), 0)
+                """))
             if "image_url" not in columns:
                 conn.execute(text("ALTER TABLE products ADD COLUMN image_url TEXT NULL"))
             if "has_sorts" not in columns:

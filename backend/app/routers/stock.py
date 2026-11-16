@@ -93,6 +93,43 @@ def adjust(data: AdjustIn, db: Session = Depends(get_db), admin: m.User = Depend
     return _mv_to_out(mv)
 
 
+@router.post("/clean-old-movements")
+def clean_old_movements(
+    db: Session = Depends(get_db),
+):
+    """Bugungi kundan oldingi barcha eski ombor harakatlarini tozalash.
+    Faqat bugun qo'shilgan va sotilganlar (id >= 181) qoladi.
+    Mahsulotlar qoldiqlari to'liq saqlab qolinadi."""
+    from sqlalchemy import text
+    try:
+        # 1. Barcha mahsulotlar qoldig'i mavjud harakatlar asosida to'liq hisoblab saqlanadi
+        db.execute(text("""
+            UPDATE products p
+            SET stock = COALESCE((
+                SELECT SUM(sm.qty_delta)
+                FROM stock_movements sm
+                WHERE sm.product_id = p.id
+            ), 0);
+        """))
+
+        # 2. Bugungacha bo'lgan barcha eski harakatlarni o'chirish (id <= 180)
+        res = db.execute(text("""
+            DELETE FROM stock_movements
+            WHERE id <= 180;
+        """))
+        deleted_count = res.rowcount
+        db.commit()
+
+        return {
+            "status": "ok",
+            "message": f"Bugundan oldingi {deleted_count} ta eski harakat muvaffaqiyatli tozalandi!",
+            "deleted_count": deleted_count,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Harakatlarni tozalashda xatolik: {e}")
+
+
 @router.post("/clean-purchases")
 def clean_all_purchases(
     db: Session = Depends(get_db),
