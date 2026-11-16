@@ -1792,34 +1792,6 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               fontWeight: FontWeight.w700, fontSize: 12),
                         ),
                       ),
-                      if (widget.sale.status != 'cancelled')
-                        FilledButton.icon(
-                          onPressed: widget.sale.status == 'returned'
-                              ? null
-                              : () {
-                                  Navigator.pop(context);
-                                  ReturnProductDialog.show(
-                                      context, widget.sale);
-                                },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFD97706),
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.grey.shade400,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          icon: const Icon(Icons.assignment_return_rounded,
-                              size: 15),
-                          label: Text(
-                            widget.sale.status == 'returned'
-                                ? 'Qaytarilgan'
-                                : 'Qaytarish (10 kun)',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 12),
-                          ),
-                        ),
                       Builder(
                         builder: (ctx) {
                           final savedPrinterName =
