@@ -158243,7 +158243,7 @@ d=s.ec(q,new A.bjq()).gq(0)
 c=s.ec(q,new A.bjr()).gq(0)
 b=s.ec(q,new A.bjs()).gq(0)
 s=t.s
-return A.l4(A.eJ(new A.bjt(a0,o,j,q,g,i,h,A.a(["Barchasi","Granit","Marmar","Kerama granit","Kafel","Tayyor mahsulot","Xomashyo","Qo\u2018shimcha","Kam qolganlar","Tugaganlar"],s),d,c,b,A.a(["Barchasi","Xaridlar","Sotuvlar",a,"Tuzatishlar"],s),r)),null,new A.bju(o))},
+return A.l4(A.eJ(new A.bjt(a0,o,j,q,g,i,h,A.a(["Barchasi","Marmar","Kerama granit","Kafel","Tayyor mahsulot","Xomashyo","Qo\u2018shimcha","Kam qolganlar","Tugaganlar"],s),d,c,b,A.a(["Barchasi","Xaridlar","Sotuvlar",a,"Tuzatishlar"],s),r)),null,new A.bju(o))},
 $S:124}
 A.bjl.prototype={
 $1(a){return!a.gwf()},
@@ -158351,7 +158351,7 @@ a1=A.bg(a1,g,g,g,A.c(a5).ax.a===B.e?B.A:B.x,g,B.lg,g,g,g,g)
 a.push(A.p(A.a([a3,B.b8,A.cc(A.al(B.lz,A.c(a5).ax.a===B.e?B.A:B.G,g,18),B.bCy,a2.ga9e(),a1)],a4),B.t,B.n,B.r,0,g))
 a.push(B.aX)
 a1=A.a([],a4)
-for(a3=h.w,k=0;k<10;++k){j=a3[k]
+for(a3=h.w,k=0;k<9;++k){j=a3[k]
 if(a2.w===j)s=A.c(a5).ax.a===B.e?B.G:B.an
 else s=A.c(a5).ax.a===B.e?B.a0:B.x
 r=new A.b0(20,20)

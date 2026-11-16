@@ -320,7 +320,6 @@ class _StockScreenState extends State<StockScreen> {
 
           final prodFilters = [
             'Barchasi',
-            'Granit',
             'Marmar',
             'Kerama granit',
             'Kafel',
