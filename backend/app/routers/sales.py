@@ -86,6 +86,117 @@ def debts(db: Session = Depends(get_db), _: m.User = Depends(_sellers)):
     return [to_out(s) for s in db.scalars(stmt).all()]
 
 
+@router.get("/inspect-recent-sales")
+def inspect_recent_sales(db: Session = Depends(get_db)):
+    """Oxirgi savdolarni, ularning mahsulotlarini va ombor harakatlarini ko'rish."""
+    from sqlalchemy import text
+    try:
+        sales_rows = db.execute(text("""
+            SELECT id, created_at, status, total, paid
+            FROM sales
+            ORDER BY id DESC
+            LIMIT 15;
+        """)).mappings().all()
+
+        items_rows = db.execute(text("""
+            SELECT si.id, si.sale_id, si.product_id, si.product_name, si.quantity, si.line_total
+            FROM sale_items si
+            ORDER BY si.id DESC
+            LIMIT 30;
+        """)).mappings().all()
+
+        movements = db.execute(text("""
+            SELECT sm.id, sm.product_id, sm.qty_delta, sm.kind, sm.ref_type, sm.ref_id, sm.created_at
+            FROM stock_movements sm
+            ORDER BY sm.id DESC
+            LIMIT 25;
+        """)).mappings().all()
+
+        return {
+            "status": "ok",
+            "sales": [dict(r) for r in sales_rows],
+            "items": [dict(r) for r in items_rows],
+            "movements": [dict(r) for r in movements],
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Xatolik: {e}")
+
+
+@router.post("/revert-test-sales")
+def revert_test_sales(
+    sale_ids: list[int] | None = None,
+    db: Session = Depends(get_db)
+):
+    """Sinov uchun sotilgan mahsulotlarni ombor qoldig'iga qaytarish va savdoni bekor qilish / tozalash."""
+    from sqlalchemy import text
+    try:
+        # Agar sale_ids berilmagan bo'lsa, 49 dan keyingi barcha savdolarni (test savdolar) olamiz
+        if not sale_ids:
+            rows = db.execute(text("SELECT id FROM sales WHERE id > 49 ORDER BY id DESC;")).fetchall()
+            target_ids = [r[0] for r in rows]
+        else:
+            target_ids = list(sale_ids)
+
+        if not target_ids:
+            return {"status": "ok", "message": "Qaytariladigan sinov savdolari topilmadi (id > 49 yo'q).", "reverted_sales": []}
+
+        reverted_info = []
+        for sid in target_ids:
+            # 1. Ushbu savdodagi mahsulotlarni aniqlash
+            items = db.execute(text("""
+                SELECT product_id, quantity, product_name
+                FROM sale_items
+                WHERE sale_id = :sid;
+            """), {"sid": sid}).mappings().all()
+
+            for it in items:
+                pid = it["product_id"]
+                qty = it["quantity"]
+                pname = it["product_name"]
+                # Mahsulot qoldig'ini tiklash
+                db.execute(text("""
+                    UPDATE products
+                    SET stock = COALESCE(stock, 0) + :qty
+                    WHERE id = :pid;
+                """), {"qty": qty, "pid": pid})
+                reverted_info.append(f"Chek #{sid}: {pname} (id={pid}) +{qty} omborga qaytarildi")
+
+            # 2. Savdoga tegishli ombor chiqim harakatlarini o'chirish
+            db.execute(text("""
+                DELETE FROM stock_movements
+                WHERE ref_type = 'sale' AND ref_id = :sid;
+            """), {"sid": sid})
+
+            # 3. Savdoga tegishli to'lovlarni o'chirish
+            db.execute(text("""
+                DELETE FROM payments
+                WHERE sale_id = :sid;
+            """), {"sid": sid})
+
+            # 4. Savdo elementlarini o'chirish
+            db.execute(text("""
+                DELETE FROM sale_items
+                WHERE sale_id = :sid;
+            """), {"sid": sid})
+
+            # 5. Savdoning o'zini o'chirish (yoki bekor qilish)
+            db.execute(text("""
+                DELETE FROM sales
+                WHERE id = :sid;
+            """), {"sid": sid})
+
+        db.commit()
+        return {
+            "status": "ok",
+            "message": f"{len(target_ids)} ta sinov savdosi bekor qilindi va mahsulotlar ombor qoldig'iga to'liq qaytarildi!",
+            "reverted_sales": target_ids,
+            "details": reverted_info
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Sinov savdolarini qaytarishda xatolik: {e}")
+
+
 @router.get("/{sale_id}", response_model=SaleOut)
 def get_sale(sale_id: int, db: Session = Depends(get_db), user: m.User = Depends(_sellers)):
     stmt = (
@@ -244,117 +355,6 @@ def restore_sale_49(db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(500, f"Chekni qaytarishda xatolik: {e}")
-
-
-@router.get("/inspect-recent-sales")
-def inspect_recent_sales(db: Session = Depends(get_db)):
-    """Oxirgi savdolarni, ularning mahsulotlarini va ombor harakatlarini ko'rish."""
-    from sqlalchemy import text
-    try:
-        sales_rows = db.execute(text("""
-            SELECT id, created_at, status, total, paid
-            FROM sales
-            ORDER BY id DESC
-            LIMIT 15;
-        """)).mappings().all()
-
-        items_rows = db.execute(text("""
-            SELECT si.id, si.sale_id, si.product_id, si.product_name, si.quantity, si.line_total
-            FROM sale_items si
-            ORDER BY si.id DESC
-            LIMIT 30;
-        """)).mappings().all()
-
-        movements = db.execute(text("""
-            SELECT sm.id, sm.product_id, sm.qty_delta, sm.kind, sm.ref_type, sm.ref_id, sm.created_at
-            FROM stock_movements sm
-            ORDER BY sm.id DESC
-            LIMIT 25;
-        """)).mappings().all()
-
-        return {
-            "status": "ok",
-            "sales": [dict(r) for r in sales_rows],
-            "items": [dict(r) for r in items_rows],
-            "movements": [dict(r) for r in movements],
-        }
-    except Exception as e:
-        raise HTTPException(500, f"Xatolik: {e}")
-
-
-@router.post("/revert-test-sales")
-def revert_test_sales(
-    sale_ids: list[int] | None = None,
-    db: Session = Depends(get_db)
-):
-    """Sinov uchun sotilgan mahsulotlarni ombor qoldig'iga qaytarish va savdoni bekor qilish / tozalash."""
-    from sqlalchemy import text
-    try:
-        # Agar sale_ids berilmagan bo'lsa, 49 dan keyingi barcha savdolarni (test savdolar) olamiz
-        if not sale_ids:
-            rows = db.execute(text("SELECT id FROM sales WHERE id > 49 ORDER BY id DESC;")).fetchall()
-            target_ids = [r[0] for r in rows]
-        else:
-            target_ids = list(sale_ids)
-
-        if not target_ids:
-            return {"status": "ok", "message": "Qaytariladigan sinov savdolari topilmadi (id > 49 yo'q).", "reverted_sales": []}
-
-        reverted_info = []
-        for sid in target_ids:
-            # 1. Ushbu savdodagi mahsulotlarni aniqlash
-            items = db.execute(text("""
-                SELECT product_id, quantity, product_name
-                FROM sale_items
-                WHERE sale_id = :sid;
-            """), {"sid": sid}).mappings().all()
-
-            for it in items:
-                pid = it["product_id"]
-                qty = it["quantity"]
-                pname = it["product_name"]
-                # Mahsulot qoldig'ini tiklash
-                db.execute(text("""
-                    UPDATE products
-                    SET stock = COALESCE(stock, 0) + :qty
-                    WHERE id = :pid;
-                """), {"qty": qty, "pid": pid})
-                reverted_info.append(f"Chek #{sid}: {pname} (id={pid}) +{qty} omborga qaytarildi")
-
-            # 2. Savdoga tegishli ombor chiqim harakatlarini o'chirish
-            db.execute(text("""
-                DELETE FROM stock_movements
-                WHERE ref_type = 'sale' AND ref_id = :sid;
-            """), {"sid": sid})
-
-            # 3. Savdoga tegishli to'lovlarni o'chirish
-            db.execute(text("""
-                DELETE FROM payments
-                WHERE sale_id = :sid;
-            """), {"sid": sid})
-
-            # 4. Savdo elementlarini o'chirish
-            db.execute(text("""
-                DELETE FROM sale_items
-                WHERE sale_id = :sid;
-            """), {"sid": sid})
-
-            # 5. Savdoning o'zini o'chirish (yoki bekor qilish)
-            db.execute(text("""
-                DELETE FROM sales
-                WHERE id = :sid;
-            """), {"sid": sid})
-
-        db.commit()
-        return {
-            "status": "ok",
-            "message": f"{len(target_ids)} ta sinov savdosi bekor qilindi va mahsulotlar ombor qoldig'iga to'liq qaytarildi!",
-            "reverted_sales": target_ids,
-            "details": reverted_info
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(500, f"Sinov savdolarini qaytarishda xatolik: {e}")
 
 
 @router.post("/reset-all-data")
