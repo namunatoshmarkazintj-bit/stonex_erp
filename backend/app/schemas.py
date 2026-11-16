@@ -287,6 +287,8 @@ class SaleIn(BaseModel):
     status: str = "completed"  # completed | order
     payment_method: str = "cash"
     note: str | None = None
+    created_at: datetime | None = None
+    offline_id: str | None = None
 
 
 class SaleReturnItemIn(BaseModel):

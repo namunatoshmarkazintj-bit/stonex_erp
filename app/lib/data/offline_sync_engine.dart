@@ -150,9 +150,7 @@ class OfflineSyncEngine extends ChangeNotifier {
       for (final salePayload in pending) {
         final offlineId = salePayload['offline_id'] as String?;
         try {
-          // Serverga jo'natish uchun tozalangan nusxa
           final sendData = Map<String, dynamic>.from(salePayload);
-          sendData.remove('offline_id');
 
           await _api!.post('/sales', body: sendData);
 

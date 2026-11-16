@@ -248,12 +248,27 @@ class ApiSalesRepository implements SalesRepository {
       if (customerPhotoUrl != null && customerPhotoUrl.isNotEmpty) 'customer_photo_url': customerPhotoUrl,
     };
 
-    try {
-      final j = await _api.post('/sales', body: payload);
-      return SaleResult.fromJson(j as Map<String, dynamic>);
-    } catch (_) {
-      // Oflayn rejim: internet uzilganda savdoni lokal navbatga saqlash
-      final total = lines.fold<double>(0.0, (sum, l) => sum + l.lineTotal);
+    // Internet holati tekshiruvi: agar onlayn bo'lsa to'g'ridan-to'g'ri serverga yuborish
+    final isKnownOffline = !OfflineSyncEngine.instance.isOnline;
+
+    if (!isKnownOffline) {
+      try {
+        final j = await _api.post('/sales', body: payload);
+        // Onlayn rejimda muvaffaqiyatli saqlanganda to'g'ridan-to'g'ri qaytariladi
+        return SaleResult.fromJson(j as Map<String, dynamic>);
+      } on ApiException catch (e) {
+        // 4xx xatoliklar (masalan: 400 mijoz talab qilinishi yoki 422 forma xatosi) bu internet uzilishi emas,
+        // ma'lumotlar aralashib ketmasligi uchun ushbu xatolik to'g'ridan-to'g'ri foydalanuvchiga ko'rsatiladi
+        if (e.status != null && e.status! >= 400 && e.status! < 500) {
+          rethrow;
+        }
+      } catch (_) {
+        // Tarmoq uzilgan
+      }
+    }
+
+    // Oflayn rejim: faqat internet uzilganda savdoni lokal navbatga xavfsiz saqlash
+    final total = lines.fold<double>(0.0, (sum, l) => sum + l.lineTotal);
       final debt = (total - paidAmount).clamp(0.0, double.infinity);
       final offlineId = DateTime.now().millisecondsSinceEpoch % 1000000;
 
@@ -298,7 +313,6 @@ class ApiSalesRepository implements SalesRepository {
             .toList(),
         paymentMethod: paymentMethod,
       );
-    }
   }
 
   @override

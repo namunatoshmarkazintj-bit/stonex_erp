@@ -160,6 +160,22 @@ def create_sale(db: Session, cashier: m.User, data: SaleIn) -> m.Sale:
     if (debt > 0 or is_order) and customer_id is None:
         raise HTTPException(400, "Buyurtma yoki nasiya uchun mijoz ko'rsatilishi shart")
 
+    # Oflayn takrorlanishdan himoya (Idempotent sync)
+    if getattr(data, 'offline_id', None):
+        existing_offline = db.scalar(
+            select(m.Sale).where(m.Sale.note.like(f"%[{data.offline_id}]%"))
+        )
+        if existing_offline:
+            return existing_offline
+
+    final_note = data.note
+    if getattr(data, 'offline_id', None):
+        tag = f"[{data.offline_id}]"
+        if not final_note:
+            final_note = tag
+        elif tag not in final_note:
+            final_note = f"{final_note} {tag}"
+
     sale_status = "order" if is_order else "completed"
     sale = m.Sale(
         customer_id=customer_id,
@@ -171,7 +187,8 @@ def create_sale(db: Session, cashier: m.User, data: SaleIn) -> m.Sale:
         paid_uzs=q2(data.paid_uzs) if data.paid_uzs is not None else paid,
         paid_usd=q2(data.paid_usd) if data.paid_usd is not None else Decimal(0),
         status=sale_status,
-        note=data.note,
+        note=final_note,
+        created_at=data.created_at if (hasattr(data, 'created_at') and data.created_at) else m.get_server_now(),
     )
     db.add(sale)
     db.flush()
