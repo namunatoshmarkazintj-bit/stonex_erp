@@ -98,6 +98,7 @@ class _PosScreenState extends State<PosScreen> {
 
   static const _categories = [
     'Barchasi',
+    'Granit',
     'Marmar',
     'Kerama granit',
     'Kafel',

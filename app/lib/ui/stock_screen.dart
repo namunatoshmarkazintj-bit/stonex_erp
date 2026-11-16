@@ -272,11 +272,17 @@ class _StockScreenState extends State<StockScreen> {
           } else if (_selectedProdCategory == 'Tugaganlar') {
             displayProducts = displayProducts.where((p) => p.stock <= 0).toList();
           } else if (_selectedProdCategory != 'Barchasi') {
-            displayProducts = displayProducts
-                .where((p) =>
-                    (p.category ?? '').toLowerCase() ==
-                    _selectedProdCategory.toLowerCase())
-                .toList();
+            final sel = _selectedProdCategory.toLowerCase();
+            displayProducts = displayProducts.where((p) {
+              final cat = (p.category ?? '').toLowerCase();
+              if (sel == 'kerama granit' || sel == 'keramogranit') {
+                return cat == 'kerama granit' || cat == 'keramogranit' || cat.contains('keram');
+              }
+              if (sel == 'granit') {
+                return cat.contains('granit') && !cat.contains('keram');
+              }
+              return cat == sel;
+            }).toList();
           }
 
           if (q.isNotEmpty) {
@@ -314,8 +320,12 @@ class _StockScreenState extends State<StockScreen> {
 
           final prodFilters = [
             'Barchasi',
+            'Granit',
             'Marmar',
-            'Keramogranit',
+            'Kerama granit',
+            'Kafel',
+            'Tayyor mahsulot',
+            'Xomashyo',
             'Qo‘shimcha',
             'Kam qolganlar',
             'Tugaganlar',
