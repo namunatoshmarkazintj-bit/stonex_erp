@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from .. import models as m
 from .. import roles
 from ..database import get_db
-from ..deps import require_roles
+from ..deps import get_current_user, require_roles
 from ..schemas import AdjustIn, MovementOut, PurchaseIn
 from ..services.sales import to_base_qty
 from ..services.stock import add_movement, get_stock
@@ -34,8 +34,8 @@ def _mv_to_out(mv: m.StockMovement) -> MovementOut:
 
 
 @router.get("/movements", response_model=list[MovementOut])
-def movements(product_id: int | None = None, limit: int = 200, db: Session = Depends(get_db),
-              _: m.User = Depends(_stock_access)):
+def movements(product_id: int | None = None, limit: int = 500, db: Session = Depends(get_db),
+              _: m.User = Depends(get_current_user)):
     stmt = (
         select(m.StockMovement)
         .options(selectinload(m.StockMovement.product), selectinload(m.StockMovement.user))

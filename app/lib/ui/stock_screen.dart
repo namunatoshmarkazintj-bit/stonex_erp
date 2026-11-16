@@ -552,7 +552,7 @@ class _StockScreenState extends State<StockScreen> {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: displayProducts.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
-                          itemBuilder: (_, i) => _buildProductStockCard(context, displayProducts[i]),
+                          itemBuilder: (_, i) => _buildProductStockCard(context, displayProducts[i], allMovements),
                         ),
                     ] else ...[
                       // Harakatlar tarixi ko'rinishi
@@ -873,10 +873,11 @@ class _StockScreenState extends State<StockScreen> {
     );
   }
 
-  Widget _buildProductStockCard(BuildContext context, Product p) {
+  Widget _buildProductStockCard(BuildContext context, Product p, List<StockMovementRecord> allMovements) {
     final minStock = p.minStock ?? 15;
     final isOut = p.stock <= 0;
     final isLow = p.stock > 0 && p.stock <= minStock;
+    final prodMovements = allMovements.where((m) => m.productId == p.id).toList();
 
     final Color statusColor = isOut
         ? AppColors.danger
@@ -890,117 +891,341 @@ class _StockScreenState extends State<StockScreen> {
         ? '${qty(p.tileLength!)} × ${qty(p.tileWidth!)} sm'
         : null;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.cardColor,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isOut
-              ? AppColors.danger.withValues(alpha: 0.3)
-              : (isLow ? const Color(0xFFC77700).withValues(alpha: 0.3) : context.borderColor),
-          width: isOut || isLow ? 1.4 : 1.0,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.layers_rounded, color: statusColor, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        p.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(color: statusColor, fontWeight: FontWeight.w800, fontSize: 10),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: context.isDark ? const Color(0xFF22262B) : const Color(0xFFE2E8F0),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        p.category ?? 'Material',
-                        style: TextStyle(color: context.mutedColor, fontSize: 10.5, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    if (sizeStr != null)
-                      Text(
-                        sizeStr,
-                        style: TextStyle(color: context.mutedColor, fontSize: 11),
-                      ),
-                    Text(
-                      'Sotuv: ${money(p.price)}/${p.unit}',
-                      style: TextStyle(color: context.mutedColor, fontSize: 11, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ],
+        onTap: () => _showProductMovementsDialog(p, prodMovements),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isOut
+                  ? AppColors.danger.withValues(alpha: 0.3)
+                  : (isLow ? const Color(0xFFC77700).withValues(alpha: 0.3) : context.borderColor),
+              width: isOut || isLow ? 1.4 : 1.0,
             ),
           ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
             children: [
-              Text(
-                '${qty(p.stock)} ${p.unit}',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: statusColor,
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.layers_rounded, color: statusColor, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            p.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            statusLabel,
+                            style: TextStyle(color: statusColor, fontWeight: FontWeight.w800, fontSize: 10),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: context.isDark ? const Color(0xFF22262B) : const Color(0xFFE2E8F0),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            p.category ?? 'Material',
+                            style: TextStyle(color: context.mutedColor, fontSize: 10.5, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        if (sizeStr != null)
+                          Text(
+                            sizeStr,
+                            style: TextStyle(color: context.mutedColor, fontSize: 11),
+                          ),
+                        Text(
+                          'Sotuv: ${money(p.price)}/${p.unit}',
+                          style: TextStyle(color: context.mutedColor, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              OutlinedButton.icon(
-                onPressed: () => _adjustDialog(p),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  visualDensity: VisualDensity.compact,
-                  side: BorderSide(color: context.borderColor),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                icon: const Icon(Icons.tune_rounded, size: 14),
-                label: const Text('Tuzatish', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${qty(p.stock)} ${p.unit}',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: statusColor,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => _showProductMovementsDialog(p, prodMovements),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          visualDensity: VisualDensity.compact,
+                          side: BorderSide(color: context.borderColor),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.history_rounded, size: 14),
+                        label: const Text('Tarix', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                      ),
+                      const SizedBox(width: 6),
+                      OutlinedButton.icon(
+                        onPressed: () => _adjustDialog(p),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          visualDensity: VisualDensity.compact,
+                          side: BorderSide(color: context.borderColor),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.tune_rounded, size: 14),
+                        label: const Text('Tuzatish', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  void _showProductMovementsDialog(Product p, List<StockMovementRecord> movements) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final sorted = List<StockMovementRecord>.from(movements)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        final inTotal = sorted.where((m) => m.qtyDelta > 0).fold<double>(0, (sum, m) => sum + m.qtyDelta);
+        final outTotal = sorted.where((m) => m.qtyDelta < 0).fold<double>(0, (sum, m) => sum + m.qtyDelta.abs());
+
+        return Container(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
+          decoration: BoxDecoration(
+            color: ctx.dialogBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: ctx.mutedColor.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.neonLime.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.history_rounded, color: AppColors.neonLime, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p.name,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Joriy qoldiq: ${qty(p.stock)} ${p.unit}  •  Kirim: +${qty(inTotal)}  •  Chiqim: -${qty(outTotal)}',
+                            style: TextStyle(color: ctx.subtextColor, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: sorted.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.history_toggle_off_rounded, size: 48, color: ctx.mutedColor.withValues(alpha: 0.4)),
+                            const SizedBox(height: 10),
+                            Text('Ushbu mahsulot bo‘yicha harakatlar topilmadi', style: TextStyle(color: ctx.mutedColor, fontSize: 14)),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: sorted.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final m = sorted[i];
+                          final isPos = m.qtyDelta > 0;
+                          String kindLabel;
+                          Color kindColor;
+                          IconData kindIcon;
+
+                          switch (m.kind) {
+                            case 'purchase':
+                              kindLabel = 'Xarid kirimi';
+                              kindColor = AppColors.green;
+                              kindIcon = Icons.input_rounded;
+                              break;
+                            case 'sale':
+                              kindLabel = 'Sotuv chiqimi';
+                              kindColor = const Color(0xFFC77700);
+                              kindIcon = Icons.output_rounded;
+                              break;
+                            case 'production':
+                              kindLabel = 'Ishlab chiqarish';
+                              kindColor = const Color(0xFF245580);
+                              kindIcon = Icons.precision_manufacturing_rounded;
+                              break;
+                            case 'adjustment':
+                              kindLabel = 'Tuzatish';
+                              kindColor = const Color(0xFF6B48A8);
+                              kindIcon = Icons.tune_rounded;
+                              break;
+                            default:
+                              kindLabel = 'Boshlang‘ich';
+                              kindColor = AppColors.muted;
+                              kindIcon = Icons.flag_rounded;
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: ctx.cardColor,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: ctx.borderColor),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: kindColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(kindIcon, color: kindColor, size: 18),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: kindColor.withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              kindLabel,
+                                              style: TextStyle(color: kindColor, fontWeight: FontWeight.w800, fontSize: 10),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            formatDateTime(m.createdAt),
+                                            style: TextStyle(color: ctx.mutedColor, fontSize: 11),
+                                          ),
+                                        ],
+                                      ),
+                                      if (m.note != null && m.note!.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          m.note!,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(fontSize: 12, color: ctx.inkColor, fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                      if (m.createdByName != null) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Mas’ul: ${m.createdByName}',
+                                          style: TextStyle(fontSize: 10.5, color: ctx.mutedColor),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${isPos ? '+' : ''}${qty(m.qtyDelta)} ${p.unit}',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: isPos ? AppColors.green : AppColors.danger,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
