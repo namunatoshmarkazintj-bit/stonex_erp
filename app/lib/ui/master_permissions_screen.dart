@@ -20,6 +20,7 @@ class _MasterPermissionsScreenState extends State<MasterPermissionsScreen> {
 
   final List<Map<String, String>> _roles = [
     {'code': 'admin', 'label': 'Admin (Xo‘jayin)', 'desc': 'Do‘kon / korxona egasi hisobi'},
+    {'code': 'boshliq', 'label': 'Boshliq', 'desc': 'Barcha ma’lumotlarni ko‘rish va kassa savdosi'},
     {'code': 'kassir', 'label': 'Kassir', 'desc': 'Kassa va savdo xodimi'},
     {'code': 'ish_boshqaruvchi', 'label': 'Ish boshqaruvchi', 'desc': 'Sex ustasi, ombor va sex nazorati'},
     {'code': 'haydovchi', 'label': 'Haydovchi', 'desc': 'Yetkazib berish xodimi'},

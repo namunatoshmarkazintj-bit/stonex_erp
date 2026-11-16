@@ -20,7 +20,8 @@ DateTime? parseDate(dynamic v) {
 
 enum Role {
   master('master', 'Tizim Muhandisi'),
-  admin('admin', 'Admin'),
+  admin('admin', 'Admin (Xo‘jayin)'),
+  boshliq('boshliq', 'Boshliq'),
   kassir('kassir', 'Kassir'),
   ishBoshqaruvchi('ish_boshqaruvchi', 'Ish boshqaruvchi'),
   ishchi('ishchi', 'Ishchi'),
@@ -29,6 +30,10 @@ enum Role {
   const Role(this.code, this.label);
   final String code;
   final String label;
+
+  /// Boshliq roli: hamma joyga kira oladi, barcha ma'lumotlarni o'qiydi,
+  /// lekin faqat kassa amaliyotlari (sotish va buyurtma saqlash) ishlaydi.
+  bool get isReadOnlyManager => this == Role.boshliq;
 
   static Role fromCode(String c) =>
       Role.values.firstWhere((r) => r.code == c, orElse: () => Role.ishchi);

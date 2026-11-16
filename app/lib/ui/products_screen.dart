@@ -19,6 +19,7 @@ import '../data/api_client.dart';
 import '../data/local_image_store.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
+import '../state/auth_controller.dart';
 import '../state/cart_controller.dart';
 import '../state/currency_controller.dart';
 import 'common.dart';
@@ -61,6 +62,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Future<void> _edit([Product? p]) async {
+    if (context.read<AuthController>().user?.role == Role.boshliq) return;
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => ProductDialog(repo: _repo, product: p),
@@ -133,13 +135,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final curUser = context.watch<AuthController>().user;
+    final isHead = curUser?.role == Role.boshliq;
+
     return Scaffold(
       backgroundColor: context.scaffoldBg,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _edit(),
-        icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.neonLime),
-        label: const Text('Mahsulot qo‘shish'),
-      ),
+      floatingActionButton: isHead
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _edit(),
+              icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.neonLime),
+              label: const Text('Mahsulot qo‘shish'),
+            ),
       body: FutureBuilder<List<Product>>(
         future: _future,
         builder: (context, snap) {
@@ -369,33 +376,35 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        if (isExtraSmall)
-                          Tooltip(
-                            message: 'Mahsulot qo‘shish',
-                            child: FilledButton(
+                        if (!isHead) ...[
+                          const SizedBox(width: 8),
+                          if (isExtraSmall)
+                            Tooltip(
+                              message: 'Mahsulot qo‘shish',
+                              child: FilledButton(
+                                onPressed: () => _edit(),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
+                                  foregroundColor: context.isDark ? AppColors.ink : Colors.white,
+                                  padding: const EdgeInsets.all(12),
+                                  shape: const CircleBorder(),
+                                  minimumSize: const Size(44, 44),
+                                ),
+                                child: Icon(Icons.add, size: 20, color: context.isDark ? AppColors.ink : AppColors.neonLime),
+                              ),
+                            )
+                          else
+                            FilledButton.icon(
                               onPressed: () => _edit(),
                               style: FilledButton.styleFrom(
                                 backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
                                 foregroundColor: context.isDark ? AppColors.ink : Colors.white,
-                                padding: const EdgeInsets.all(12),
-                                shape: const CircleBorder(),
-                                minimumSize: const Size(44, 44),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               ),
-                              child: Icon(Icons.add, size: 20, color: context.isDark ? AppColors.ink : AppColors.neonLime),
+                              icon: Icon(Icons.add, size: 18, color: context.isDark ? AppColors.ink : AppColors.neonLime),
+                              label: const Text('Qo‘shish', style: TextStyle(fontWeight: FontWeight.w700)),
                             ),
-                          )
-                        else
-                          FilledButton.icon(
-                            onPressed: () => _edit(),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
-                              foregroundColor: context.isDark ? AppColors.ink : Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            icon: Icon(Icons.add, size: 18, color: context.isDark ? AppColors.ink : AppColors.neonLime),
-                            label: const Text('Qo‘shish', style: TextStyle(fontWeight: FontWeight.w700)),
-                          ),
+                        ],
                       ],
                     ),
 
@@ -592,24 +601,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                             tooltip: 'QR Yorliq',
                                             onPressed: () => _showQrLabel(p),
                                           ),
-                                          const SizedBox(width: 4),
-                                          IconButton(
-                                            visualDensity: VisualDensity.compact,
-                                            padding: const EdgeInsets.all(4),
-                                            constraints: const BoxConstraints(),
-                                            icon: const Icon(Icons.edit_outlined, size: 18),
-                                            tooltip: 'Tahrirlash',
-                                            onPressed: () => _edit(p),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          IconButton(
-                                            visualDensity: VisualDensity.compact,
-                                            padding: const EdgeInsets.all(4),
-                                            constraints: const BoxConstraints(),
-                                            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.danger),
-                                            tooltip: 'O‘chirish',
-                                            onPressed: () => _delete(p),
-                                          ),
+                                          if (!isHead) ...[
+                                            const SizedBox(width: 4),
+                                            IconButton(
+                                              visualDensity: VisualDensity.compact,
+                                              padding: const EdgeInsets.all(4),
+                                              constraints: const BoxConstraints(),
+                                              icon: const Icon(Icons.edit_outlined, size: 18),
+                                              tooltip: 'Tahrirlash',
+                                              onPressed: () => _edit(p),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            IconButton(
+                                              visualDensity: VisualDensity.compact,
+                                              padding: const EdgeInsets.all(4),
+                                              constraints: const BoxConstraints(),
+                                              icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.danger),
+                                              tooltip: 'O‘chirish',
+                                              onPressed: () => _delete(p),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ],
@@ -877,16 +888,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       tooltip: 'QR Yorliq (Chop etish)',
                                       onPressed: () => _showQrLabel(p),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 19),
-                                      tooltip: 'Tahrirlash',
-                                      onPressed: () => _edit(p),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline_rounded, size: 19, color: AppColors.danger),
-                                      tooltip: 'O‘chirish',
-                                      onPressed: () => _delete(p),
-                                    ),
+                                    if (!isHead) ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, size: 19),
+                                        tooltip: 'Tahrirlash',
+                                        onPressed: () => _edit(p),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline_rounded, size: 19, color: AppColors.danger),
+                                        tooltip: 'O‘chirish',
+                                        onPressed: () => _delete(p),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ],

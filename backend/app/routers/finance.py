@@ -28,7 +28,7 @@ def _utcnow():
     return m.get_server_now()
 
 router = APIRouter(tags=["finance"])
-_admin_or_cashier = require_roles(roles.ADMIN, roles.CASHIER)
+_admin_or_cashier = require_roles(roles.ADMIN, roles.HEAD, roles.CASHIER)
 _admin = require_roles(roles.ADMIN)
 
 

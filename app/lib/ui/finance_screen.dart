@@ -10,6 +10,7 @@ import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
+import '../state/auth_controller.dart';
 import 'common.dart';
 
 /// Moliya va Kirim-Chiqimlar bo'limi
@@ -313,6 +314,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     String? initialType,
     bool autoPayAll = false,
   }) async {
+    if (context.read<AuthController>().user?.role == Role.boshliq) return;
     final ok = await FinanceTransactionDialog.show(
       context,
       initialCategory: initialCategory,
@@ -436,6 +438,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ],
           );
 
+          final isHead = context.watch<AuthController>().user?.role == Role.boshliq;
           final actions = [
             OutlinedButton.icon(
               onPressed: _exportExcel,
@@ -448,31 +451,33 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            FilledButton.icon(
-              onPressed: () => _openAddTransactionDialog(
-                initialCategory: 'Ish haqi / Avans',
-                initialType: 'expense',
+            if (!isHead) ...[
+              FilledButton.icon(
+                onPressed: () => _openAddTransactionDialog(
+                  initialCategory: 'Ish haqi / Avans',
+                  initialType: 'expense',
+                ),
+                icon: const Icon(Icons.payments_rounded, size: 17),
+                label: const Text('Oylik to‘lash', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-              icon: const Icon(Icons.payments_rounded, size: 17),
-              label: const Text('Oylik to‘lash', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              FilledButton.icon(
+                onPressed: () => _openAddTransactionDialog(),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 17),
+                label: const Text('+ Chiqim / Kirim', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: isDark ? AppColors.neonLime : AppColors.darkCard,
+                  foregroundColor: isDark ? AppColors.ink : Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-            ),
-            FilledButton.icon(
-              onPressed: () => _openAddTransactionDialog(),
-              icon: const Icon(Icons.add_circle_outline_rounded, size: 17),
-              label: const Text('+ Chiqim / Kirim', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-              style: FilledButton.styleFrom(
-                backgroundColor: isDark ? AppColors.neonLime : AppColors.darkCard,
-                foregroundColor: isDark ? AppColors.ink : Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
+            ],
           ];
 
           if (isNarrow) {

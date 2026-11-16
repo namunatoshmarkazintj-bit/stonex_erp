@@ -14,7 +14,7 @@ from ..deps import require_roles
 from ..schemas import CustomerIn, CustomerOut
 
 router = APIRouter(prefix="/customers", tags=["customers"])
-_sellers = require_roles(roles.ADMIN, roles.CASHIER)
+_sellers = require_roles(roles.ADMIN, roles.HEAD, roles.CASHIER)
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "customers"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

@@ -458,7 +458,7 @@ def get_salary_report(
     month: str = Query(..., description="YYYY-MM formati"),
     total_working_days: int = Query(26, ge=1, le=31),
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(roles.ADMIN)),
+    _: User = Depends(require_roles(roles.ADMIN, roles.HEAD)),
 ):
     # Xo'jayinga (admin) oylik to'lanmaydi - ro'yxatdan chiqariladi!
     users = db.scalars(

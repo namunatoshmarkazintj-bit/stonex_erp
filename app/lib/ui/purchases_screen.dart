@@ -5,6 +5,7 @@ import '../core/format.dart';
 import '../core/theme.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
+import '../state/auth_controller.dart';
 import 'common.dart';
 
 class PurchasesScreen extends StatefulWidget {
@@ -930,17 +931,19 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                           ),
                           const SizedBox(width: 8),
                         ],
-                        FilledButton.icon(
-                          onPressed: () => _openNewPurchaseDialog(products),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.neonLime,
-                            foregroundColor: AppColors.ink,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        if (context.watch<AuthController>().user?.role != Role.boshliq) ...[
+                          FilledButton.icon(
+                            onPressed: () => _openNewPurchaseDialog(products),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.neonLime,
+                              foregroundColor: AppColors.ink,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+                            label: const Text('Yangi Xarid Kirimi', style: TextStyle(fontWeight: FontWeight.w800)),
                           ),
-                          icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                          label: const Text('Yangi Xarid Kirimi', style: TextStyle(fontWeight: FontWeight.w800)),
-                        ),
+                        ],
                       ],
                     ),
                   ],

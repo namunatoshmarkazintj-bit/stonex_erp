@@ -51,6 +51,7 @@ class _Dest {
 
 List<_Dest> _destinationsFor(Role role,
     {void Function(int index)? onNavigate, AppUser? currentUser}) {
+  final isHead = role == Role.boshliq;
   final dash = _Dest('Asosiy oyna', Icons.grid_view_rounded,
       () => DashboardScreen(onNavigate: onNavigate),
       actionLabel: '+ Yangi Savdo');
@@ -60,7 +61,7 @@ List<_Dest> _destinationsFor(Role role,
     'Buyurtmalar',
     Icons.assignment_rounded,
     () => OrdersScreen(onNewOrder: () {
-      final posIdx = role == Role.admin ? 1 : 0;
+      final posIdx = (role == Role.admin || role == Role.boshliq) ? 1 : 0;
       onNavigate?.call(posIdx);
     }),
     actionLabel: '+ Yangi Buyurtma',
@@ -69,7 +70,9 @@ List<_Dest> _destinationsFor(Role role,
     role == Role.haydovchi ? 'Mening Yetkazmalarim' : 'Yetkazib berish',
     Icons.local_shipping_rounded,
     () => DeliveriesScreen(currentUser: currentUser),
-    actionLabel: role == Role.haydovchi ? 'Mening yetkazmalarim' : '+ Yangi Yetkazish',
+    actionLabel: role == Role.haydovchi
+        ? 'Mening yetkazmalarim'
+        : (isHead ? '' : '+ Yangi Yetkazish'),
   );
   const salesHistory = _Dest(
     'Savdolar',
@@ -77,32 +80,33 @@ List<_Dest> _destinationsFor(Role role,
     SalesHistoryScreen.new,
     actionLabel: 'Savdolar jurnali',
   );
-  const customers = _Dest(
+  final customers = _Dest(
     'Mijozlar',
     Icons.people_alt_rounded,
     CustomersScreen.new,
-    actionLabel: '+ Yangi Mijoz',
+    actionLabel: isHead ? '' : '+ Yangi Mijoz',
   );
   const debts = _Dest(
       'Nasiyalar', Icons.pending_actions_rounded, DebtsScreen.new,
       actionLabel: 'Qarz undirish');
-  const purchases = _Dest(
+  final purchases = _Dest(
     'Xaridlar',
     Icons.shopping_bag_rounded,
     PurchasesScreen.new,
-    actionLabel: '+ Yangi Xarid',
+    actionLabel: isHead ? '' : '+ Yangi Xarid',
   );
-  const finance = _Dest(
+  final finance = _Dest(
     'Moliya',
     Icons.account_balance_wallet_rounded,
     FinanceScreen.new,
-    actionLabel: '+ Chiqim / Kirim',
+    actionLabel: isHead ? '' : '+ Chiqim / Kirim',
   );
-  const products = _Dest(
+  final products = _Dest(
       'Mahsulotlar', Icons.inventory_2_rounded, ProductsScreen.new,
-      actionLabel: '+ Mahsulot');
-  final stock = _Dest('Ombor', Icons.warehouse_rounded, () => StockScreen(currentUser: currentUser),
-      actionLabel: '+ Xarid kirimi');
+      actionLabel: isHead ? '' : '+ Mahsulot');
+  final stock = _Dest('Ombor', Icons.warehouse_rounded,
+      () => StockScreen(currentUser: currentUser),
+      actionLabel: isHead ? '' : '+ Xarid kirimi');
   final isManager = role == Role.admin || role == Role.ishBoshqaruvchi;
   final prod = _Dest(
     'Ishlab chiqarish',
@@ -110,8 +114,8 @@ List<_Dest> _destinationsFor(Role role,
     ProductionScreen.new,
     actionLabel: isManager ? '+ Topshiriq' : '',
   );
-  const staff = _Dest('Xodimlar', Icons.badge_rounded, UsersScreen.new,
-      isGeneral: true, actionLabel: '+ Xodim');
+  final staff = _Dest('Xodimlar', Icons.badge_rounded, UsersScreen.new,
+      isGeneral: true, actionLabel: isHead ? '' : '+ Xodim');
   final cams = _Dest(
       'Kameralar',
       Icons.videocam_rounded,

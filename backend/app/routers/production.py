@@ -14,7 +14,7 @@ from ..services.stock import add_movement
 from ..units import q3
 
 router = APIRouter(prefix="/production", tags=["production"])
-_prod = require_roles(roles.ADMIN, roles.WORKER, roles.FOREMAN)
+_prod = require_roles(roles.ADMIN, roles.HEAD, roles.WORKER, roles.FOREMAN)
 
 
 def to_out(t: m.ProductionTask) -> TaskOut:

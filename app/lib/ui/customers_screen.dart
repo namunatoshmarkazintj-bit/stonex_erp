@@ -16,6 +16,7 @@ import '../core/theme.dart';
 import '../data/local_image_store.dart';
 import '../data/repositories.dart';
 import '../domain/models.dart';
+import '../state/auth_controller.dart';
 import 'camera_capture_dialog.dart';
 import 'common.dart';
 import 'receipt_dialog.dart';
@@ -138,27 +139,29 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              SizedBox(
-                height: 44,
-                child: FilledButton.icon(
-                  onPressed: () => _openCustomerDialog(),
-                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                  label: Text(wide ? 'Yangi Mijoz' : '+',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 13)),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: context.isDark
-                        ? AppColors.neonLime
-                        : AppColors.darkCard,
-                    foregroundColor:
-                        context.isDark ? AppColors.ink : Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                    padding: EdgeInsets.symmetric(horizontal: wide ? 18 : 14),
+              if (context.watch<AuthController>().user?.role != Role.boshliq) ...[
+                const SizedBox(width: 10),
+                SizedBox(
+                  height: 44,
+                  child: FilledButton.icon(
+                    onPressed: () => _openCustomerDialog(),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                    label: Text(wide ? 'Yangi Mijoz' : '+',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.isDark
+                          ? AppColors.neonLime
+                          : AppColors.darkCard,
+                      foregroundColor:
+                          context.isDark ? AppColors.ink : Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
+                      padding: EdgeInsets.symmetric(horizontal: wide ? 18 : 14),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 12),

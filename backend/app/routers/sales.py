@@ -10,7 +10,7 @@ from ..schemas import PaymentIn, SaleIn, SaleOut, SaleReturnIn, SaleFulfillIn
 from ..services import sales as svc
 
 router = APIRouter(prefix="/sales", tags=["sales"])
-_sellers = require_roles(roles.ADMIN, roles.CASHIER, roles.DRIVER, roles.FOREMAN)
+_sellers = require_roles(roles.ADMIN, roles.HEAD, roles.CASHIER, roles.DRIVER, roles.FOREMAN)
 
 
 def to_out(s: m.Sale) -> SaleOut:
