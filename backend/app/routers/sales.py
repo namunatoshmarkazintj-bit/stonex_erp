@@ -207,7 +207,6 @@ def restore_sale_49(db: Session = Depends(get_db)):
             SET status = 'completed',
                 total = 378000.00,
                 paid = 378000.00,
-                debt = 0.00,
                 paid_uzs = 378000.00,
                 paid_usd = 0.00,
                 note = '[Qaytarish: 14 kun]'
@@ -227,6 +226,14 @@ def restore_sale_49(db: Session = Depends(get_db)):
             DELETE FROM stock_movements
             WHERE ref_type = 'sale' AND ref_id = 49 AND kind = 'return';
         """))
+
+        # 4. To'lov mavjudligini tekshirish, bo'lmasa yaratish
+        p_count = db.execute(text("SELECT count(*) FROM payments WHERE sale_id = 49;")).scalar()
+        if not p_count:
+            db.execute(text("""
+                INSERT INTO payments (sale_id, amount, method, created_at)
+                VALUES (49, 378000.00, 'cash', NOW());
+            """))
 
         db.commit()
         return {
