@@ -1479,6 +1479,16 @@ class MockStockRepository implements StockRepository {
       createdAt: DateTime.now(),
     ));
   }
+
+  @override
+  Future<void> deleteMovement(int id) async {
+    _s.movements.removeWhere((m) => m.id == id);
+  }
+
+  @override
+  Future<void> cleanPurchases() async {
+    _s.movements.removeWhere((m) => m.kind == 'purchase');
+  }
 }
 
 class MockNotificationRepository implements NotificationRepository {

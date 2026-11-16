@@ -716,6 +716,106 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     }
   }
 
+  Future<void> _confirmClearAllPurchases(int count) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.dialogBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+            SizedBox(width: 10),
+            Text('Xaridlarni tozalash', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+          ],
+        ),
+        content: Text(
+          'Haqiqatan ham barcha $count ta xarid yozuvlarini o‘chirmoqchimisiz?\n\n'
+          'Ushbu xaridlar orqali omborga kirim qilingan tovarlar miqdori ham ombor zaxirasidan bekor qilinadi.',
+          style: const TextStyle(fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ha, tozalansin'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && mounted) {
+      try {
+        await _stockRepo.cleanPurchases();
+        if (mounted) {
+          showMessage(context, 'Barcha xaridlar muvaffaqiyatli tozalandi');
+          _loadData();
+        }
+      } catch (e) {
+        if (mounted) {
+          showMessage(context, 'Tozalashda xatolik: $e', error: true);
+        }
+      }
+    }
+  }
+
+  Future<void> _confirmDeletePurchase(StockMovementRecord m) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.dialogBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 24),
+            SizedBox(width: 10),
+            Text('Xaridni o‘chirish', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+          ],
+        ),
+        content: Text(
+          'Haqiqatan ham "${m.productName ?? 'Mahsulot'}" xarid yozuvini o‘chirmoqchimisiz?\n\n'
+          'Ombor zaxirasidan ${m.qtyDelta.abs()} miqdor ayirib tashlanadi.',
+          style: const TextStyle(fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('O‘chirish'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && mounted) {
+      try {
+        await _stockRepo.deleteMovement(m.id);
+        if (mounted) {
+          showMessage(context, 'Xarid yozuvi o‘chirildi');
+          _loadData();
+        }
+      } catch (e) {
+        if (mounted) {
+          showMessage(context, 'O‘chirishda xatolik: $e', error: true);
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -813,16 +913,35 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                         ),
                       ],
                     ),
-                    FilledButton.icon(
-                      onPressed: () => _openNewPurchaseDialog(products),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.neonLime,
-                        foregroundColor: AppColors.ink,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                      label: const Text('Yangi Xarid Kirimi', style: TextStyle(fontWeight: FontWeight.w800)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (purchases.isNotEmpty) ...[
+                          OutlinedButton.icon(
+                            onPressed: () => _confirmClearAllPurchases(purchases.length),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.redAccent,
+                              side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.5)),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+                            label: const Text('Tozalash', style: TextStyle(fontWeight: FontWeight.w700)),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        FilledButton.icon(
+                          onPressed: () => _openNewPurchaseDialog(products),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.neonLime,
+                            foregroundColor: AppColors.ink,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+                          label: const Text('Yangi Xarid Kirimi', style: TextStyle(fontWeight: FontWeight.w800)),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1051,13 +1170,27 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '+${m.qtyDelta.toStringAsFixed(1)} $unit',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                        color: Color(0xFF10B981),
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '+${m.qtyDelta.toStringAsFixed(1)} $unit',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+                          tooltip: 'O‘chirish',
+                          splashRadius: 18,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          onPressed: () => _confirmDeletePurchase(m),
+                        ),
+                      ],
                     ),
                   ],
                 ),

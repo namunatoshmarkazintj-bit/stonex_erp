@@ -91,3 +91,39 @@ def adjust(data: AdjustIn, db: Session = Depends(get_db), admin: m.User = Depend
     db.commit()
     db.refresh(mv)
     return _mv_to_out(mv)
+
+
+@router.post("/clean-purchases")
+def clean_all_purchases(
+    db: Session = Depends(get_db),
+    admin: m.User = Depends(_stock_access),
+):
+    """Barcha xarid (purchase) yozuvlarini ombor harakatlaridan tozalash."""
+    from sqlalchemy import text
+    try:
+        res = db.execute(text("DELETE FROM stock_movements WHERE kind = 'purchase';"))
+        deleted_count = res.rowcount
+        db.commit()
+        return {
+            "status": "ok",
+            "message": f"{deleted_count} ta xarid yozuvi muvaffaqiyatli tozalandi.",
+            "deleted_count": deleted_count,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Xaridlarni tozalashda xatolik: {e}")
+
+
+@router.delete("/movements/{movement_id}", status_code=204)
+def delete_movement(
+    movement_id: int,
+    db: Session = Depends(get_db),
+    admin: m.User = Depends(_stock_access),
+):
+    """Bitta ombor harakatini (masalan, noto'g'ri kiritilgan xaridni) o'chirish."""
+    mv = db.get(m.StockMovement, movement_id)
+    if mv is None:
+        raise HTTPException(404, "Harakat topilmadi")
+    db.delete(mv)
+    db.commit()
+    return None

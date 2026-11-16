@@ -637,6 +637,16 @@ class ApiStockRepository implements StockRepository {
       'note': note,
     });
   }
+
+  @override
+  Future<void> deleteMovement(int id) async {
+    await _api.delete('/stock/movements/$id');
+  }
+
+  @override
+  Future<void> cleanPurchases() async {
+    await _api.post('/stock/clean-purchases', body: {});
+  }
 }
 
 class ApiNotificationRepository implements NotificationRepository {

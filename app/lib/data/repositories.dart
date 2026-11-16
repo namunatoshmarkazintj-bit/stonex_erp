@@ -164,6 +164,8 @@ abstract class StockRepository {
     required double delta,
     required String note,
   });
+  Future<void> deleteMovement(int id);
+  Future<void> cleanPurchases();
 }
 
 abstract class NotificationRepository {
