@@ -54,9 +54,9 @@ List<_Dest> _destinationsFor(Role role,
   final isHead = role == Role.boshliq;
   final dash = _Dest('Asosiy oyna', Icons.grid_view_rounded,
       () => DashboardScreen(onNavigate: onNavigate),
-      actionLabel: '+ Yangi Savdo');
+      actionLabel: '');
   const pos = _Dest('Savdo (POS)', Icons.point_of_sale_rounded, PosScreen.new,
-      actionLabel: 'Savdoga o‘tish');
+      actionLabel: '');
   final orders = _Dest(
     'Buyurtmalar',
     Icons.assignment_rounded,
@@ -64,27 +64,25 @@ List<_Dest> _destinationsFor(Role role,
       final posIdx = (role == Role.admin || role == Role.boshliq) ? 1 : 0;
       onNavigate?.call(posIdx);
     }),
-    actionLabel: '+ Yangi Buyurtma',
+    actionLabel: '',
   );
   final deliveries = _Dest(
     role == Role.haydovchi ? 'Mening Yetkazmalarim' : 'Yetkazib berish',
     Icons.local_shipping_rounded,
     () => DeliveriesScreen(currentUser: currentUser),
-    actionLabel: role == Role.haydovchi
-        ? 'Mening yetkazmalarim'
-        : (isHead ? '' : '+ Yangi Yetkazish'),
+    actionLabel: '',
   );
   const salesHistory = _Dest(
     'Savdolar',
     Icons.receipt_long_rounded,
     SalesHistoryScreen.new,
-    actionLabel: 'Savdolar jurnali',
+    actionLabel: '',
   );
   final customers = _Dest(
     'Mijozlar',
     Icons.people_alt_rounded,
     CustomersScreen.new,
-    actionLabel: isHead ? '' : '+ Yangi Mijoz',
+    actionLabel: '',
   );
   const debts = _Dest(
       'Nasiyalar', Icons.pending_actions_rounded, DebtsScreen.new,
@@ -93,29 +91,29 @@ List<_Dest> _destinationsFor(Role role,
     'Xaridlar',
     Icons.shopping_bag_rounded,
     PurchasesScreen.new,
-    actionLabel: isHead ? '' : '+ Yangi Xarid',
+    actionLabel: '',
   );
   final finance = _Dest(
     'Moliya',
     Icons.account_balance_wallet_rounded,
     FinanceScreen.new,
-    actionLabel: isHead ? '' : '+ Chiqim / Kirim',
+    actionLabel: '',
   );
   final products = _Dest(
       'Mahsulotlar', Icons.inventory_2_rounded, ProductsScreen.new,
-      actionLabel: isHead ? '' : '+ Mahsulot');
+      actionLabel: '');
   final stock = _Dest('Ombor', Icons.warehouse_rounded,
       () => StockScreen(currentUser: currentUser),
-      actionLabel: isHead ? '' : '+ Xarid kirimi');
+      actionLabel: '');
   final isManager = role == Role.admin || role == Role.ishBoshqaruvchi;
   final prod = _Dest(
     'Ishlab chiqarish',
     Icons.precision_manufacturing_rounded,
     ProductionScreen.new,
-    actionLabel: isManager ? '+ Topshiriq' : '',
+    actionLabel: '',
   );
   final staff = _Dest('Xodimlar', Icons.badge_rounded, UsersScreen.new,
-      isGeneral: true, actionLabel: isHead ? '' : '+ Xodim');
+      isGeneral: true, actionLabel: '');
   final cams = _Dest(
       'Kameralar',
       Icons.videocam_rounded,
@@ -123,7 +121,7 @@ List<_Dest> _destinationsFor(Role role,
           title: 'Kameralar',
           note: 'IP-kamera / DVR oqimlari keyingi bosqichda ulanadi.'),
       isGeneral: true,
-      actionLabel: 'Sozlash');
+      actionLabel: '');
 
   if (role == Role.master) {
     const masterPanel = _Dest(
@@ -1324,11 +1322,11 @@ class _VaultHeader extends StatelessWidget {
             ),
           ],
 
-          if (actionLabel.isNotEmpty) ...[
+          if (title == 'Nasiyalar' && actionLabel.isNotEmpty) ...[
             const SizedBox(width: 12),
             FilledButton.icon(
               onPressed: onActionPressed,
-              icon: const Icon(Icons.add_rounded, size: 18),
+              icon: const Icon(Icons.payments_rounded, size: 18),
               label: Text(
                 actionLabel,
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),

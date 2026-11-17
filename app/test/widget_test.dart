@@ -1390,7 +1390,7 @@ void main() {
     }
 
     // Ish boshqaruvchiga topshiriq tugmasi chiqishi kerak
-    expect(find.text('+ Topshiriq'), findsWidgets);
+    expect(find.text('Yangi topshiriq'), findsWidgets);
 
 
 
