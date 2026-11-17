@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
 import 'data/local_company_store.dart';
+import 'data/local_storage_service.dart';
 import 'data/repositories.dart';
 import 'data/repository_factory.dart';
 import 'state/app_lock_controller.dart';
@@ -15,8 +16,9 @@ import 'ui/home_shell.dart';
 import 'ui/login_screen.dart';
 import 'ui/pin_lock_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await LocalStorageService.init();
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.manual,
     overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom],

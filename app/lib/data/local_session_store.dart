@@ -1,42 +1,68 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import '../domain/models.dart';
+import 'local_storage_service.dart';
 
 /// Foydalanuvchi sessiyasini lokal xotirada saqlash.
-/// Dastur qayta ochilganda har safar login talab qilmaydi.
+/// Android, Windows va Vebda bir marta kirilgach qaytib login so'ramaydi.
 class LocalSessionStore {
-  static File _getFile() {
-    final appData = Platform.environment['APPDATA'] ??
-        Platform.environment['HOME'] ??
-        Directory.systemTemp.path;
-    final dir = Directory('$appData/stonex_erp');
-    if (!dir.existsSync()) {
-      try {
+  static const String _prefKey = 'stonex_erp_session_v3';
+
+  static File? _getDesktopFile() {
+    if (kIsWeb) return null;
+    try {
+      final appData = Platform.environment['APPDATA'] ??
+          Platform.environment['HOME'] ??
+          Directory.systemTemp.path;
+      final dir = Directory('$appData/stonex_erp');
+      if (!dir.existsSync()) {
         dir.createSync(recursive: true);
-      } catch (_) {}
+      }
+      return File('${dir.path}/session.json');
+    } catch (_) {
+      return null;
     }
-    return File('${dir.path}/session.json');
   }
 
   static void saveSession({required String token, required AppUser user}) {
     try {
-      final f = _getFile();
       final data = {
         'token': token,
         'user': user.toJson(),
         'saved_at': DateTime.now().toIso8601String(),
       };
-      f.writeAsStringSync(jsonEncode(data));
+      final jsonStr = jsonEncode(data);
+
+      // 1. SharedPreferences orqali doimiy saqlash (Android, Web, Windows)
+      LocalStorageService.setString(_prefKey, jsonStr);
+
+      // 2. Desktop (Windows) uchun faylga zaxira nusxa saqlash
+      final f = _getDesktopFile();
+      if (f != null) {
+        f.writeAsStringSync(jsonStr);
+      }
     } catch (_) {}
   }
 
   static ({String token, AppUser user})? loadSession() {
     try {
-      final f = _getFile();
-      if (!f.existsSync()) return null;
-      final text = f.readAsStringSync();
-      if (text.trim().isEmpty) return null;
+      // 1. Avval SharedPreferences'dan o'qish
+      String? text = LocalStorageService.getString(_prefKey);
+
+      // 2. Agar bo'lmasa, desktop fayldan tekshirish
+      if (text == null || text.trim().isEmpty) {
+        final f = _getDesktopFile();
+        if (f != null && f.existsSync()) {
+          text = f.readAsStringSync();
+          if (text.trim().isNotEmpty) {
+            LocalStorageService.setString(_prefKey, text);
+          }
+        }
+      }
+
+      if (text == null || text.trim().isEmpty) return null;
       final data = jsonDecode(text) as Map<String, dynamic>;
       final token = data['token'] as String?;
       final userMap = data['user'] as Map<String, dynamic>?;
@@ -49,11 +75,11 @@ class LocalSessionStore {
 
   static void clearSession() {
     try {
-      final f = _getFile();
-      if (f.existsSync()) {
+      LocalStorageService.remove(_prefKey);
+      final f = _getDesktopFile();
+      if (f != null && f.existsSync()) {
         f.deleteSync();
       }
     } catch (_) {}
   }
 }
-

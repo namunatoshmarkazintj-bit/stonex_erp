@@ -61,7 +61,7 @@ class AppLockController extends ChangeNotifier with WidgetsBindingObserver {
   bool unlock(String enteredPin) {
     if (_currentUser == null) return false;
     final savedPin = LocalSecurityStore.getPin(_currentUser!.id);
-    if (savedPin != null && savedPin == enteredPin.trim()) {
+    if (savedPin == enteredPin.trim()) {
       _isLocked = false;
       _shouldLockOnResume = false;
       notifyListeners();

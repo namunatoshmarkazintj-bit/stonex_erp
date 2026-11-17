@@ -2,13 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'local_storage_service.dart';
 
 /// Stonex ERP Oflayn Kesh va Ma'lumotlar ombori.
-/// Desktopda (Windows) %APPDATA%/stonex_erp papkasida saqlaydi.
-/// Vebda esa xotirada yoki lokal saqlashda saqlanadi.
+/// Android, Windows va Vebda ma'lumotlar xotirada doimiy saqlanadi.
 class OfflineCacheStore {
-  static final Map<String, String> _webMemoryCache = {};
-
   static Directory? _getCacheDir() {
     if (kIsWeb) return null;
     try {
@@ -32,23 +30,26 @@ class OfflineCacheStore {
   }
 
   static String? _readString(String filename) {
-    if (kIsWeb) return _webMemoryCache[filename];
     try {
+      final key = 'stonex_cache_$filename';
+      final val = LocalStorageService.getString(key);
+      if (val != null && val.trim().isNotEmpty) return val;
       final f = _getFile(filename);
       if (f != null && f.existsSync()) {
         final text = f.readAsStringSync();
-        return text.trim().isEmpty ? null : text;
+        if (text.trim().isNotEmpty) {
+          LocalStorageService.setString(key, text);
+          return text;
+        }
       }
     } catch (_) {}
     return null;
   }
 
   static void _writeString(String filename, String content) {
-    if (kIsWeb) {
-      _webMemoryCache[filename] = content;
-      return;
-    }
     try {
+      final key = 'stonex_cache_$filename';
+      LocalStorageService.setString(key, content);
       final f = _getFile(filename);
       if (f != null) {
         f.writeAsStringSync(content);

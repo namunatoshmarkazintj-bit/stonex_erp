@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme.dart';
+import '../data/local_security_store.dart';
 import '../domain/models.dart';
 import '../state/app_lock_controller.dart';
 import '../state/auth_controller.dart';
@@ -239,9 +240,11 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
                   ),
                   const SizedBox(height: 20),
 
-                  const Text(
-                    'Davom etish uchun PIN kodni kiriting',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  Text(
+                    LocalSecurityStore.hasCustomPin(widget.user.id)
+                        ? 'Davom etish uchun 4 xonali PIN kodni kiriting'
+                        : 'Davom etish uchun PIN kodni kiriting (Standart: 1234)',
+                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                   ),
                   const SizedBox(height: 16),
 
