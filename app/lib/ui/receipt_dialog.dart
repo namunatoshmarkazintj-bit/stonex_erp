@@ -1423,6 +1423,20 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             const SizedBox(height: 6),
                             Center(
                               child: Text(
+                                CompanyInfo.name,
+                                style: const TextStyle(
+                                  fontFamily: 'Courier',
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                  letterSpacing: 0.3,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Center(
+                              child: Text(
                                 'Manzil: ${CompanyInfo.address}',
                                 style: const TextStyle(
                                   fontFamily: 'Courier',

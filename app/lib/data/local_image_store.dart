@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
+import 'local_storage_service.dart';
 
 /// Mahsulot va mijoz rasmlarini lokal xotirada keshda saqlash va sinxronlash.
 ///
@@ -15,30 +16,36 @@ class LocalImageStore {
   static bool _saveScheduled = false;
   static final Set<String> _inFlight = {};
 
-  static Directory _getBaseDir() {
-    if (Platform.isAndroid || Platform.isIOS) {
-      final dir = Directory('${Directory.systemTemp.path}/stonex_erp');
+  static Directory? _getBaseDir() {
+    if (kIsWeb) return null;
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        final dir = Directory('${Directory.systemTemp.path}/stonex_erp');
+        if (!dir.existsSync()) {
+          try {
+            dir.createSync(recursive: true);
+          } catch (_) {}
+        }
+        return dir.existsSync() ? dir : Directory.systemTemp;
+      }
+      final appData = Platform.environment['APPDATA'] ??
+          Platform.environment['HOME'] ??
+          Directory.systemTemp.path;
+      final dir = Directory('$appData/stonex_erp');
       if (!dir.existsSync()) {
         try {
           dir.createSync(recursive: true);
         } catch (_) {}
       }
-      return dir.existsSync() ? dir : Directory.systemTemp;
+      return dir;
+    } catch (_) {
+      return null;
     }
-    final appData = Platform.environment['APPDATA'] ??
-        Platform.environment['HOME'] ??
-        Directory.systemTemp.path;
-    final dir = Directory('$appData/stonex_erp');
-    if (!dir.existsSync()) {
-      try {
-        dir.createSync(recursive: true);
-      } catch (_) {}
-    }
-    return dir;
   }
 
-  static Directory _getCacheDir() {
+  static Directory? _getCacheDir() {
     final base = _getBaseDir();
+    if (base == null) return null;
     final cacheDir = Directory('${base.path}/img_cache');
     if (!cacheDir.existsSync()) {
       try {
@@ -48,8 +55,10 @@ class LocalImageStore {
     return cacheDir;
   }
 
-  static File _getFile() {
-    return File('${_getBaseDir().path}/product_images.json');
+  static File? _getFile() {
+    final base = _getBaseDir();
+    if (base == null) return null;
+    return File('${base.path}/product_images.json');
   }
 
   static void _schedulePersist() {
@@ -58,8 +67,12 @@ class LocalImageStore {
     Future.delayed(const Duration(milliseconds: 300), () {
       _saveScheduled = false;
       try {
+        final encoded = jsonEncode(_cache);
+        LocalStorageService.setString('product_images_cache', encoded);
         final f = _getFile();
-        f.writeAsStringSync(jsonEncode(_cache));
+        if (f != null) {
+          f.writeAsStringSync(encoded);
+        }
       } catch (_) {}
     });
   }
@@ -68,8 +81,16 @@ class LocalImageStore {
     if (_loaded) return;
     _loaded = true;
     try {
+      final prefData = LocalStorageService.getString('product_images_cache');
+      if (prefData != null && prefData.isNotEmpty) {
+        final data = jsonDecode(prefData) as Map<String, dynamic>;
+        for (final e in data.entries) {
+          _cache[e.key] = e.value.toString();
+        }
+        return;
+      }
       final f = _getFile();
-      if (f.existsSync()) {
+      if (f != null && f.existsSync()) {
         final text = f.readAsStringSync();
         if (text.isNotEmpty) {
           final data = jsonDecode(text) as Map<String, dynamic>;
@@ -97,11 +118,13 @@ class LocalImageStore {
 
   /// Lokal keshda rasm fayli bormi-yo'qligini tekshirish
   static File? getCachedFile(String rawUrl) {
-    if (rawUrl.isEmpty || rawUrl.startsWith('data:image/')) return null;
+    if (kIsWeb || rawUrl.isEmpty || rawUrl.startsWith('data:image/')) return null;
     try {
       final resolved = ApiClient.resolveUrl(rawUrl);
       final filename = _urlToFilename(resolved);
-      final file = File('${_getCacheDir().path}/$filename');
+      final cacheDir = _getCacheDir();
+      if (cacheDir == null) return null;
+      final file = File('${cacheDir.path}/$filename');
       if (file.existsSync() && file.lengthSync() > 100) {
         return file;
       }
@@ -111,7 +134,7 @@ class LocalImageStore {
 
   /// Rasmni fonda yuklab olib, lokal papkaga saqlash
   static Future<File?> downloadAndCache(String rawUrl) async {
-    if (rawUrl.isEmpty || rawUrl.startsWith('data:image/')) return null;
+    if (kIsWeb || rawUrl.isEmpty || rawUrl.startsWith('data:image/')) return null;
     final resolved = ApiClient.resolveUrl(rawUrl);
     if (!resolved.startsWith('http://') && !resolved.startsWith('https://')) return null;
 
@@ -127,9 +150,12 @@ class LocalImageStore {
       client.close();
       if (res.statusCode == 200 && res.bodyBytes.length > 50) {
         final filename = _urlToFilename(resolved);
-        final file = File('${_getCacheDir().path}/$filename');
-        await file.writeAsBytes(res.bodyBytes);
-        return file;
+        final cacheDir = _getCacheDir();
+        if (cacheDir != null) {
+          final file = File('${cacheDir.path}/$filename');
+          await file.writeAsBytes(res.bodyBytes);
+          return file;
+        }
       }
     } catch (_) {
     } finally {
@@ -140,6 +166,7 @@ class LocalImageStore {
 
   /// Barcha rasmlarni dastur ochilganda orqa fonda yuklab keshga joylash
   static void prefetchAll(List<String?> urls) {
+    if (kIsWeb) return;
     Future.microtask(() async {
       for (final u in urls) {
         if (u != null && u.trim().isNotEmpty) {
@@ -155,14 +182,18 @@ class LocalImageStore {
   static String? _normalizeImage(String? raw, String prefix) {
     if (raw == null || raw.trim().isEmpty) return null;
     final trimmed = raw.trim();
+    if (kIsWeb) return trimmed;
     if (trimmed.startsWith('data:image/') || trimmed.length > 500) {
       try {
         final comma = trimmed.indexOf(',');
         final b64 = comma != -1 ? trimmed.substring(comma + 1).trim() : trimmed;
         final bytes = base64Decode(b64);
-        final file = File('${_getCacheDir().path}/${prefix}.jpg');
-        file.writeAsBytesSync(bytes);
-        return file.path;
+        final cacheDir = _getCacheDir();
+        if (cacheDir != null) {
+          final file = File('${cacheDir.path}/$prefix.jpg');
+          file.writeAsBytesSync(bytes);
+          return file.path;
+        }
       } catch (_) {
         return null;
       }

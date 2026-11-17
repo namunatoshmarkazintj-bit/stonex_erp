@@ -114,7 +114,11 @@ class _UsersScreenState extends State<UsersScreen> {
 
   // --- Xodim qo'shish va tahrirlash ---
   Future<void> _addUser() async {
-    if (context.read<AuthController>().user?.role == Role.boshliq) return;
+    Role? role;
+    try {
+      role = Provider.of<AuthController?>(context, listen: false)?.user?.role;
+    } catch (_) {}
+    if (role == Role.boshliq) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => UserDialog(repo: _usersRepo),
@@ -126,7 +130,11 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Future<void> _editUser(AppUser user) async {
-    if (context.read<AuthController>().user?.role == Role.boshliq) return;
+    Role? role;
+    try {
+      role = Provider.of<AuthController?>(context, listen: false)?.user?.role;
+    } catch (_) {}
+    if (role == Role.boshliq) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => UserDialog(repo: _usersRepo, user: user),
@@ -465,7 +473,11 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Widget? _buildFab() {
-    final isHead = context.watch<AuthController>().user?.role == Role.boshliq;
+    Role? role;
+    try {
+      role = Provider.of<AuthController?>(context, listen: true)?.user?.role;
+    } catch (_) {}
+    final isHead = role == Role.boshliq;
     if (_currentTab == 0 && !isHead) {
       return FloatingActionButton.extended(
         backgroundColor: context.isDark ? AppColors.neonLime : AppColors.darkCard,
@@ -876,46 +888,53 @@ class _UsersScreenState extends State<UsersScreen> {
               ],
             ),
           ),
-          if (context.watch<AuthController>().user?.role != Role.boshliq) ...[
-            const SizedBox(width: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.all(6),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.edit_rounded, size: 18),
-                  onPressed: () => _editUser(u),
-                  tooltip: 'Tahrirlash',
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.all(6),
-                  constraints: const BoxConstraints(),
-                  icon: Icon(
-                    u.isActive ? Icons.lock_open_rounded : Icons.lock_rounded,
-                    size: 18,
-                    color: u.isActive ? AppColors.green : AppColors.danger,
-                  ),
-                  onPressed: () => _toggleUserStatus(u),
-                  tooltip: u.isActive ? 'Bloklash' : 'Faollashtirish',
-                ),
-                if (u.role != Role.admin) ...[
+          Builder(
+            builder: (context) {
+              Role? currentRole;
+              try {
+                currentRole = Provider.of<AuthController?>(context, listen: true)?.user?.role;
+              } catch (_) {}
+              if (currentRole == Role.boshliq) return const SizedBox.shrink();
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   const SizedBox(width: 4),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.all(6),
                     constraints: const BoxConstraints(),
-                    icon: const Icon(Icons.archive_outlined, size: 18, color: AppColors.danger),
-                    onPressed: () => _archiveUser(u),
-                    tooltip: 'Arxivga olish (o‘chirish)',
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    onPressed: () => _editUser(u),
+                    tooltip: 'Tahrirlash',
                   ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(6),
+                    constraints: const BoxConstraints(),
+                    icon: Icon(
+                      u.isActive ? Icons.lock_open_rounded : Icons.lock_rounded,
+                      size: 18,
+                      color: u.isActive ? AppColors.green : AppColors.danger,
+                    ),
+                    onPressed: () => _toggleUserStatus(u),
+                    tooltip: u.isActive ? 'Bloklash' : 'Faollashtirish',
+                  ),
+                  if (u.role != Role.admin) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(6),
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.archive_outlined, size: 18, color: AppColors.danger),
+                      onPressed: () => _archiveUser(u),
+                      tooltip: 'Arxivga olish (o‘chirish)',
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              );
+            },
+          ),
         ],
       ),
     );

@@ -1166,25 +1166,26 @@ class _VaultHeader extends StatelessWidget {
         children: [
           // Chap tomon: Menyuni ochish/yopish, Sahifa nomi va Valyuta kursi
           Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (onToggleSidebar != null) ...[
-                  _HeaderIconBtn(
-                    icon: sidebarOpen
-                        ? Icons.menu_open_rounded
-                        : Icons.menu_rounded,
-                    tooltip: sidebarOpen
-                        ? 'Menyuni yopish (Ctrl+B)'
-                        : 'Menyuni ochish (Ctrl+B)',
-                    onTap: onToggleSidebar!,
-                  ),
-                  const SizedBox(width: 14),
-                ],
-                Flexible(
-                  child: Text(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onToggleSidebar != null) ...[
+                    _HeaderIconBtn(
+                      icon: sidebarOpen
+                          ? Icons.menu_open_rounded
+                          : Icons.menu_rounded,
+                      tooltip: sidebarOpen
+                          ? 'Menyuni yopish (Ctrl+B)'
+                          : 'Menyuni ochish (Ctrl+B)',
+                      onTap: onToggleSidebar!,
+                    ),
+                    const SizedBox(width: 14),
+                  ],
+                  Text(
                     title,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
@@ -1192,14 +1193,14 @@ class _VaultHeader extends StatelessWidget {
                       letterSpacing: -0.6,
                     ),
                   ),
-                ),
-                if (isDashboard) ...[
+                  if (isDashboard) ...[
+                    const SizedBox(width: 12),
+                    const CurrencyBadge(),
+                  ],
                   const SizedBox(width: 12),
-                  const CurrencyBadge(),
+                  OnlineSyncBadge(api: appApiClient),
                 ],
-                const SizedBox(width: 12),
-                OnlineSyncBadge(api: appApiClient),
-              ],
+              ),
             ),
           ),
 
@@ -1315,6 +1316,28 @@ class _VaultHeader extends StatelessWidget {
                   side: BorderSide(
                     color: isDark ? const Color(0xFF282D34) : AppColors.border,
                   ),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                elevation: 0,
+              ),
+            ),
+          ],
+
+          if (actionLabel.isNotEmpty) ...[
+            const SizedBox(width: 12),
+            FilledButton.icon(
+              onPressed: onActionPressed,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(
+                actionLabel,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.neonLime,
+                foregroundColor: AppColors.ink,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

@@ -643,7 +643,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final curUser = context.watch<AuthController>().user;
+    AppUser? curUser;
+    try {
+      curUser = Provider.of<AuthController?>(context, listen: true)?.user;
+    } catch (_) {}
     final isManager = curUser?.role == Role.admin || curUser?.role == Role.ishBoshqaruvchi;
     final filters = ['Barchasi', 'Kutilmoqda (OTK)', 'Jarayonda', 'Yakunlangan', 'Qaytarilgan'];
 

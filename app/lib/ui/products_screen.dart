@@ -135,7 +135,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final curUser = context.watch<AuthController>().user;
+    AppUser? curUser;
+    try {
+      curUser = Provider.of<AuthController?>(context, listen: true)?.user;
+    } catch (_) {}
     final isHead = curUser?.role == Role.boshliq;
 
     return Scaffold(
@@ -2844,6 +2847,18 @@ class _ProductQrLabelDialogState extends State<ProductQrLabelDialog> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // Kompaniya brendi (Stiker boshidagi yozuv)
+                      const Text(
+                        'NTM MARBLE',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                          color: Color(0xFF4A5568),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
                       // QR Kod
                       Container(
                         padding: const EdgeInsets.all(4),

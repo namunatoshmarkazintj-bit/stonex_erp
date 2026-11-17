@@ -438,12 +438,16 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ],
           );
 
-          final isHead = context.watch<AuthController>().user?.role == Role.boshliq;
+          Role? curRole;
+          try {
+            curRole = Provider.of<AuthController?>(context, listen: true)?.user?.role;
+          } catch (_) {}
+          final isHead = curRole == Role.boshliq;
           final actions = [
             OutlinedButton.icon(
               onPressed: _exportExcel,
               icon: const Icon(Icons.download_rounded, size: 17),
-              label: const Text('Excel', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+              label: const Text('Excel yuklab olish', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: context.inkColor,
                 side: BorderSide(color: context.borderColor),

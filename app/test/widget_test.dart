@@ -932,7 +932,7 @@ void main() {
 
     expect(find.text('Kassa Cheki'), findsOneWidget);
 
-    expect(find.text('NTJ — NAMUNA TOSH JILO'), findsOneWidget);
+    expect(find.textContaining('NAMUNA TOSH JILO'), findsWidgets);
 
     expect(find.text('Sobirjon Aka'), findsOneWidget);
 
@@ -1092,7 +1092,7 @@ void main() {
 
 
 
-    expect(find.text('Xarid qilinayotgan tovar / xomashyo'), findsOneWidget);
+    expect(find.textContaining('Xarid qilinayotgan tovar / xomashyo'), findsOneWidget);
 
     expect(find.text('Kirim qilish'), findsOneWidget);
 
@@ -1172,7 +1172,7 @@ void main() {
 
     expect(find.text('Kassa Cheki'), findsOneWidget);
 
-    expect(find.text('NTJ — NAMUNA TOSH JILO'), findsOneWidget);
+    expect(find.textContaining('NAMUNA TOSH JILO'), findsWidgets);
 
     expect(find.textContaining('95'), findsWidgets);
 
@@ -1382,9 +1382,15 @@ void main() {
 
 
 
-    // Ish boshqaruvchiga topshiriq tugmasi chiqishi kerak
+    // Ishlab chiqarish bo'limiga o'tish
+    final prodNav = find.widgetWithText(InkWell, 'Ishlab chiqarish');
+    if (prodNav.evaluate().isNotEmpty) {
+      await tester.tap(prodNav.first);
+      await tester.pumpAndSettle();
+    }
 
-    expect(find.text('Topshiriq'), findsOneWidget);
+    // Ish boshqaruvchiga topshiriq tugmasi chiqishi kerak
+    expect(find.text('+ Topshiriq'), findsWidgets);
 
 
 

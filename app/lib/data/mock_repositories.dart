@@ -55,15 +55,160 @@ class MockStore {
         salaryType: 'monthly',
       ),
     ),
+    'ishchi': (
+      password: 'ishchi12345',
+      user: const AppUser(
+        id: 2,
+        username: 'ishchi',
+        fullName: 'Ishchi Bobur',
+        role: Role.ishchi,
+        salary: 4500000,
+        salaryType: 'monthly',
+      ),
+    ),
+    'kassir': (
+      password: 'kassir12345',
+      user: const AppUser(
+        id: 3,
+        username: 'kassir',
+        fullName: 'Alisher Kassir',
+        role: Role.kassir,
+        salary: 5000000,
+        salaryType: 'monthly',
+      ),
+    ),
+    'boshqaruvchi': (
+      password: 'boshqaruvchi123',
+      user: const AppUser(
+        id: 4,
+        username: 'boshqaruvchi',
+        fullName: 'Sardor Boshqaruvchi',
+        role: Role.ishBoshqaruvchi,
+        salary: 7000000,
+        salaryType: 'monthly',
+      ),
+    ),
   };
 
   final List<AttendanceRecord> attendances = [];
 
-  final List<MockSaleEntry> sales = [];
+  final List<MockSaleEntry> sales = [
+    MockSaleEntry(
+      result: SaleResult(
+        id: 95,
+        total: 1800000,
+        paid: 1800000,
+        debt: 0,
+        customerId: 1,
+        customerName: 'Sardor Qodirov',
+        customerPhone: '+998 90 999 11 22',
+        cashierName: 'Alisher (Kassir)',
+        paymentMethod: 'cash',
+        createdAt: DateTime.now().subtract(const Duration(days: 6)),
+        items: const [
+          SaleItemRecord(productId: 1, productName: 'Angola', quantity: 10, unitPrice: 180000, lineTotal: 1800000),
+        ],
+      ),
+      cost: 1200000,
+    ),
+    MockSaleEntry(
+      result: SaleResult(
+        id: 96,
+        total: 900000,
+        paid: 900000,
+        debt: 0,
+        customerId: 2,
+        customerName: 'Farhod Usta',
+        customerPhone: '+998 91 888 22 33',
+        cashierName: 'Alisher (Kassir)',
+        paymentMethod: 'karta',
+        createdAt: DateTime.now().subtract(const Duration(days: 4)),
+        items: const [
+          SaleItemRecord(productId: 5, productName: 'Kley', quantity: 20, unitPrice: 45000, lineTotal: 900000),
+        ],
+      ),
+      cost: 600000,
+    ),
+    MockSaleEntry(
+      result: SaleResult(
+        id: 99,
+        total: 850000,
+        paid: 600000,
+        debt: 250000,
+        customerName: 'Akmal aka',
+        customerPhone: '+998 90 123 45 67',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+        items: const [
+          SaleItemRecord(productId: 2, productName: 'Miramir', quantity: 5, unitPrice: 170000, lineTotal: 850000),
+        ],
+      ),
+      cost: 550000,
+    ),
+  ];
 
-  final List<FinanceTransaction> financeTransactions = [];
-  final List<Customer> customers = [];
-  final List<ProductionTask> tasks = [];
+  final List<FinanceTransaction> financeTransactions = [
+    FinanceTransaction(
+      id: 1,
+      type: 'income',
+      category: 'Savdo tushumi',
+      amount: 1900000,
+      paymentMethod: 'cash',
+      note: 'Buyurtma #100 (Sobirjon)',
+      date: DateTime.now().subtract(const Duration(hours: 3)),
+      createdByName: 'Kassa',
+    ),
+    FinanceTransaction(
+      id: 2,
+      type: 'expense',
+      category: 'Transport / Yoqilg‘i',
+      amount: 450000,
+      paymentMethod: 'cash',
+      note: 'Labo yoqilg‘i va xizmat',
+      date: DateTime.now().subtract(const Duration(days: 1)),
+      createdByName: 'Admin',
+    ),
+  ];
+
+  final List<Customer> customers = [
+    const Customer(
+      id: 1,
+      name: 'Sardor Qodirov',
+      phone: '+998 90 999 11 22',
+      passport: 'AB 1234567',
+      totalSpent: 1800000,
+      totalDebt: 0,
+      salesCount: 1,
+    ),
+    const Customer(
+      id: 2,
+      name: 'Farhod Usta',
+      phone: '+998 91 888 22 33',
+      passport: 'AC 9876543',
+      totalSpent: 900000,
+      totalDebt: 0,
+      salesCount: 1,
+    ),
+  ];
+
+  final List<ProductionTask> tasks = [
+    const ProductionTask(
+      id: 1,
+      productId: 1,
+      productName: 'Angola',
+      unit: 'm2',
+      assignedTo: 2,
+      workerName: 'Ishchi Bobur',
+      planned: 120,
+      produced: 85,
+      status: 'open',
+      orderId: 101,
+      cutLength: 1.2,
+      cutWidth: 0.6,
+      cutPieces: 4,
+      cutSpec: '120 sm × 60 sm',
+      note: 'Oshxona stoli uchun to‘g‘ri burchakli kesish [silliqlash]',
+    ),
+  ];
   final List<StockMovementRecord> movements = [
     StockMovementRecord(id: 1, productId: 1, productName: 'Angola', qtyDelta: 200, kind: 'opening', note: 'Boshlang‘ich qoldiq', createdAt: DateTime.now().subtract(const Duration(days: 10))),
     StockMovementRecord(id: 2, productId: 2, productName: 'Miramir', qtyDelta: 150, kind: 'opening', note: 'Boshlang‘ich qoldiq', createdAt: DateTime.now().subtract(const Duration(days: 10))),

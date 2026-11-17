@@ -574,7 +574,7 @@ class Product {
       if (lower == 'oliy' || lower == 'oliy sort') return 'Oliy sort';
       final m = RegExp(r'^(?:sort\s*)?(1|1\.5|2|3)(?:\s*sort)?$', caseSensitive: false).firstMatch(s);
       if (m != null) {
-        return 'sort ${m.group(1)}';
+        return '${m.group(1)}-sort';
       }
       return s;
     }
