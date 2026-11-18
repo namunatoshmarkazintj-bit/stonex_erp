@@ -577,8 +577,9 @@ class MockAuthRepository implements AuthRepository {
         (username.trim() == 'admin' &&
             (password == 'admin12345' || password == 'admin123'));
     if (!isMatch) throw ApiException('Login yoki parol noto‘g‘ri', 401);
-    if (role != null && rec.user.role != role)
+    if (role != null && rec.user.role != role) {
       throw ApiException('Bu akkaunt tanlangan rol uchun emas', 403);
+    }
     return rec.user;
   }
 
@@ -610,7 +611,9 @@ class MockProductRepository implements ProductRepository {
     final c = code.trim().toLowerCase();
     for (final p in _s.products) {
       if (p.qrCode.toLowerCase() == c ||
-          (p.sku.isNotEmpty && p.sku.toLowerCase() == c)) return p;
+          (p.sku.isNotEmpty && p.sku.toLowerCase() == c)) {
+        return p;
+      }
     }
     return null;
   }
@@ -777,21 +780,24 @@ class MockSalesRepository implements SalesRepository {
       if (i < 0) throw ApiException('Mahsulot topilmadi', 404);
       final p = _s.products[i];
       final q = l.baseQty;
-      if (q <= 0)
+      if (q <= 0) {
         throw ApiException('${p.name}: miqdor 0 dan katta bo‘lsin', 400);
+      }
       if (!isOrder) {
         final available = p.stock - (reserved[p.id] ?? 0);
-        if (q > available + 1e-9)
+        if (q > available + 1e-9) {
           throw ApiException(
               '${p.name}: omborda yetarli emas (bor: $available ${p.unit})',
               400);
+        }
       }
       reserved[p.id] = (reserved[p.id] ?? 0) + q;
       total += l.lineTotal;
       cost += q * p.costPrice;
     }
-    if (paidAmount < 0 || paidAmount > total + 1e-6)
+    if (paidAmount < 0 || paidAmount > total + 1e-6) {
       throw ApiException('To‘lov summasi noto‘g‘ri', 400);
+    }
     final debt = total - paidAmount;
     if (!isOrder &&
         debt > 0.005 &&
@@ -952,9 +958,10 @@ class MockSalesRepository implements SalesRepository {
     // Omborda mahsulot yetarliligini tekshiramiz
     for (final item in entry.result.items) {
       final idx = _s.indexOf(item.productId);
-      if (idx < 0)
+      if (idx < 0) {
         throw ApiException(
             '${item.productName}: mahsulot omborda topilmadi', 404);
+      }
       final p = _s.products[idx];
       if (item.quantity > p.stock + 1e-9) {
         throw ApiException(
@@ -1078,8 +1085,9 @@ class MockSalesRepository implements SalesRepository {
       if (ret.quantity <= 0) continue;
       final itemIdx =
           updatedItems.indexWhere((it) => it.productId == ret.productId);
-      if (itemIdx < 0)
+      if (itemIdx < 0) {
         throw ApiException('Mahsulot ushbu chekda topilmadi', 400);
+      }
       final it = updatedItems[itemIdx];
 
       // Faqat toshga ishlov berilgan mahsulotlar bloklanadi (majburlab tanlanmagan bo'lsa)
@@ -1124,9 +1132,10 @@ class MockSalesRepository implements SalesRepository {
       );
     }
 
-    if (totalRefund <= 0)
+    if (totalRefund <= 0) {
       throw ApiException(
           'Kamida bitta tovar qaytarish uchun tanlanishi kerak', 400);
+    }
 
     final debtReduced = totalRefund < sale.debt ? totalRefund : sale.debt;
     final cashRefund = totalRefund - debtReduced;
