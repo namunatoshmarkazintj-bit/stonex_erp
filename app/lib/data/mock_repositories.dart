@@ -20,26 +20,203 @@ class MockStore {
   int nextId = 200;
   int nextUserId = 10;
   int nextAttendanceId = 100;
-  final Map<String, double> paidSalaries = {}; // "userId_YYYY-MM" -> to'langan jami summa
-  final Map<String, double> manualBonuses = {}; // "userId_YYYY-MM" -> berilgan mukofot (bonus) summasi
+  final Map<String, double> paidSalaries =
+      {}; // "userId_YYYY-MM" -> to'langan jami summa
+  final Map<String, double> manualBonuses =
+      {}; // "userId_YYYY-MM" -> berilgan mukofot (bonus) summasi
 
   final List<Product> products = [
-    const Product(id: 1, name: 'Angola', category: 'Marmar', qrCode: 'STX-ANGOLA', unit: 'm2', donaM2: 0.25, price: 180000, costPrice: 120000, stock: 200, imageUrl: 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 2, name: 'Miramir', category: 'Marmar', qrCode: 'STX-MIRAMIR', unit: 'm2', donaM2: 0.25, price: 170000, costPrice: 110000, stock: 150, imageUrl: 'https://images.unsplash.com/photo-1615529182904-14819c35db37?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 3, name: 'Tan Brown', category: 'Marmar', qrCode: 'STX-TANBROWN', unit: 'm2', donaM2: 0.25, price: 190000, costPrice: 130000, stock: 120, imageUrl: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 4, name: 'Metalogranit 60x120', category: 'Kerama granit', qrCode: 'STX-METALOGRANIT', unit: 'm2', donaM2: 0.72, tileLength: 120, tileWidth: 60, boxPieces: 2, boxM2: 1.44, price: 150000, costPrice: 95000, stock: 80, imageUrl: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 5, name: 'Kley Akfix', category: 'Qo‘shimcha', qrCode: 'STX-KLEY', unit: 'dona', price: 45000, costPrice: 30000, stock: 100, imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 6, name: 'Sim', category: 'Xomashyo', qrCode: 'STX-SIM', unit: 'm', price: 12000, costPrice: 7000, stock: 500, imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 7, name: 'Disk Olmos', category: 'Qo‘shimcha', qrCode: 'STX-DISK', unit: 'dona', price: 250000, costPrice: 170000, stock: 30, imageUrl: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 8, name: 'Italiya Plita 60x60', category: 'Kafel', qrCode: 'STX-KAFEL', unit: 'm2', donaM2: 0.36, tileLength: 60, tileWidth: 60, boxPieces: 4, boxM2: 1.44, price: 135000, costPrice: 90000, stock: 95, imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 9, name: 'Marmar Stol Ustligi', category: 'Tayyor mahsulot', qrCode: 'STX-TAYYOR-STOL', unit: 'dona', price: 1200000, costPrice: 750000, stock: 8, imageUrl: 'https://images.unsplash.com/photo-1615529182904-14819c35db37?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 10, name: "Ko'k saroy", category: 'Marmar', sku: 'KS01', qrCode: 'STX-KOKSAROY', unit: 'm2', donaM2: 0.25, price: 160000, costPrice: 140000, stock: 875, imageUrl: 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 19, name: 'Razmer kesish (Metrda)', category: 'Xizmat', qrCode: 'SRV-CUT-M', unit: 'metr', price: 15000, costPrice: 0, stock: 999999, imageUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 24, name: 'Razmer kesish (Kvadratda)', category: 'Xizmat', qrCode: 'SRV-CUT-M2', unit: 'm2', price: 25000, costPrice: 0, stock: 999999, imageUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 20, name: 'Faska ochish', category: 'Xizmat', qrCode: 'SRV-FASKA', unit: 'metr', price: 20000, costPrice: 0, stock: 999999, imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 21, name: 'Silliqlash (Granit)', category: 'Xizmat', qrCode: 'SRV-SILLIQ-GRANIT', unit: 'metr', price: 30000, costPrice: 0, stock: 999999, imageUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 23, name: 'Silliqlash (Keramogranit)', category: 'Xizmat', qrCode: 'SRV-SILLIQ-KER', unit: 'metr', price: 20000, costPrice: 0, stock: 999999, imageUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop&q=80'),
-    const Product(id: 22, name: 'Chizish', category: 'Xizmat', qrCode: 'SRV-CHIZISH', unit: 'metr', price: 10000, costPrice: 0, stock: 999999, imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 1,
+        name: 'Angola',
+        category: 'Marmar',
+        qrCode: 'STX-ANGOLA',
+        unit: 'm2',
+        donaM2: 0.25,
+        price: 180000,
+        costPrice: 120000,
+        stock: 200,
+        imageUrl:
+            'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 2,
+        name: 'Miramir',
+        category: 'Marmar',
+        qrCode: 'STX-MIRAMIR',
+        unit: 'm2',
+        donaM2: 0.25,
+        price: 170000,
+        costPrice: 110000,
+        stock: 150,
+        imageUrl:
+            'https://images.unsplash.com/photo-1615529182904-14819c35db37?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 3,
+        name: 'Tan Brown',
+        category: 'Marmar',
+        qrCode: 'STX-TANBROWN',
+        unit: 'm2',
+        donaM2: 0.25,
+        price: 190000,
+        costPrice: 130000,
+        stock: 120,
+        imageUrl:
+            'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 4,
+        name: 'Metalogranit 60x120',
+        category: 'Kerama granit',
+        qrCode: 'STX-METALOGRANIT',
+        unit: 'm2',
+        donaM2: 0.72,
+        tileLength: 120,
+        tileWidth: 60,
+        boxPieces: 2,
+        boxM2: 1.44,
+        price: 150000,
+        costPrice: 95000,
+        stock: 80,
+        imageUrl:
+            'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 5,
+        name: 'Kley Akfix',
+        category: 'Qo‘shimcha',
+        qrCode: 'STX-KLEY',
+        unit: 'dona',
+        price: 45000,
+        costPrice: 30000,
+        stock: 100,
+        imageUrl:
+            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 6,
+        name: 'Sim',
+        category: 'Xomashyo',
+        qrCode: 'STX-SIM',
+        unit: 'm',
+        price: 12000,
+        costPrice: 7000,
+        stock: 500,
+        imageUrl:
+            'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 7,
+        name: 'Disk Olmos',
+        category: 'Qo‘shimcha',
+        qrCode: 'STX-DISK',
+        unit: 'dona',
+        price: 250000,
+        costPrice: 170000,
+        stock: 30,
+        imageUrl:
+            'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 8,
+        name: 'Italiya Plita 60x60',
+        category: 'Kafel',
+        qrCode: 'STX-KAFEL',
+        unit: 'm2',
+        donaM2: 0.36,
+        tileLength: 60,
+        tileWidth: 60,
+        boxPieces: 4,
+        boxM2: 1.44,
+        price: 135000,
+        costPrice: 90000,
+        stock: 95,
+        imageUrl:
+            'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 9,
+        name: 'Marmar Stol Ustligi',
+        category: 'Tayyor mahsulot',
+        qrCode: 'STX-TAYYOR-STOL',
+        unit: 'dona',
+        price: 1200000,
+        costPrice: 750000,
+        stock: 8,
+        imageUrl:
+            'https://images.unsplash.com/photo-1615529182904-14819c35db37?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 10,
+        name: "Ko'k saroy",
+        category: 'Marmar',
+        sku: 'KS01',
+        qrCode: 'STX-KOKSAROY',
+        unit: 'm2',
+        donaM2: 0.25,
+        price: 160000,
+        costPrice: 140000,
+        stock: 875,
+        imageUrl:
+            'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 19,
+        name: 'Razmer kesish (Metrda)',
+        category: 'Xizmat',
+        qrCode: 'SRV-CUT-M',
+        unit: 'metr',
+        price: 15000,
+        costPrice: 0,
+        stock: 999999,
+        imageUrl:
+            'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 24,
+        name: 'Razmer kesish (Kvadratda)',
+        category: 'Xizmat',
+        qrCode: 'SRV-CUT-M2',
+        unit: 'm2',
+        price: 25000,
+        costPrice: 0,
+        stock: 999999,
+        imageUrl:
+            'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 20,
+        name: 'Faska ochish',
+        category: 'Xizmat',
+        qrCode: 'SRV-FASKA',
+        unit: 'metr',
+        price: 20000,
+        costPrice: 0,
+        stock: 999999,
+        imageUrl:
+            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 21,
+        name: 'Silliqlash (Granit)',
+        category: 'Xizmat',
+        qrCode: 'SRV-SILLIQ-GRANIT',
+        unit: 'metr',
+        price: 30000,
+        costPrice: 0,
+        stock: 999999,
+        imageUrl:
+            'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 23,
+        name: 'Silliqlash (Keramogranit)',
+        category: 'Xizmat',
+        qrCode: 'SRV-SILLIQ-KER',
+        unit: 'metr',
+        price: 20000,
+        costPrice: 0,
+        stock: 999999,
+        imageUrl:
+            'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop&q=80'),
+    const Product(
+        id: 22,
+        name: 'Chizish',
+        category: 'Xizmat',
+        qrCode: 'SRV-CHIZISH',
+        unit: 'metr',
+        price: 10000,
+        costPrice: 0,
+        stock: 999999,
+        imageUrl:
+            'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=600&auto=format&fit=crop&q=80'),
   ];
 
   /// Faqat mock rejimi uchun test akkauntlari (haqiqiy backendda parollar xeshlangan).
@@ -106,7 +283,12 @@ class MockStore {
         paymentMethod: 'cash',
         createdAt: DateTime.now().subtract(const Duration(days: 6)),
         items: const [
-          SaleItemRecord(productId: 1, productName: 'Angola', quantity: 10, unitPrice: 180000, lineTotal: 1800000),
+          SaleItemRecord(
+              productId: 1,
+              productName: 'Angola',
+              quantity: 10,
+              unitPrice: 180000,
+              lineTotal: 1800000),
         ],
       ),
       cost: 1200000,
@@ -124,7 +306,12 @@ class MockStore {
         paymentMethod: 'karta',
         createdAt: DateTime.now().subtract(const Duration(days: 4)),
         items: const [
-          SaleItemRecord(productId: 5, productName: 'Kley', quantity: 20, unitPrice: 45000, lineTotal: 900000),
+          SaleItemRecord(
+              productId: 5,
+              productName: 'Kley',
+              quantity: 20,
+              unitPrice: 45000,
+              lineTotal: 900000),
         ],
       ),
       cost: 600000,
@@ -139,7 +326,12 @@ class MockStore {
         customerPhone: '+998 90 123 45 67',
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
         items: const [
-          SaleItemRecord(productId: 2, productName: 'Miramir', quantity: 5, unitPrice: 170000, lineTotal: 850000),
+          SaleItemRecord(
+              productId: 2,
+              productName: 'Miramir',
+              quantity: 5,
+              unitPrice: 170000,
+              lineTotal: 850000),
         ],
       ),
       cost: 550000,
@@ -210,8 +402,22 @@ class MockStore {
     ),
   ];
   final List<StockMovementRecord> movements = [
-    StockMovementRecord(id: 1, productId: 1, productName: 'Angola', qtyDelta: 200, kind: 'opening', note: 'Boshlang‘ich qoldiq', createdAt: DateTime.now().subtract(const Duration(days: 10))),
-    StockMovementRecord(id: 2, productId: 2, productName: 'Miramir', qtyDelta: 150, kind: 'opening', note: 'Boshlang‘ich qoldiq', createdAt: DateTime.now().subtract(const Duration(days: 10))),
+    StockMovementRecord(
+        id: 1,
+        productId: 1,
+        productName: 'Angola',
+        qtyDelta: 200,
+        kind: 'opening',
+        note: 'Boshlang‘ich qoldiq',
+        createdAt: DateTime.now().subtract(const Duration(days: 10))),
+    StockMovementRecord(
+        id: 2,
+        productId: 2,
+        productName: 'Miramir',
+        qtyDelta: 150,
+        kind: 'opening',
+        note: 'Boshlang‘ich qoldiq',
+        createdAt: DateTime.now().subtract(const Duration(days: 10))),
   ];
   final List<AppNotification> notifications = [];
 
@@ -236,8 +442,18 @@ class MockStore {
       note: 'Ehtiyotkorlik bilan yetkazilsin, marmar plitalar',
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
       items: const [
-        DeliveryItem(id: 1, productId: 2, productName: 'Miramir Marmar', quantity: 5, unit: 'm2'),
-        DeliveryItem(id: 2, productId: 5, productName: 'Kley Akfix', quantity: 2, unit: 'dona'),
+        DeliveryItem(
+            id: 1,
+            productId: 2,
+            productName: 'Miramir Marmar',
+            quantity: 5,
+            unit: 'm2'),
+        DeliveryItem(
+            id: 2,
+            productId: 5,
+            productName: 'Kley Akfix',
+            quantity: 2,
+            unit: 'dona'),
       ],
     ),
     Delivery(
@@ -259,7 +475,12 @@ class MockStore {
       note: 'Darvoza oldiga borganda telefon qiling',
       createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
       items: const [
-        DeliveryItem(id: 6, productId: 1, productName: 'Volga Blue Granit', quantity: 8, unit: 'm2'),
+        DeliveryItem(
+            id: 6,
+            productId: 1,
+            productName: 'Volga Blue Granit',
+            quantity: 8,
+            unit: 'm2'),
       ],
     ),
     Delivery(
@@ -281,7 +502,12 @@ class MockStore {
       note: 'Yuk ortilmoqda, tushlikdan keyin jo‘natiladi',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       items: const [
-        DeliveryItem(id: 3, productId: 3, productName: 'Tan Brown Granit', quantity: 10, unit: 'm2'),
+        DeliveryItem(
+            id: 3,
+            productId: 3,
+            productName: 'Tan Brown Granit',
+            quantity: 10,
+            unit: 'm2'),
       ],
     ),
     Delivery(
@@ -303,8 +529,14 @@ class MockStore {
       note: 'Muvaffaqiyatli topshirildi',
       createdAt: DateTime.now().subtract(const Duration(hours: 6)),
       items: const [
-        DeliveryItem(id: 4, productId: 7, productName: 'Disk Olmos', quantity: 2, unit: 'dona'),
-        DeliveryItem(id: 5, productId: 6, productName: 'Sim', quantity: 1, unit: 'm'),
+        DeliveryItem(
+            id: 4,
+            productId: 7,
+            productName: 'Disk Olmos',
+            quantity: 2,
+            unit: 'dona'),
+        DeliveryItem(
+            id: 5, productId: 6, productName: 'Sim', quantity: 1, unit: 'm'),
       ],
     ),
   ];
@@ -316,8 +548,15 @@ class MockStore {
     if (i < 0) return;
     final p = products[i];
     products[i] = Product(
-      id: p.id, name: p.name, sku: p.sku, qrCode: p.qrCode, unit: p.unit, donaM2: p.donaM2,
-      price: p.price, costPrice: p.costPrice, stock: newStock,
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      qrCode: p.qrCode,
+      unit: p.unit,
+      donaM2: p.donaM2,
+      price: p.price,
+      costPrice: p.costPrice,
+      stock: newStock,
     );
   }
 }
@@ -331,12 +570,15 @@ class MockAuthRepository implements AuthRepository {
     final rec = _s.users[username.trim()];
     if (rec == null) throw ApiException('Login yoki parol noto‘g‘ri', 401);
     if (!rec.user.canLogin) {
-      throw ApiException('Ushbu xodim uchun dasturga kirish huquqi berilmagan', 403);
+      throw ApiException(
+          'Ushbu xodim uchun dasturga kirish huquqi berilmagan', 403);
     }
     final isMatch = rec.password == password ||
-        (username.trim() == 'admin' && (password == 'admin12345' || password == 'admin123'));
+        (username.trim() == 'admin' &&
+            (password == 'admin12345' || password == 'admin123'));
     if (!isMatch) throw ApiException('Login yoki parol noto‘g‘ri', 401);
-    if (role != null && rec.user.role != role) throw ApiException('Bu akkaunt tanlangan rol uchun emas', 403);
+    if (role != null && rec.user.role != role)
+      throw ApiException('Bu akkaunt tanlangan rol uchun emas', 403);
     return rec.user;
   }
 
@@ -367,7 +609,8 @@ class MockProductRepository implements ProductRepository {
   Future<Product?> findByCode(String code) async {
     final c = code.trim().toLowerCase();
     for (final p in _s.products) {
-      if (p.qrCode.toLowerCase() == c || (p.sku.isNotEmpty && p.sku.toLowerCase() == c)) return p;
+      if (p.qrCode.toLowerCase() == c ||
+          (p.sku.isNotEmpty && p.sku.toLowerCase() == c)) return p;
     }
     return null;
   }
@@ -378,21 +621,39 @@ class MockProductRepository implements ProductRepository {
       throw ApiException('SKU yoki QR-kod allaqachon mavjud', 409);
     }
     final created = Product(
-      id: _s.nextProductId++, name: p.name, category: p.category, sku: p.sku, qrCode: p.qrCode, unit: p.unit,
-      donaM2: p.donaM2, thickness: p.thickness,
-      tileLength: p.tileLength, tileWidth: p.tileWidth, boxPieces: p.boxPieces, boxM2: p.boxM2,
-      sort: p.sort, hasSorts: p.hasSorts,
+      id: _s.nextProductId++,
+      name: p.name,
+      category: p.category,
+      sku: p.sku,
+      qrCode: p.qrCode,
+      unit: p.unit,
+      donaM2: p.donaM2,
+      thickness: p.thickness,
+      tileLength: p.tileLength,
+      tileWidth: p.tileWidth,
+      boxPieces: p.boxPieces,
+      boxM2: p.boxM2,
+      sort: p.sort,
+      hasSorts: p.hasSorts,
       color: p.color,
-      priceSort1: p.priceSort1, priceSort1_5: p.priceSort1_5, priceSort2: p.priceSort2,
-      price: p.price, costPrice: p.costPrice, stock: initialStock,
+      priceSort1: p.priceSort1,
+      priceSort1_5: p.priceSort1_5,
+      priceSort2: p.priceSort2,
+      price: p.price,
+      costPrice: p.costPrice,
+      stock: initialStock,
       minStock: p.minStock,
       imageUrl: p.imageUrl,
     );
     _s.products.add(created);
     if (initialStock > 0) {
       _s.movements.add(StockMovementRecord(
-        id: _s.nextId++, productId: created.id, qtyDelta: initialStock, kind: 'opening',
-        note: 'Boshlang‘ich qoldiq', createdAt: DateTime.now(),
+        id: _s.nextId++,
+        productId: created.id,
+        qtyDelta: initialStock,
+        kind: 'opening',
+        note: 'Boshlang‘ich qoldiq',
+        createdAt: DateTime.now(),
       ));
     }
     return created;
@@ -404,13 +665,17 @@ class MockProductRepository implements ProductRepository {
     if (i < 0) throw ApiException('Mahsulot topilmadi', 404);
     final old = _s.products[i];
     final updated = Product(
-      id: p.id, name: p.name, category: p.category ?? old.category, sku: p.sku, qrCode: p.qrCode, unit: p.unit, donaM2: p.donaM2,
+      id: p.id, name: p.name, category: p.category ?? old.category, sku: p.sku,
+      qrCode: p.qrCode, unit: p.unit, donaM2: p.donaM2,
       thickness: p.thickness,
-      tileLength: p.tileLength, tileWidth: p.tileWidth, boxPieces: p.boxPieces, boxM2: p.boxM2,
+      tileLength: p.tileLength, tileWidth: p.tileWidth, boxPieces: p.boxPieces,
+      boxM2: p.boxM2,
       sort: p.sort, hasSorts: p.hasSorts,
       color: p.color,
-      priceSort1: p.priceSort1, priceSort1_5: p.priceSort1_5, priceSort2: p.priceSort2,
-      price: p.price, costPrice: p.costPrice, stock: old.stock, // qoldiq faqat harakatlar orqali o'zgaradi
+      priceSort1: p.priceSort1, priceSort1_5: p.priceSort1_5,
+      priceSort2: p.priceSort2,
+      price: p.price, costPrice: p.costPrice,
+      stock: old.stock, // qoldiq faqat harakatlar orqali o'zgaradi
       minStock: p.minStock,
       imageUrl: p.imageUrl ?? old.imageUrl,
     );
@@ -434,17 +699,18 @@ class MockProductRepository implements ProductRepository {
   }
 
   @override
-  Future<List<Product>> listDeleted() async => List.unmodifiable(_deletedProducts);
+  Future<List<Product>> listDeleted() async =>
+      List.unmodifiable(_deletedProducts);
 
   @override
   Future<Product> restore(int id) async {
     final idx = _deletedProducts.indexWhere((p) => p.id == id);
     if (idx < 0) throw ApiException('Mahsulot topilmadi', 404);
     final p = _deletedProducts.removeAt(idx).copyWith(
-      isActive: true,
-      deletedAt: null,
-      deletedByName: null,
-    );
+          isActive: true,
+          deletedAt: null,
+          deletedByName: null,
+        );
     _s.products.add(p);
     return p;
   }
@@ -465,9 +731,12 @@ class MockProductRepository implements ProductRepository {
   }
 
   @override
-  Future<Product> uploadProductImage(int productId, List<int> bytes, String filename) async {
+  Future<Product> uploadProductImage(
+      int productId, List<int> bytes, String filename) async {
     final p = _s.products.firstWhere((e) => e.id == productId);
-    final updated = p.copyWith(imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80');
+    final updated = p.copyWith(
+        imageUrl:
+            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80');
     final i = _s.products.indexWhere((e) => e.id == productId);
     if (i >= 0) _s.products[i] = updated;
     return updated;
@@ -497,7 +766,8 @@ class MockSalesRepository implements SalesRepository {
     if (lines.isEmpty) throw ApiException('Savat bo‘sh', 400);
     final isOrder = status == 'order';
     if (isOrder && (customerName == null || customerName.trim().isEmpty)) {
-      throw ApiException('Buyurtma rasmiylashtirish uchun mijoz ko‘rsatilishi shart', 400);
+      throw ApiException(
+          'Buyurtma rasmiylashtirish uchun mijoz ko‘rsatilishi shart', 400);
     }
 
     final reserved = <int, double>{};
@@ -507,18 +777,25 @@ class MockSalesRepository implements SalesRepository {
       if (i < 0) throw ApiException('Mahsulot topilmadi', 404);
       final p = _s.products[i];
       final q = l.baseQty;
-      if (q <= 0) throw ApiException('${p.name}: miqdor 0 dan katta bo‘lsin', 400);
+      if (q <= 0)
+        throw ApiException('${p.name}: miqdor 0 dan katta bo‘lsin', 400);
       if (!isOrder) {
         final available = p.stock - (reserved[p.id] ?? 0);
-        if (q > available + 1e-9) throw ApiException('${p.name}: omborda yetarli emas (bor: $available ${p.unit})', 400);
+        if (q > available + 1e-9)
+          throw ApiException(
+              '${p.name}: omborda yetarli emas (bor: $available ${p.unit})',
+              400);
       }
       reserved[p.id] = (reserved[p.id] ?? 0) + q;
       total += l.lineTotal;
       cost += q * p.costPrice;
     }
-    if (paidAmount < 0 || paidAmount > total + 1e-6) throw ApiException('To‘lov summasi noto‘g‘ri', 400);
+    if (paidAmount < 0 || paidAmount > total + 1e-6)
+      throw ApiException('To‘lov summasi noto‘g‘ri', 400);
     final debt = total - paidAmount;
-    if (!isOrder && debt > 0.005 && (customerName == null || customerName.trim().isEmpty)) {
+    if (!isOrder &&
+        debt > 0.005 &&
+        (customerName == null || customerName.trim().isEmpty)) {
       throw ApiException('Nasiya uchun mijoz ko‘rsatilishi shart', 400);
     }
     final saleId = _s.nextId++;
@@ -527,8 +804,12 @@ class MockSalesRepository implements SalesRepository {
       reserved.forEach((id, q) {
         _s.setStock(id, _s.products[_s.indexOf(id)].stock - q);
         _s.movements.add(StockMovementRecord(
-          id: _s.nextId++, productId: id, qtyDelta: -q, kind: 'sale',
-          note: 'Savdo #$saleId', createdAt: DateTime.now(),
+          id: _s.nextId++,
+          productId: id,
+          qtyDelta: -q,
+          kind: 'sale',
+          note: 'Savdo #$saleId',
+          createdAt: DateTime.now(),
         ));
       });
     }
@@ -552,19 +833,23 @@ class MockSalesRepository implements SalesRepository {
       cashierName: 'Alisher (Kassir)',
       paymentMethod: paymentMethod,
       createdAt: DateTime.now(),
-      items: lines.map((l) => SaleItemRecord(
-        productId: l.product.id,
-        productName: l.displayName,
-        quantity: l.baseQty,
-        unitPrice: l.unitPrice,
-        lineTotal: l.lineTotal,
-      )).toList(),
+      items: lines
+          .map((l) => SaleItemRecord(
+                productId: l.product.id,
+                productName: l.displayName,
+                quantity: l.baseQty,
+                unitPrice: l.unitPrice,
+                lineTotal: l.lineTotal,
+              ))
+          .toList(),
     );
     _s.sales.add(MockSaleEntry(result: res, cost: cost));
 
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
-      title: isOrder ? 'Yangi buyurtma qabul qilindi' : 'Yangi savdo amalga oshirildi',
+      title: isOrder
+          ? 'Yangi buyurtma qabul qilindi'
+          : 'Yangi savdo amalga oshirildi',
       message: isOrder
           ? 'Buyurtma #$saleId: ${total.round()} so‘m (${customerName ?? 'Mijoz'})${paidAmount > 0 ? ', avans: ${paidAmount.round()} so‘m' : ''}'
           : 'Savdo #$saleId: ${total.round()} so‘m${customerName != null && customerName.isNotEmpty ? ' ($customerName)' : ''}',
@@ -580,7 +865,8 @@ class MockSalesRepository implements SalesRepository {
           _s.notifications.add(AppNotification(
             id: _s.nextId++,
             title: 'Ombor ogohlantirishi: Zaxira kam',
-            message: '${p.name} mahsulotidan atigi ${p.stock.toStringAsFixed(1)} ${p.unit} qoldi!',
+            message:
+                '${p.name} mahsulotidan atigi ${p.stock.toStringAsFixed(1)} ${p.unit} qoldi!',
             kind: 'warning',
             isRead: false,
             createdAt: DateTime.now(),
@@ -593,7 +879,8 @@ class MockSalesRepository implements SalesRepository {
   }
 
   @override
-  Future<List<SaleResult>> listSales({int limit = 50, String? status, int? customerId}) async {
+  Future<List<SaleResult>> listSales(
+      {int limit = 50, String? status, int? customerId}) async {
     Iterable<MockSaleEntry> entries = _s.sales;
     if (status != null && status.isNotEmpty) {
       entries = entries.where((e) => e.result.status == status);
@@ -617,7 +904,8 @@ class MockSalesRepository implements SalesRepository {
   }
 
   @override
-  Future<SaleResult> payDebt(int saleId, double amount, {String method = 'cash'}) async {
+  Future<SaleResult> payDebt(int saleId, double amount,
+      {String method = 'cash'}) async {
     final entry = _s.sales.firstWhere(
       (e) => e.result.id == saleId,
       orElse: () => throw ApiException('Savdo topilmadi', 404),
@@ -626,13 +914,15 @@ class MockSalesRepository implements SalesRepository {
       throw ApiException('To‘lov summasi noto‘g‘ri yoki qarzdan ortiq', 400);
     }
     final newPaid = entry.result.paid + amount;
-    final newDebt = (entry.result.total - newPaid).clamp(0, double.infinity).toDouble();
+    final newDebt =
+        (entry.result.total - newPaid).clamp(0, double.infinity).toDouble();
     final updated = entry.result.copyWith(paid: newPaid, debt: newDebt);
     entry.result = updated;
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
       title: 'Qarz to‘lovi qabul qilindi',
-      message: 'Mijoz ${entry.result.customerName ?? 'Mijoz'} ${amount.round()} so‘m to‘ladi ($method)',
+      message:
+          'Mijoz ${entry.result.customerName ?? 'Mijoz'} ${amount.round()} so‘m to‘ladi ($method)',
       kind: 'payment',
       isRead: false,
       createdAt: DateTime.now(),
@@ -662,10 +952,14 @@ class MockSalesRepository implements SalesRepository {
     // Omborda mahsulot yetarliligini tekshiramiz
     for (final item in entry.result.items) {
       final idx = _s.indexOf(item.productId);
-      if (idx < 0) throw ApiException('${item.productName}: mahsulot omborda topilmadi', 404);
+      if (idx < 0)
+        throw ApiException(
+            '${item.productName}: mahsulot omborda topilmadi', 404);
       final p = _s.products[idx];
       if (item.quantity > p.stock + 1e-9) {
-        throw ApiException('${p.name}: omborda yetarli emas (mavjud: ${p.stock.toStringAsFixed(1)} ${p.unit}, kerak: ${item.quantity.toStringAsFixed(1)})', 400);
+        throw ApiException(
+            '${p.name}: omborda yetarli emas (mavjud: ${p.stock.toStringAsFixed(1)} ${p.unit}, kerak: ${item.quantity.toStringAsFixed(1)})',
+            400);
       }
     }
 
@@ -679,7 +973,8 @@ class MockSalesRepository implements SalesRepository {
         productId: p.id,
         qtyDelta: -item.quantity,
         kind: 'sale',
-        note: 'Buyurtma topshirildi #$saleId (${entry.result.customerName ?? ''})',
+        note:
+            'Buyurtma topshirildi #$saleId (${entry.result.customerName ?? ''})',
         createdAt: DateTime.now(),
       ));
     }
@@ -688,7 +983,8 @@ class MockSalesRepository implements SalesRepository {
     double newDebt = entry.result.debt;
     if (payAmount != null && payAmount > 0) {
       newPaid += payAmount;
-      newDebt = (entry.result.total - newPaid).clamp(0, double.infinity).toDouble();
+      newDebt =
+          (entry.result.total - newPaid).clamp(0, double.infinity).toDouble();
     }
 
     final updated = entry.result.copyWith(
@@ -700,7 +996,9 @@ class MockSalesRepository implements SalesRepository {
       fulfilledByName: 'Admin',
       fulfilledAt: DateTime.now(),
       note: note != null && note.isNotEmpty
-          ? (entry.result.note != null ? '${entry.result.note} | Topshirish: $note' : note)
+          ? (entry.result.note != null
+              ? '${entry.result.note} | Topshirish: $note'
+              : note)
           : entry.result.note,
       paid: newPaid,
       debt: newDebt,
@@ -710,7 +1008,8 @@ class MockSalesRepository implements SalesRepository {
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
       title: 'Buyurtma topshirildi',
-      message: 'Buyurtma #$saleId mijozga topshirildi (${entry.result.customerName ?? 'Mijoz'})',
+      message:
+          'Buyurtma #$saleId mijozga topshirildi (${entry.result.customerName ?? 'Mijoz'})',
       kind: 'order',
       isRead: false,
       createdAt: DateTime.now(),
@@ -735,7 +1034,8 @@ class MockSalesRepository implements SalesRepository {
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
       title: 'Buyurtma bekor qilindi',
-      message: 'Buyurtma #$saleId bekor qilindi (${entry.result.customerName ?? 'Mijoz'})',
+      message:
+          'Buyurtma #$saleId bekor qilindi (${entry.result.customerName ?? 'Mijoz'})',
       kind: 'warning',
       isRead: false,
       createdAt: DateTime.now(),
@@ -761,11 +1061,14 @@ class MockSalesRepository implements SalesRepository {
     final created = sale.createdAt ?? DateTime.now();
     final diffDays = DateTime.now().difference(created).inDays;
     if (diffDays > 10) {
-      throw ApiException('Mahsulotni qaytarish muddati (10 kun) o‘tgan! Savdo bundan $diffDays kun oldin qilingan.', 400);
+      throw ApiException(
+          'Mahsulotni qaytarish muddati (10 kun) o‘tgan! Savdo bundan $diffDays kun oldin qilingan.',
+          400);
     }
 
     if (sale.status == 'cancelled' || sale.status == 'returned') {
-      throw ApiException('Ushbu savdo allaqachon bekor qilingan yoki qaytarilgan', 400);
+      throw ApiException(
+          'Ushbu savdo allaqachon bekor qilingan yoki qaytarilgan', 400);
     }
 
     double totalRefund = 0;
@@ -773,17 +1076,23 @@ class MockSalesRepository implements SalesRepository {
 
     for (final ret in items) {
       if (ret.quantity <= 0) continue;
-      final itemIdx = updatedItems.indexWhere((it) => it.productId == ret.productId);
-      if (itemIdx < 0) throw ApiException('Mahsulot ushbu chekda topilmadi', 400);
+      final itemIdx =
+          updatedItems.indexWhere((it) => it.productId == ret.productId);
+      if (itemIdx < 0)
+        throw ApiException('Mahsulot ushbu chekda topilmadi', 400);
       final it = updatedItems[itemIdx];
 
       // Faqat toshga ishlov berilgan mahsulotlar bloklanadi (majburlab tanlanmagan bo'lsa)
       if (it.isStoneProcessed && !force) {
-        throw ApiException('\'${it.productName}\' maxsus razmerda kesib/ishlov berilgan! Kesilgan kafellar qaytarib olinmaydi.', 400);
+        throw ApiException(
+            '\'${it.productName}\' maxsus razmerda kesib/ishlov berilgan! Kesilgan kafellar qaytarib olinmaydi.',
+            400);
       }
 
       if (ret.quantity > it.quantity) {
-        throw ApiException('Qaytarish miqdori (${ret.quantity}) sotilgan miqdordan (${it.quantity}) ko‘p bo‘lishi mumkin emas', 400);
+        throw ApiException(
+            'Qaytarish miqdori (${ret.quantity}) sotilgan miqdordan (${it.quantity}) ko‘p bo‘lishi mumkin emas',
+            400);
       }
 
       totalRefund += ret.quantity * it.unitPrice;
@@ -815,7 +1124,9 @@ class MockSalesRepository implements SalesRepository {
       );
     }
 
-    if (totalRefund <= 0) throw ApiException('Kamida bitta tovar qaytarish uchun tanlanishi kerak', 400);
+    if (totalRefund <= 0)
+      throw ApiException(
+          'Kamida bitta tovar qaytarish uchun tanlanishi kerak', 400);
 
     final debtReduced = totalRefund < sale.debt ? totalRefund : sale.debt;
     final cashRefund = totalRefund - debtReduced;
@@ -827,7 +1138,8 @@ class MockSalesRepository implements SalesRepository {
       total: newTotal,
       paid: newPaid,
       debt: (newTotal - newPaid).clamp(0.0, double.infinity),
-      status: (allReturned || newTotal <= 0) ? 'returned' : 'partially_returned',
+      status:
+          (allReturned || newTotal <= 0) ? 'returned' : 'partially_returned',
       note: '${sale.note ?? ''} [Qaytarildi: ${money(totalRefund)}]'.trim(),
       items: updatedItems,
     );
@@ -837,7 +1149,8 @@ class MockSalesRepository implements SalesRepository {
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
       title: 'Mahsulot qaytarildi (Vozvrat)',
-      message: 'Chek #${sale.id} bo‘yicha ${money(totalRefund)} miqdorida tovar qaytarib olindi.',
+      message:
+          'Chek #${sale.id} bo‘yicha ${money(totalRefund)} miqdorida tovar qaytarib olindi.',
       kind: 'warning',
       isRead: false,
       createdAt: DateTime.now(),
@@ -857,7 +1170,9 @@ class MockFinanceRepository implements FinanceRepository {
     final cogs = _s.sales.fold<double>(0, (a, e) => a + e.cost);
     final paid = _s.sales.fold<double>(0, (a, e) => a + e.result.paid);
     final receivables = _s.sales.fold<double>(0, (a, e) => a + e.result.debt);
-    final exp = _s.financeTransactions.where((t) => t.isExpense).fold<double>(0, (a, e) => a + e.amount);
+    final exp = _s.financeTransactions
+        .where((t) => t.isExpense)
+        .fold<double>(0, (a, e) => a + e.amount);
 
     var stockVal = 0.0;
     var stockCostVal = 0.0;
@@ -898,10 +1213,15 @@ class MockFinanceRepository implements FinanceRepository {
       list = list.where((t) => t.category == category).toList();
     }
     if (dateFrom != null) {
-      list = list.where((t) => t.date.isAfter(dateFrom.subtract(const Duration(seconds: 1)))).toList();
+      list = list
+          .where((t) =>
+              t.date.isAfter(dateFrom.subtract(const Duration(seconds: 1))))
+          .toList();
     }
     if (dateTo != null) {
-      list = list.where((t) => t.date.isBefore(dateTo.add(const Duration(days: 1)))).toList();
+      list = list
+          .where((t) => t.date.isBefore(dateTo.add(const Duration(days: 1))))
+          .toList();
     }
     list.sort((a, b) => b.date.compareTo(a.date));
     return list.take(limit).toList();
@@ -909,7 +1229,10 @@ class MockFinanceRepository implements FinanceRepository {
 
   @override
   Future<FinanceTransaction> addTransaction(FinanceTransaction tx) async {
-    final newId = (_s.financeTransactions.map((e) => e.id).fold(0, (a, b) => a > b ? a : b)) + 1;
+    final newId = (_s.financeTransactions
+            .map((e) => e.id)
+            .fold(0, (a, b) => a > b ? a : b)) +
+        1;
     final created = FinanceTransaction(
       id: newId,
       type: tx.type,
@@ -964,7 +1287,8 @@ class MockFinanceRepository implements FinanceRepository {
   }
 
   @override
-  Future<List<RevenueBreakdownItem>> revenueBreakdown({DateTime? dateFrom, DateTime? dateTo}) async {
+  Future<List<RevenueBreakdownItem>> revenueBreakdown(
+      {DateTime? dateFrom, DateTime? dateTo}) async {
     return const [
       RevenueBreakdownItem(
         category: 'Granit plitalar (Angola, Miramir, Tan Brown)',
@@ -1008,12 +1332,15 @@ class MockFinanceRepository implements FinanceRepository {
   Future<String> exportCsv({DateTime? dateFrom, DateTime? dateTo}) async {
     final txs = await listTransactions(dateFrom: dateFrom, dateTo: dateTo);
     final buf = StringBuffer();
-    buf.writeln('\uFEFF#;Sana;Turi;Kategoriya;To\'lov usuli;Summa (so\'m);Izoh;Mas\'ul');
+    buf.writeln(
+        '\uFEFF#;Sana;Turi;Kategoriya;To\'lov usuli;Summa (so\'m);Izoh;Mas\'ul');
     for (var i = 0; i < txs.length; i++) {
       final t = txs[i];
-      final dt = '${t.date.day.toString().padLeft(2, '0')}.${t.date.month.toString().padLeft(2, '0')}.${t.date.year}';
+      final dt =
+          '${t.date.day.toString().padLeft(2, '0')}.${t.date.month.toString().padLeft(2, '0')}.${t.date.year}';
       final typeStr = t.isIncome ? 'Kirim' : 'Chiqim';
-      buf.writeln('${i + 1};$dt;$typeStr;${t.category};${t.paymentMethod};${t.amount.toInt()};${t.note ?? ''};${t.createdByName ?? ''}');
+      buf.writeln(
+          '${i + 1};$dt;$typeStr;${t.category};${t.paymentMethod};${t.amount.toInt()};${t.note ?? ''};${t.createdByName ?? ''}');
     }
     return buf.toString();
   }
@@ -1027,8 +1354,10 @@ class MockProductionRepository implements ProductionRepository {
   Future<List<ProductionTask>> list() async => _s.tasks.reversed.toList();
 
   @override
-  Future<List<AppUser>> workers() async =>
-      _s.users.values.map((e) => e.user).where((u) => u.role == Role.ishchi && u.isActive).toList();
+  Future<List<AppUser>> workers() async => _s.users.values
+      .map((e) => e.user)
+      .where((u) => u.role == Role.ishchi && u.isActive)
+      .toList();
 
   @override
   Future<void> create({
@@ -1044,15 +1373,30 @@ class MockProductionRepository implements ProductionRepository {
   }) async {
     final i = _s.indexOf(productId);
     if (i < 0) throw ApiException('Mahsulot topilmadi', 404);
-    final w = _s.users.values
-        .map((e) => e.user)
-        .firstWhere((u) => u.id == workerId,
-            orElse: () => const AppUser(id: 3, username: 'ishchi', fullName: 'Ishchi Bobur', role: Role.ishchi));
+    final w = _s.users.values.map((e) => e.user).firstWhere(
+        (u) => u.id == workerId,
+        orElse: () => const AppUser(
+            id: 3,
+            username: 'ishchi',
+            fullName: 'Ishchi Bobur',
+            role: Role.ishchi));
     final p = _s.products[i];
     _s.tasks.add(ProductionTask(
-      id: _s.nextId++, productId: p.id, productName: p.name, unit: p.unit, assignedTo: w.id,
-      workerName: w.fullName, planned: plannedQty, produced: 0, status: 'open', note: note,
-      orderId: orderId, cutLength: cutLength, cutWidth: cutWidth, cutPieces: cutPieces, cutSpec: cutSpec,
+      id: _s.nextId++,
+      productId: p.id,
+      productName: p.name,
+      unit: p.unit,
+      assignedTo: w.id,
+      workerName: w.fullName,
+      planned: plannedQty,
+      produced: 0,
+      status: 'open',
+      note: note,
+      orderId: orderId,
+      cutLength: cutLength,
+      cutWidth: cutWidth,
+      cutPieces: cutPieces,
+      cutSpec: cutSpec,
     ));
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
@@ -1065,7 +1409,8 @@ class MockProductionRepository implements ProductionRepository {
   }
 
   @override
-  Future<void> report(int taskId, double producedQty, {double? wasteQty, String? note}) async {
+  Future<void> report(int taskId, double producedQty,
+      {double? wasteQty, String? note}) async {
     final ti = _s.tasks.indexWhere((t) => t.id == taskId);
     if (ti < 0) throw ApiException('Topshiriq topilmadi', 404);
     final t = _s.tasks[ti];
@@ -1073,25 +1418,42 @@ class MockProductionRepository implements ProductionRepository {
     final produced = t.produced + producedQty;
     final waste = (t.waste + (wasteQty ?? 0));
     _s.tasks[ti] = ProductionTask(
-      id: t.id, productId: t.productId, productName: t.productName, unit: t.unit,
-      assignedTo: t.assignedTo, workerName: t.workerName, planned: t.planned,
-      produced: produced, waste: waste, status: produced >= t.planned ? 'done' : 'open',
+      id: t.id,
+      productId: t.productId,
+      productName: t.productName,
+      unit: t.unit,
+      assignedTo: t.assignedTo,
+      workerName: t.workerName,
+      planned: t.planned,
+      produced: produced,
+      waste: waste,
+      status: produced >= t.planned ? 'done' : 'open',
       note: note ?? t.note,
-      orderId: t.orderId, cutLength: t.cutLength, cutWidth: t.cutWidth,
-      cutPieces: t.cutPieces, cutSpec: t.cutSpec,
+      orderId: t.orderId,
+      cutLength: t.cutLength,
+      cutWidth: t.cutWidth,
+      cutPieces: t.cutPieces,
+      cutSpec: t.cutSpec,
     );
     final pi = _s.indexOf(t.productId);
     if (pi >= 0) {
       _s.setStock(t.productId, _s.products[pi].stock + producedQty);
     }
     _s.movements.add(StockMovementRecord(
-      id: _s.nextId++, productId: t.productId, qtyDelta: producedQty, kind: 'production',
-      note: 'Topshiriq #${t.id} bajarilishi', createdAt: DateTime.now(),
+      id: _s.nextId++,
+      productId: t.productId,
+      qtyDelta: producedQty,
+      kind: 'production',
+      note: 'Topshiriq #${t.id} bajarilishi',
+      createdAt: DateTime.now(),
     ));
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
-      title: produced >= t.planned ? 'Ishlab chiqarish yakunlandi' : 'Ishlab chiqarish qayd etildi',
-      message: '${t.workerName}: ${t.productName} ($producedQty ${t.unit} tayyorlandi)',
+      title: produced >= t.planned
+          ? 'Ishlab chiqarish yakunlandi'
+          : 'Ishlab chiqarish qayd etildi',
+      message:
+          '${t.workerName}: ${t.productName} ($producedQty ${t.unit} tayyorlandi)',
       kind: 'production',
       isRead: false,
       createdAt: DateTime.now(),
@@ -1104,12 +1466,24 @@ class MockProductionRepository implements ProductionRepository {
     if (ti < 0) throw ApiException('Topshiriq topilmadi', 404);
     final t = _s.tasks[ti];
     _s.tasks[ti] = ProductionTask(
-      id: t.id, productId: t.productId, productName: t.productName, unit: t.unit,
-      assignedTo: t.assignedTo, workerName: t.workerName, planned: t.planned,
-      produced: t.produced, waste: t.waste, status: 'done',
-      approvedBy: 1, approvedAt: DateTime.now(), note: t.note,
-      orderId: t.orderId, cutLength: t.cutLength, cutWidth: t.cutWidth,
-      cutPieces: t.cutPieces, cutSpec: t.cutSpec,
+      id: t.id,
+      productId: t.productId,
+      productName: t.productName,
+      unit: t.unit,
+      assignedTo: t.assignedTo,
+      workerName: t.workerName,
+      planned: t.planned,
+      produced: t.produced,
+      waste: t.waste,
+      status: 'done',
+      approvedBy: 1,
+      approvedAt: DateTime.now(),
+      note: t.note,
+      orderId: t.orderId,
+      cutLength: t.cutLength,
+      cutWidth: t.cutWidth,
+      cutPieces: t.cutPieces,
+      cutSpec: t.cutSpec,
     );
   }
 
@@ -1130,7 +1504,8 @@ class MockProductionRepository implements ProductionRepository {
       produced: t.produced,
       waste: t.waste,
       status: 'rejected',
-      note: '${t.note ?? ""}' + (reason != null && reason.isNotEmpty ? ' [Qaytarildi: $reason]' : ' [Ishchi qaytardi]'),
+      note:
+          '${t.note ?? ""}${reason != null && reason.isNotEmpty ? ' [Qaytarildi: $reason]' : ' [Ishchi qaytardi]'}',
       approvedBy: t.approvedBy,
       approvedAt: t.approvedAt,
       orderId: t.orderId,
@@ -1142,7 +1517,8 @@ class MockProductionRepository implements ProductionRepository {
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
       title: 'Topshiriq qaytarildi',
-      message: '${t.workerName}: ${t.productName} topshirig‘ini qaytardi' + (reason != null && reason.isNotEmpty ? ' ($reason)' : ''),
+      message:
+          '${t.workerName}: ${t.productName} topshirig‘ini qaytardi${reason != null && reason.isNotEmpty ? ' ($reason)' : ''}',
       kind: 'production',
       isRead: false,
       createdAt: DateTime.now(),
@@ -1174,9 +1550,12 @@ class MockUserRepository implements UserRepository {
     String salaryType = 'monthly',
   }) async {
     if (role == Role.ishBoshqaruvchi) {
-      final existingForeman = _s.users.values.any((e) => e.user.role == Role.ishBoshqaruvchi && e.user.isActive);
+      final existingForeman = _s.users.values
+          .any((e) => e.user.role == Role.ishBoshqaruvchi && e.user.isActive);
       if (existingForeman) {
-        throw ApiException('Tizimda faqat 1 ta Ish boshqaruvchi akkaunti bo‘lishi mumkin', 400);
+        throw ApiException(
+            'Tizimda faqat 1 ta Ish boshqaruvchi akkaunti bo‘lishi mumkin',
+            400);
       }
     }
     final u = (canLogin && username != null && username.trim().isNotEmpty)
@@ -1216,17 +1595,24 @@ class MockUserRepository implements UserRepository {
       (e) => e.value.user.id == id,
       orElse: () => throw ApiException('Foydalanuvchi topilmadi', 404),
     );
-    if (role == Role.ishBoshqaruvchi && entry.value.user.role != Role.ishBoshqaruvchi) {
-      final existingForeman = _s.users.values.any((e) => e.user.role == Role.ishBoshqaruvchi && e.user.isActive && e.user.id != id);
+    if (role == Role.ishBoshqaruvchi &&
+        entry.value.user.role != Role.ishBoshqaruvchi) {
+      final existingForeman = _s.users.values.any((e) =>
+          e.user.role == Role.ishBoshqaruvchi &&
+          e.user.isActive &&
+          e.user.id != id);
       if (existingForeman) {
-        throw ApiException('Tizimda faqat 1 ta Ish boshqaruvchi akkaunti bo‘lishi mumkin', 400);
+        throw ApiException(
+            'Tizimda faqat 1 ta Ish boshqaruvchi akkaunti bo‘lishi mumkin',
+            400);
       }
     }
     final oldUser = entry.value.user;
     final effectiveCanLogin = canLogin ?? oldUser.canLogin;
-    final effectiveUsername = (effectiveCanLogin && username != null && username.isNotEmpty)
-        ? username.trim()
-        : oldUser.username;
+    final effectiveUsername =
+        (effectiveCanLogin && username != null && username.isNotEmpty)
+            ? username.trim()
+            : oldUser.username;
 
     final updated = AppUser(
       id: oldUser.id,
@@ -1240,7 +1626,9 @@ class MockUserRepository implements UserRepository {
       isOnShift: isOnShift ?? oldUser.isOnShift,
     );
     _s.users[entry.key] = (
-      password: (effectiveCanLogin && password != null && password.isNotEmpty) ? password : entry.value.password,
+      password: (effectiveCanLogin && password != null && password.isNotEmpty)
+          ? password
+          : entry.value.password,
       user: updated,
     );
     return updated;
@@ -1310,7 +1698,8 @@ class MockAttendanceRepository implements AttendanceRepository {
   };
 
   @override
-  Future<List<AttendanceRecord>> list({String? date, String? month, int? userId}) async {
+  Future<List<AttendanceRecord>> list(
+      {String? date, String? month, int? userId}) async {
     var items = List<AttendanceRecord>.from(_s.attendances);
     if (date != null && date.isNotEmpty) {
       items = items.where((a) => a.date == date).toList();
@@ -1323,20 +1712,25 @@ class MockAttendanceRepository implements AttendanceRepository {
 
     // Ketdi qilinmasa kechgacha ketadigan vaqtgacha (18:00) avtomatik ketdi qiladi
     final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final todayStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     for (int i = 0; i < items.length; i++) {
       final a = items[i];
       if (a.checkIn != null && a.checkOut == null) {
         final parsedDate = DateTime.tryParse(a.date);
         if (parsedDate != null) {
-          final shiftEnd = DateTime(parsedDate.year, parsedDate.month, parsedDate.day, 18, 0);
-          if (a.date.compareTo(todayStr) < 0 || (a.date == todayStr && now.isAfter(shiftEnd))) {
+          final shiftEnd = DateTime(
+              parsedDate.year, parsedDate.month, parsedDate.day, 18, 0);
+          if (a.date.compareTo(todayStr) < 0 ||
+              (a.date == todayStr && now.isAfter(shiftEnd))) {
             final diffMins = shiftEnd.difference(a.checkIn!).inMinutes;
             final worked = (diffMins / 60.0).clamp(0.0, 24.0);
             final updated = a.copyWith(
               checkOut: shiftEnd,
               workedHours: double.parse(worked.toStringAsFixed(1)),
-              note: a.note != null ? '${a.note} · Avtomatik ketdi (18:00)' : 'Avtomatik ketdi (18:00)',
+              note: a.note != null
+                  ? '${a.note} · Avtomatik ketdi (18:00)'
+                  : 'Avtomatik ketdi (18:00)',
             );
             items[i] = updated;
             final sIdx = _s.attendances.indexWhere((x) => x.id == a.id);
@@ -1351,19 +1745,28 @@ class MockAttendanceRepository implements AttendanceRepository {
   }
 
   @override
-  Future<AttendanceRecord> checkIn(int userId, {DateTime? time, String? note}) async {
+  Future<AttendanceRecord> checkIn(int userId,
+      {DateTime? time, String? note}) async {
     final now = time ?? DateTime.now();
-    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final user = _s.users.values.firstWhere((u) => u.user.id == userId, orElse: () => throw ApiException('Xodim topilmadi', 404)).user;
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final user = _s.users.values
+        .firstWhere((u) => u.user.id == userId,
+            orElse: () => throw ApiException('Xodim topilmadi', 404))
+        .user;
 
     final isLate = now.hour > 9 || (now.hour == 9 && now.minute > 15);
-    final idx = _s.attendances.indexWhere((a) => a.userId == userId && a.date == dateStr);
+    final idx = _s.attendances
+        .indexWhere((a) => a.userId == userId && a.date == dateStr);
 
     if (idx >= 0) {
       final existing = _s.attendances[idx];
       double hours = 0;
       if (existing.checkOut != null) {
-        hours = double.parse((existing.checkOut!.difference(now).inMinutes / 60.0).clamp(0.0, 24.0).toStringAsFixed(1));
+        hours = double.parse(
+            (existing.checkOut!.difference(now).inMinutes / 60.0)
+                .clamp(0.0, 24.0)
+                .toStringAsFixed(1));
       }
       final updated = existing.copyWith(
         checkIn: now,
@@ -1389,17 +1792,26 @@ class MockAttendanceRepository implements AttendanceRepository {
   }
 
   @override
-  Future<AttendanceRecord> checkOut(int userId, {DateTime? time, String? note}) async {
+  Future<AttendanceRecord> checkOut(int userId,
+      {DateTime? time, String? note}) async {
     final now = time ?? DateTime.now();
-    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final user = _s.users.values.firstWhere((u) => u.user.id == userId, orElse: () => throw ApiException('Xodim topilmadi', 404)).user;
-    final idx = _s.attendances.indexWhere((a) => a.userId == userId && a.date == dateStr);
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final user = _s.users.values
+        .firstWhere((u) => u.user.id == userId,
+            orElse: () => throw ApiException('Xodim topilmadi', 404))
+        .user;
+    final idx = _s.attendances
+        .indexWhere((a) => a.userId == userId && a.date == dateStr);
 
     if (idx >= 0) {
       final existing = _s.attendances[idx];
       double hours = 0;
       if (existing.checkIn != null) {
-        hours = double.parse((now.difference(existing.checkIn!).inMinutes / 60.0).clamp(0.0, 24.0).toStringAsFixed(1));
+        hours = double.parse(
+            (now.difference(existing.checkIn!).inMinutes / 60.0)
+                .clamp(0.0, 24.0)
+                .toStringAsFixed(1));
       }
       final updated = existing.copyWith(
         checkOut: now,
@@ -1424,7 +1836,8 @@ class MockAttendanceRepository implements AttendanceRepository {
   }
 
   @override
-  Future<void> bulkCheckIn(List<int> userIds, {DateTime? time, String? date}) async {
+  Future<void> bulkCheckIn(List<int> userIds,
+      {DateTime? time, String? date}) async {
     final now = time ?? DateTime.now();
     for (final uid in userIds) {
       await checkIn(uid, time: now);
@@ -1433,21 +1846,28 @@ class MockAttendanceRepository implements AttendanceRepository {
 
   @override
   Future<AttendanceRecord> saveRecord(AttendanceRecord record) async {
-    final idx = _s.attendances.indexWhere((a) => a.id == record.id || (a.userId == record.userId && a.date == record.date));
+    final idx = _s.attendances.indexWhere((a) =>
+        a.id == record.id ||
+        (a.userId == record.userId && a.date == record.date));
     if (idx >= 0) {
       _s.attendances[idx] = record;
       return record;
     } else {
-      final rec = record.copyWith(id: record.id > 0 ? record.id : _s.nextAttendanceId++);
+      final rec = record.copyWith(
+          id: record.id > 0 ? record.id : _s.nextAttendanceId++);
       _s.attendances.add(rec);
       return rec;
     }
   }
 
   @override
-  Future<List<SalaryReportItem>> getSalaryReport({required String month, int totalWorkingDays = 26}) async {
+  Future<List<SalaryReportItem>> getSalaryReport(
+      {required String month, int totalWorkingDays = 26}) async {
     // Xo'jayinga (admin) oylik to'lanmaydi!
-    final users = _s.users.values.map((e) => e.user).where((u) => u.isActive && u.role != Role.admin).toList();
+    final users = _s.users.values
+        .map((e) => e.user)
+        .where((u) => u.isActive && u.role != Role.admin)
+        .toList();
     final atts = await list(month: month);
 
     final userAtts = <int, List<AttendanceRecord>>{};
@@ -1477,7 +1897,8 @@ class MockAttendanceRepository implements AttendanceRepository {
 
       for (final a in worked) {
         if (a.checkIn != null) {
-          final expectedStart = DateTime(a.checkIn!.year, a.checkIn!.month, a.checkIn!.day, 9, 0);
+          final expectedStart =
+              DateTime(a.checkIn!.year, a.checkIn!.month, a.checkIn!.day, 9, 0);
           final diffMins = a.checkIn!.difference(expectedStart).inMinutes;
           if (diffMins > 10) {
             totalLateDeduction += diffMins * minuteRate;
@@ -1499,18 +1920,26 @@ class MockAttendanceRepository implements AttendanceRepository {
         bonus = 0;
       } else if (u.salaryType == 'daily') {
         calculated = u.salary * daysWorked;
-        deduction = totalLateDeduction > 0 ? totalLateDeduction.roundToDouble() : (u.salary * 0.1 * daysLate).roundToDouble();
+        deduction = totalLateDeduction > 0
+            ? totalLateDeduction.roundToDouble()
+            : (u.salary * 0.1 * daysLate).roundToDouble();
       } else if (u.salaryType == 'hourly') {
         calculated = u.salary * hoursWorked;
         deduction = totalLateDeduction.roundToDouble();
       } else {
-        calculated = (dayRate * (daysWorked > 0 ? daysWorked : totalWorkingDays)).roundToDouble();
-        deduction = totalLateDeduction > 0 ? totalLateDeduction.roundToDouble() : (dayRate * 0.1 * daysLate).roundToDouble();
+        calculated =
+            (dayRate * (daysWorked > 0 ? daysWorked : totalWorkingDays))
+                .roundToDouble();
+        deduction = totalLateDeduction > 0
+            ? totalLateDeduction.roundToDouble()
+            : (dayRate * 0.1 * daysLate).roundToDouble();
       }
 
-      final rawNet = (calculated + bonus - deduction).clamp(0.0, double.infinity);
+      final rawNet =
+          (calculated + bonus - deduction).clamp(0.0, double.infinity);
       final remainingSalary = (rawNet - paidAmount).clamp(0.0, double.infinity);
-      final isPaid = (paidAmount >= rawNet && rawNet > 0) || (paidAmount > 0 && remainingSalary == 0);
+      final isPaid = (paidAmount >= rawNet && rawNet > 0) ||
+          (paidAmount > 0 && remainingSalary == 0);
 
       reportItems.add(SalaryReportItem(
         userId: u.id,
@@ -1540,13 +1969,15 @@ class MockAttendanceRepository implements AttendanceRepository {
   }
 
   @override
-  Future<void> addBonus(int userId, String month, double amount, {String? reason}) async {
+  Future<void> addBonus(int userId, String month, double amount,
+      {String? reason}) async {
     final key = '${userId}_$month';
     _s.manualBonuses[key] = (_s.manualBonuses[key] ?? 0.0) + amount;
   }
 
   @override
-  Future<Map<String, dynamic>> getShiftConfig() async => Map<String, dynamic>.from(_shiftConfig);
+  Future<Map<String, dynamic>> getShiftConfig() async =>
+      Map<String, dynamic>.from(_shiftConfig);
 
   @override
   Future<void> updateShiftConfig(Map<String, dynamic> config) async {
@@ -1561,7 +1992,11 @@ class MockStockRepository implements StockRepository {
   @override
   Future<List<StockMovementRecord>> movements({int? productId}) async {
     if (productId != null) {
-      return _s.movements.where((m) => m.productId == productId).toList().reversed.toList();
+      return _s.movements
+          .where((m) => m.productId == productId)
+          .toList()
+          .reversed
+          .toList();
     }
     return _s.movements.reversed.toList();
   }
@@ -1578,14 +2013,29 @@ class MockStockRepository implements StockRepository {
     final p = _s.products[i];
     final oldStock = p.stock < 0 ? 0 : p.stock;
     final newStock = oldStock + quantity;
-    final newCost = ((oldStock * p.costPrice) + (quantity * unitCost)) / newStock;
+    final newCost =
+        ((oldStock * p.costPrice) + (quantity * unitCost)) / newStock;
     _s.products[i] = Product(
-      id: p.id, name: p.name, sku: p.sku, qrCode: p.qrCode, unit: p.unit, donaM2: p.donaM2,
-      price: p.price, costPrice: newCost, stock: newStock,
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      qrCode: p.qrCode,
+      unit: p.unit,
+      donaM2: p.donaM2,
+      price: p.price,
+      costPrice: newCost,
+      stock: newStock,
     );
     _s.movements.add(StockMovementRecord(
-      id: _s.nextId++, productId: productId, productName: p.name, qtyDelta: quantity, kind: 'purchase',
-      note: note ?? 'Xarid kirimi', createdByName: 'Admin', unitCost: unitCost, createdAt: DateTime.now(),
+      id: _s.nextId++,
+      productId: productId,
+      productName: p.name,
+      qtyDelta: quantity,
+      kind: 'purchase',
+      note: note ?? 'Xarid kirimi',
+      createdByName: 'Admin',
+      unitCost: unitCost,
+      createdAt: DateTime.now(),
     ));
     _s.notifications.add(AppNotification(
       id: _s.nextId++,
@@ -1611,8 +2061,12 @@ class MockStockRepository implements StockRepository {
     }
     _s.setStock(productId, p.stock + delta);
     _s.movements.add(StockMovementRecord(
-      id: _s.nextId++, productId: productId, qtyDelta: delta, kind: 'adjustment',
-      note: note, createdAt: DateTime.now(),
+      id: _s.nextId++,
+      productId: productId,
+      qtyDelta: delta,
+      kind: 'adjustment',
+      note: note,
+      createdAt: DateTime.now(),
     ));
     final sign = delta > 0 ? '+' : '';
     _s.notifications.add(AppNotification(
@@ -1692,7 +2146,8 @@ class MockCustomerRepository implements CustomerRepository {
 
   @override
   Future<Customer> getCustomer(int id) async {
-    final c = _s.customers.firstWhere((x) => x.id == id, orElse: () => throw ApiException('Mijoz topilmadi', 404));
+    final c = _s.customers.firstWhere((x) => x.id == id,
+        orElse: () => throw ApiException('Mijoz topilmadi', 404));
     final local = LocalImageStore.getCustomerImage(c.id, c.phone, c.name);
     if (local != null && local.isNotEmpty) {
       return c.copyWith(photoUrl: local);
@@ -1716,7 +2171,8 @@ class MockCustomerRepository implements CustomerRepository {
     if (idx < 0) throw ApiException('Mijoz topilmadi', 404);
     _s.customers[idx] = customer;
     if (customer.photoUrl != null && customer.photoUrl!.isNotEmpty) {
-      LocalImageStore.saveCustomerImage(customer.id, customer.photoUrl, customer.phone, customer.name);
+      LocalImageStore.saveCustomerImage(
+          customer.id, customer.photoUrl, customer.phone, customer.name);
     }
     return customer;
   }
@@ -1740,7 +2196,8 @@ class MockDeliveryRepository implements DeliveryRepository {
   final MockStore _s;
 
   @override
-  Future<List<Delivery>> list({String? status, String? query, int? driverId}) async {
+  Future<List<Delivery>> list(
+      {String? status, String? query, int? driverId}) async {
     await Future.delayed(const Duration(milliseconds: 60));
     var list = List.of(_s.deliveries);
     if (driverId != null) {
@@ -1776,8 +2233,12 @@ class MockDeliveryRepository implements DeliveryRepository {
     final d = delivery.copyWith(
       id: _s.nextDeliveryId++,
       createdAt: DateTime.now(),
-      dispatchTime: delivery.status == 'on_the_way' ? DateTime.now() : delivery.dispatchTime,
-      deliveredTime: delivery.status == 'delivered' ? DateTime.now() : delivery.deliveredTime,
+      dispatchTime: delivery.status == 'on_the_way'
+          ? DateTime.now()
+          : delivery.dispatchTime,
+      deliveredTime: delivery.status == 'delivered'
+          ? DateTime.now()
+          : delivery.deliveredTime,
     );
     _s.deliveries.insert(0, d);
     return d;
@@ -1798,7 +2259,9 @@ class MockDeliveryRepository implements DeliveryRepository {
     final cur = _s.deliveries[idx];
     final updated = cur.copyWith(
       status: status,
-      dispatchTime: status == 'on_the_way' && cur.dispatchTime == null ? DateTime.now() : cur.dispatchTime,
+      dispatchTime: status == 'on_the_way' && cur.dispatchTime == null
+          ? DateTime.now()
+          : cur.dispatchTime,
       deliveredTime: status == 'delivered' ? DateTime.now() : cur.deliveredTime,
     );
     _s.deliveries[idx] = updated;
@@ -1838,5 +2301,3 @@ class MockDeliveryRepository implements DeliveryRepository {
     _s.deliveries.removeWhere((d) => d.id == id);
   }
 }
-
-
