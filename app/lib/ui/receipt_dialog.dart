@@ -273,7 +273,6 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     sb.writeln('(Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)');
     sb.writeln(dividerDbl);
     sb.writeln(center('Xaridingiz uchun tashakkur!'));
-    sb.writeln(center('NTJ - Namuna Tosh Jilo'));
     sb.writeln(dividerDbl);
     return sb.toString();
   }
@@ -552,7 +551,6 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
   <div class="text-center" style="margin-top: 6px; font-size: ${is58mm ? '10px' : '11.5px'}; color: #000000;">
     <div class="bold" style="font-weight: 900;">Xaridingiz uchun tashakkur!</div>
-    <div style="color: #000000; font-weight: 900; font-size: ${is58mm ? '8.5px' : '10px'};">NTJ - Namuna Tosh Jilo</div>
   </div>
 
   <!-- Avto-kesgich (Cutter) uchun bo'sh joy -->
@@ -899,12 +897,6 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.Text('Xaridingiz uchun tashakkur!',
                       style:
                           pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5),
-                      textAlign: pw.TextAlign.center),
-                  pw.Text('NTJ - Namuna Tosh Jilo',
-                      style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: is58mm ? 6 : 7.5,
-                          color: PdfColors.black),
                       textAlign: pw.TextAlign.center),
                   // Kesish pichog'i uchun bo'sh joy
                   pw.SizedBox(height: 20 * PdfPageFormat.mm),
@@ -1422,20 +1414,6 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             const SizedBox(height: 6),
                             Center(
                               child: Text(
-                                CompanyInfo.name,
-                                style: const TextStyle(
-                                  fontFamily: 'Courier',
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.black,
-                                  letterSpacing: 0.3,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Center(
-                              child: Text(
                                 'Manzil: ${CompanyInfo.address}',
                                 style: const TextStyle(
                                   fontFamily: 'Courier',
@@ -1760,7 +1738,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                             const SizedBox(height: 10),
                             const Center(
                               child: Text(
-                                'Xaridingiz uchun tashakkur!\nNTJ — Namuna Tosh Jilo',
+                                'Xaridingiz uchun tashakkur!',
                                 style: TextStyle(
                                   fontFamily: 'Courier',
                                   fontSize: 10,

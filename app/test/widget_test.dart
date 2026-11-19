@@ -932,7 +932,7 @@ void main() {
 
     expect(find.text('Kassa Cheki'), findsOneWidget);
 
-    expect(find.textContaining('NAMUNA TOSH JILO'), findsWidgets);
+    expect(find.byType(Image), findsWidgets);
 
     expect(find.text('Sobirjon Aka'), findsOneWidget);
 
@@ -1172,7 +1172,7 @@ void main() {
 
     expect(find.text('Kassa Cheki'), findsOneWidget);
 
-    expect(find.textContaining('NAMUNA TOSH JILO'), findsWidgets);
+    expect(find.byType(Image), findsWidgets);
 
     expect(find.textContaining('95'), findsWidgets);
 
