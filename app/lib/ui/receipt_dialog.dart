@@ -199,7 +199,6 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
     final sb = StringBuffer();
     sb.writeln(dividerDbl);
-    sb.writeln(center(_cleanAscii(CompanyInfo.name)));
     sb.writeln(center(_cleanAscii(CompanyInfo.businessType)));
     sb.writeln(center(_cleanAscii('Manzil: ${CompanyInfo.address}')));
     for (final phone in CompanyInfo.phones) {
