@@ -86,7 +86,9 @@ class AppUser {
       canLogin: canLogin,
       isOnShift: (j['is_on_shift'] ?? true) as bool,
       isArchived: (j['is_archived'] ?? false) as bool,
-      archivedAt: j['archived_at'] == null ? null : DateTime.tryParse(j['archived_at'].toString()),
+      archivedAt: j['archived_at'] == null
+          ? null
+          : DateTime.tryParse(j['archived_at'].toString()),
       archivedByName: j['archived_by_name']?.toString(),
     );
   }
@@ -561,8 +563,9 @@ class Product {
 
   double priceForSort(String? s) {
     if (s == '1' && priceSort1 != null && priceSort1! > 0) return priceSort1!;
-    if (s == '1.5' && priceSort1_5 != null && priceSort1_5! > 0)
+    if (s == '1.5' && priceSort1_5 != null && priceSort1_5! > 0) {
       return priceSort1_5!;
+    }
     if (s == '2' && priceSort2 != null && priceSort2! > 0) return priceSort2!;
     return price;
   }
@@ -572,7 +575,9 @@ class Product {
       final s = sort!.trim();
       final lower = s.toLowerCase();
       if (lower == 'oliy' || lower == 'oliy sort') return 'Oliy sort';
-      final m = RegExp(r'^(?:sort\s*)?(1|1\.5|2|3)(?:\s*sort)?$', caseSensitive: false).firstMatch(s);
+      final m = RegExp(r'^(?:sort\s*)?(1|1\.5|2|3)(?:\s*sort)?$',
+              caseSensitive: false)
+          .firstMatch(s);
       if (m != null) {
         return '${m.group(1)}-sort';
       }
@@ -633,7 +638,9 @@ class Product {
     if (nm.contains('sim') || nm.contains('esk') || nm.contains('yinjiahong')) {
       return 'Xomashyo';
     }
-    if (nm.contains('stol') || nm.contains('demehot') || nm.contains('demhot')) {
+    if (nm.contains('stol') ||
+        nm.contains('demehot') ||
+        nm.contains('demhot')) {
       return 'Tayyor mahsulot';
     }
     // Kategoriya kelmay qolsa yoki aniqlanmasa, avtomatik ravishda "Qo‘shimcha" bo'ladi
@@ -701,7 +708,7 @@ class Product {
         id: (j['id'] as num?)?.toInt() ?? 0,
         name: (j['name'] ?? '').toString(),
         category: () {
-          final c = j['category']?.toString()?.trim();
+          final c = j['category']?.toString().trim();
           if (c != null && c.isNotEmpty) {
             if (c.toLowerCase() == 'granit') {
               return 'Marmar';
@@ -739,10 +746,14 @@ class Product {
               nm.contains('gul')) {
             return 'Qo‘shimcha';
           }
-          if (nm.contains('sim') || nm.contains('esk') || nm.contains('yinjiahong')) {
+          if (nm.contains('sim') ||
+              nm.contains('esk') ||
+              nm.contains('yinjiahong')) {
             return 'Xomashyo';
           }
-          if (nm.contains('stol') || nm.contains('demehot') || nm.contains('demhot')) {
+          if (nm.contains('stol') ||
+              nm.contains('demehot') ||
+              nm.contains('demhot')) {
             return 'Tayyor mahsulot';
           }
           // Kategoriya kelmay qolsa, avtomatik ravishda "Qo‘shimcha" bo'ladi
@@ -869,10 +880,13 @@ class CartLine {
   double get unitPrice => unitPriceOverride ?? product.priceForSort(sort);
   double get baseQty {
     if (inPachka && product.effectiveBoxM2 != null) {
-      return double.parse((quantity * product.effectiveBoxM2!).toStringAsFixed(3));
+      return double.parse(
+          (quantity * product.effectiveBoxM2!).toStringAsFixed(3));
     }
     if (inDona && product.hasDona) {
-      return double.parse((quantity * (product.effectiveDonaM2 ?? product.donaM2 ?? 1.0)).toStringAsFixed(3));
+      return double.parse(
+          (quantity * (product.effectiveDonaM2 ?? product.donaM2 ?? 1.0))
+              .toStringAsFixed(3));
     }
     return quantity;
   }
@@ -881,7 +895,10 @@ class CartLine {
 
   static String _formatQty(double v) {
     if (v == v.roundToDouble()) return v.toInt().toString();
-    return v.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    return v
+        .toStringAsFixed(2)
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
   }
 
   String get displayName {
@@ -965,7 +982,9 @@ class SaleItemRecord {
     for (final m in matches) {
       final inside = (m.group(1) ?? '').toLowerCase();
       if (inside.contains('sort')) continue;
-      if (inside.contains('kesish') || inside.contains('kesib') || inside.contains('kesil')) {
+      if (inside.contains('kesish') ||
+          inside.contains('kesib') ||
+          inside.contains('kesil')) {
         return true;
       }
       if (RegExp(r'\d+(\.\d+)?\s*[×xX*]\s*\d+').hasMatch(inside)) {
@@ -1091,7 +1110,8 @@ class SaleResult {
 
   int get returnDays {
     if (note != null && note!.isNotEmpty) {
-      final m = RegExp(r'\[Qaytarish:\s*(\d+)\s*kun\]', caseSensitive: false).firstMatch(note!);
+      final m = RegExp(r'\[Qaytarish:\s*(\d+)\s*kun\]', caseSensitive: false)
+          .firstMatch(note!);
       if (m != null) {
         final d = int.tryParse(m.group(1)!);
         if (d != null && d > 0) return d.clamp(1, 30);
@@ -1107,7 +1127,9 @@ class SaleResult {
 
   DateTime? get debtDueDate {
     if (note != null && note!.isNotEmpty) {
-      final m = RegExp(r'\[Nasiya muddati:\s*(\d{2}\.\d{2}\.\d{4})\]', caseSensitive: false).firstMatch(note!);
+      final m = RegExp(r'\[Nasiya muddati:\s*(\d{2}\.\d{2}\.\d{4})\]',
+              caseSensitive: false)
+          .firstMatch(note!);
       if (m != null) {
         final parts = m.group(1)!.split('.');
         if (parts.length == 3) {
@@ -1125,7 +1147,8 @@ class SaleResult {
 
   String? get bankAccount {
     if (note != null && note!.isNotEmpty) {
-      final m = RegExp(r'\[Hisob:\s*([^\]]+)\]', caseSensitive: false).firstMatch(note!);
+      final m = RegExp(r'\[Hisob:\s*([^\]]+)\]', caseSensitive: false)
+          .firstMatch(note!);
       if (m != null) {
         return m.group(1)!.trim();
       }
@@ -1136,8 +1159,12 @@ class SaleResult {
   String? get cleanNote {
     if (note == null) return null;
     var cleaned = note!
-        .replaceAll(RegExp(r'\[Qaytarish:\s*\d+\s*kun\]\s*', caseSensitive: false), '')
-        .replaceAll(RegExp(r'\[Nasiya muddati:\s*\d{2}\.\d{2}\.\d{4}\]\s*', caseSensitive: false), '')
+        .replaceAll(
+            RegExp(r'\[Qaytarish:\s*\d+\s*kun\]\s*', caseSensitive: false), '')
+        .replaceAll(
+            RegExp(r'\[Nasiya muddati:\s*\d{2}\.\d{2}\.\d{4}\]\s*',
+                caseSensitive: false),
+            '')
         .replaceAll(RegExp(r'\[Hisob:\s*[^\]]+\]\s*', caseSensitive: false), '')
         .trim();
     return cleaned.isEmpty ? null : cleaned;

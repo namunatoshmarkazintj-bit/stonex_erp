@@ -407,6 +407,11 @@ class _PosScreenState extends State<PosScreen> {
               items = items.where((p) => _isCategoryMatch(p, _selectedCategory)).toList();
             }
 
+            // Kassirni chalg'itmaslik uchun tugagan mahsulotlarni eng pastga joylashtiramiz
+            final inStock = items.where((p) => p.stock > 0).toList();
+            final outOfStock = items.where((p) => p.stock <= 0).toList();
+            items = [...inStock, ...outOfStock];
+
             if (items.isEmpty) {
               return const _EmptyState(
                 icon: Icons.search_off_rounded,
