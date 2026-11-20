@@ -800,7 +800,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
                               ),
                               pw.Text(
-                                '${money(item.unitPrice)} / birlik',
+                                _cleanAscii('${money(item.unitPrice)} / birlik'),
                                 style: pw.TextStyle(
                                   font: font,
                                   fontSize: is58mm ? 5.6 : 6.8,
