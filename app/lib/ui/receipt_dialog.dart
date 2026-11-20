@@ -1839,13 +1839,9 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                             color: Colors.white),
                                       )
                                     : const Icon(Icons.print_rounded, size: 15),
-                                label: Text(
-                                  kIsWeb
-                                      ? 'Chop etish (Brauzer / Oddiy shrift)'
-                                      : (savedPrinterName != null
-                                          ? 'Chop etish (${savedPrinterName.length > 14 ? "${savedPrinterName.substring(0, 12)}.." : savedPrinterName})'
-                                          : 'Chop etish'),
-                                  style: const TextStyle(
+                                label: const Text(
+                                  'Chop etish',
+                                  style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 12),
                                 ),
