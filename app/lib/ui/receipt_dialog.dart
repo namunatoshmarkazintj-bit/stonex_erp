@@ -564,24 +564,26 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   Future<Uint8List> _buildReceiptPdfBytes(
       SaleResult sale, PdfPageFormat driverFormat) async {
     final doc = pw.Document();
-    // HelveticaBold — qalin, to'q qora va serifsiz sans-serif shrift:
-    // Termal printerlarda (203 DPI) har bir harf chizig'i 2-3 ta termal nuqtani qamrab olib,
-    // yozuvlarni kulrang/hira emas, maksimal qora va tiniq (chuqur kontrastli) bosib chiqaradi.
+    // HelveticaBold — zamonaviy Korzinka/supermarket kassa cheklaridagi kabi to'q,
+    // serifsiz va qalin shrift (termal printerda maksimal kontrastli qora chiqadi).
     final font = pw.Font.helveticaBold();
     final fontBold = pw.Font.helveticaBold();
 
     final is58mm = LocalPrinterStore.getSavedPaperWidth() <= 58;
 
-    // Xprinter XP-80 termal bosish kallagi (printhead) kengligi = qat'iy 72.0 mm (576 dots @ 203 DPI).
-    // Foydalanuvchi talabiga ko'ra kenglik aynan 72.0 mm ga sozlandi:
-    final double targetPaperWidth = (is58mm ? 48.0 : 72.0) * PdfPageFormat.mm;
-    final double effMarginLeft = (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm;
-    final double effMarginRight = (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm;
+    // Standart 80mm kassa qog'ozi (Korzinka, Makro va yirik do'konlar standarti):
+    // Qog'oz ruloni = 80.0 mm.
+    // Chapdan 4.0 mm va o'ngdan 4.0 mm simmetrik hoshiya tashlanadi.
+    // O'rtadagi faol chek kengligi = 72.0 mm (XP-80 ning fizik bosish kallagi).
+    // Natijada chek 80mm qog'ozning qoq o'rtasida chiroyli va tekis bo'lib chiqadi!
+    final double targetPaperWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
+    final double effMarginLeft = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
+    final double effMarginRight = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
     final double effMarginTop = 2.0 * PdfPageFormat.mm;
     final double effMarginBottom = 2.0 * PdfPageFormat.mm;
 
-    // 72mm kenglikdan 2mm hoshiya ayrilganda kontent to'liq 70.0 mm bo'ladi
-    final double maxContentWidth = (is58mm ? 46.4 : 70.0) * PdfPageFormat.mm;
+    // Faol kontent kengligi: 80mm da 72.0 mm, 58mm da 54.0 mm
+    final double maxContentWidth = (is58mm ? 54.0 : 72.0) * PdfPageFormat.mm;
 
     final String paymentLabel;
     final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
@@ -598,7 +600,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
     final double fontSizeBase = is58mm ? 6.5 : 8.0;
     final double fontSizeHeader = is58mm ? 8.5 : 11.0;
     final double colQtyWidth = is58mm ? 24 : 28;
-    final double colSumWidth = is58mm ? 56 : 74;
+    final double colSumWidth = is58mm ? 56 : 76;
 
     doc.addPage(
       pw.Page(
@@ -611,11 +613,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
           marginBottom: effMarginBottom,
         ),
         build: (pw.Context ctx) {
-          return pw.ConstrainedBox(
-            constraints: pw.BoxConstraints(maxWidth: maxContentWidth),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-              mainAxisSize: pw.MainAxisSize.min,
+          return pw.Center(
+            child: pw.ConstrainedBox(
+              constraints: pw.BoxConstraints(maxWidth: maxContentWidth),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                mainAxisSize: pw.MainAxisSize.min,
               children: [
                 // 1. NTJ Logotipi
                 pw.Center(
@@ -935,6 +938,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                 pw.SizedBox(height: 20 * PdfPageFormat.mm),
               ],
             ),
+          ),
           );
         },
       ),
@@ -965,12 +969,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         }
       }
 
-      // Xprinter XP-80 va 80mm qog'oz uchun standart 72.0 mm format (576 dots @ 203 DPI):
+      // 80mm kassa qog'ozi uchun markazlashtirilgan format (Korzinka / supermarket standarti):
       final defaultRollFormat = PdfPageFormat(
-        (is58mm ? 48.0 : 72.0) * PdfPageFormat.mm,
+        (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm,
         double.infinity,
-        marginLeft: (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm,
-        marginRight: (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm,
+        marginLeft: (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm,
+        marginRight: (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm,
         marginTop: 2.0 * PdfPageFormat.mm,
         marginBottom: 2.0 * PdfPageFormat.mm,
       );
