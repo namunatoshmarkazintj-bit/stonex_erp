@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -560,6 +561,405 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 ''';
   }
 
+  Future<Uint8List> _buildReceiptPdfBytes(
+      SaleResult sale, PdfPageFormat driverFormat) async {
+    final doc = pw.Document();
+    final font = pw.Font.courierBold();
+    final fontBold = pw.Font.courierBold();
+
+    final rawWidth = driverFormat.width;
+    final is58mm = LocalPrinterStore.getSavedPaperWidth() <= 58 ||
+        (rawWidth > 0 && rawWidth <= 60 * PdfPageFormat.mm);
+
+    // Drayverdan kelgan qog'oz kengligi (Xprinter XP-80 da ko'pincha 78.0mm yoki 80.0mm):
+    // Agar drayver standart A4 (210mm) yoki kutilmagan katta qiymat bersa, 78.0 mm qilib olamiz.
+    final double targetPaperWidth;
+    if (rawWidth >= 65 * PdfPageFormat.mm && rawWidth <= 85 * PdfPageFormat.mm) {
+      targetPaperWidth = rawWidth;
+    } else if (rawWidth > 40 * PdfPageFormat.mm && rawWidth <= 60 * PdfPageFormat.mm) {
+      targetPaperWidth = rawWidth;
+    } else {
+      targetPaperWidth = (is58mm ? 48.0 : 78.0) * PdfPageFormat.mm;
+    }
+
+    // Chap va o'ng xavfsiz hoshiyalar (kamida 2.0mm chapdan, 3.5mm o'ngdan):
+    // Bu qog'oz sal surilgan taqdirda ham o'ng chetdagi narx va yozuvlar kesilishini 100% yo'qotadi!
+    final double effMarginLeft = math.max(
+      driverFormat.marginLeft > 0 ? driverFormat.marginLeft : 0.0,
+      (is58mm ? 1.0 : 2.0) * PdfPageFormat.mm,
+    );
+    final double effMarginRight = math.max(
+      driverFormat.marginRight > 0 ? driverFormat.marginRight : 0.0,
+      (is58mm ? 1.5 : 3.5) * PdfPageFormat.mm,
+    );
+    final double effMarginTop = 2.0 * PdfPageFormat.mm;
+    final double effMarginBottom = 2.0 * PdfPageFormat.mm;
+
+    // Xprinter XP-80 termal bosish kallagi (printhead) maydoni ichida cheklangan foydali kenglik:
+    // 80mm printerlarda apparat bosish kengligi maksimum 72.0 mm (576 dots).
+    // Shu sababli ichki kontent kengligi hech qachon 67.0 mm dan oshmaydi.
+    final double maxContentWidth = (is58mm ? 44.0 : 67.0) * PdfPageFormat.mm;
+
+    final String paymentLabel;
+    final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
+    if (pm == 'karta' || pm == 'card') {
+      paymentLabel = 'Karta';
+    } else if (pm == 'bank' || pm == 'transfer') {
+      paymentLabel = sale.bankAccount != null && sale.bankAccount!.isNotEmpty
+          ? 'Bank (${sale.bankAccount})'
+          : 'Bank hisob raqami';
+    } else {
+      paymentLabel = 'Naqd';
+    }
+
+    final double fontSizeBase = is58mm ? 6.5 : 7.8;
+    final double fontSizeHeader = is58mm ? 8.5 : 10.5;
+    final double colQtyWidth = is58mm ? 24 : 28;
+    final double colSumWidth = is58mm ? 56 : 78;
+
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(
+          targetPaperWidth,
+          double.infinity,
+          marginLeft: effMarginLeft,
+          marginRight: effMarginRight,
+          marginTop: effMarginTop,
+          marginBottom: effMarginBottom,
+        ),
+        build: (pw.Context ctx) {
+          return pw.ConstrainedBox(
+            constraints: pw.BoxConstraints(maxWidth: maxContentWidth),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                // 1. NTJ Logotipi
+                pw.Center(
+                  child: pw.Image(
+                    pw.MemoryImage(ReceiptLogoData.bytesWhite),
+                    width: is58mm ? 70 : 92,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+
+                // 2. NAMUNA TOSH JILO nomi
+                pw.Text(
+                  'NAMUNA TOSH JILO',
+                  style: pw.TextStyle(
+                    font: fontBold,
+                    fontSize: fontSizeHeader,
+                    color: PdfColors.black,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 1),
+
+                // 3. Korxona yo'nalishi, manzili va telefon raqamlari
+                pw.Text(
+                  _cleanAscii(CompanyInfo.businessType),
+                  style: pw.TextStyle(
+                    font: font,
+                    fontSize: is58mm ? 6.0 : 7.2,
+                    color: PdfColors.black,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 1),
+                pw.Text(
+                  _cleanAscii('Manzil: ${CompanyInfo.address}'),
+                  style: pw.TextStyle(font: font, fontSize: is58mm ? 6.2 : 7.5),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.Text(
+                  _cleanAscii('Tel: ${CompanyInfo.phonesInline}'),
+                  style: pw.TextStyle(font: font, fontSize: is58mm ? 6.2 : 7.5),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 3),
+                pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1.0),
+                pw.SizedBox(height: 2),
+
+                // 4. Chek raqami va sana-vaqt
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      _cleanAscii('Chek No: #${sale.id.toString().padLeft(6, '0')}'),
+                      style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                    ),
+                    pw.Text(
+                      formatDateTime(sale.createdAt ?? DateTime.now()),
+                      style: pw.TextStyle(font: font, fontSize: fontSizeBase),
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 2),
+
+                // 5. Sotuvchi va to'lov turi
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Expanded(
+                      child: pw.Text(
+                        _cleanAscii('Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
+                        style: pw.TextStyle(font: font, fontSize: fontSizeBase),
+                      ),
+                    ),
+                    pw.SizedBox(width: 4),
+                    pw.Text(
+                      _cleanAscii("To'lov: $paymentLabel"),
+                      style: pw.TextStyle(font: font, fontSize: fontSizeBase),
+                    ),
+                  ],
+                ),
+                if (sale.customerName?.isNotEmpty == true) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Align(
+                    alignment: pw.Alignment.centerLeft,
+                    child: pw.Text(
+                      _cleanAscii('Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}'),
+                      style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                    ),
+                  ),
+                ],
+                pw.SizedBox(height: 4),
+                pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
+                pw.SizedBox(height: 3),
+
+                // 6. Mahsulotlar jadvali sarlavhasi
+                pw.Row(
+                  children: [
+                    pw.Expanded(
+                      child: pw.Text(
+                        'Mahsulot',
+                        style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                      ),
+                    ),
+                    pw.Container(
+                      width: colQtyWidth,
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text(
+                        'Miqdor',
+                        style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                      ),
+                    ),
+                    pw.Container(
+                      width: colSumWidth,
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text(
+                        'Summa',
+                        style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                      ),
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 2),
+                pw.Divider(color: PdfColors.black, thickness: 0.8),
+                pw.SizedBox(height: 2),
+
+                // 7. Mahsulotlar ro'yxati
+                for (final item in sale.items) ...[
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 2.0),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Expanded(
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                _cleanAscii(item.productName),
+                                style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                              ),
+                              pw.Text(
+                                '${money(item.unitPrice)} / birlik',
+                                style: pw.TextStyle(
+                                  font: font,
+                                  fontSize: is58mm ? 5.6 : 6.8,
+                                  color: PdfColors.grey900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        pw.Container(
+                          width: colQtyWidth,
+                          alignment: pw.Alignment.topRight,
+                          child: pw.Text(
+                            item.quantity.toStringAsFixed(1),
+                            style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                          ),
+                        ),
+                        pw.Container(
+                          width: colSumWidth,
+                          alignment: pw.Alignment.topRight,
+                          child: pw.Text(
+                            _cleanAscii(money(item.lineTotal)),
+                            style: pw.TextStyle(font: fontBold, fontSize: fontSizeBase),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                pw.SizedBox(height: 3),
+                pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
+                pw.SizedBox(height: 3),
+
+                // 8. JAMI summasi
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('JAMI:',
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
+                    pw.Text(_cleanAscii(money(sale.total)),
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
+                  ],
+                ),
+
+                // 9. USD ekvivalenti va valyuta kursi
+                if (sale.currencyRate != null && sale.currencyRate! > 0) ...[
+                  pw.SizedBox(height: 1),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('USD (\$):',
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.8)),
+                      pw.Text(_cleanAscii(moneyUsd(sale.total / sale.currencyRate!)),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.8)),
+                    ],
+                  ),
+                  pw.SizedBox(height: 1),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('Kurs (\$1 =):',
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.5 : 7.8)),
+                      pw.Text(_cleanAscii(money(sale.currencyRate!)),
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.5 : 7.8)),
+                    ],
+                  ),
+                ],
+                pw.SizedBox(height: 2),
+
+                // 10. To'langan summa va qarz
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text("To'landi:",
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.8)),
+                    pw.Text(_cleanAscii(money(sale.paid)),
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7.5 : 8.8)),
+                  ],
+                ),
+                if (sale.debt > 0.005) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('Qarz (Nasiya):',
+                          style: pw.TextStyle(
+                              font: fontBold,
+                              fontSize: is58mm ? 7.5 : 8.8,
+                              color: PdfColors.black)),
+                      pw.Text(_cleanAscii(money(sale.debt)),
+                          style: pw.TextStyle(
+                              font: fontBold,
+                              fontSize: is58mm ? 7.5 : 8.8,
+                              color: PdfColors.black)),
+                    ],
+                  ),
+                  if (sale.debtDueDate != null) ...[
+                    pw.SizedBox(height: 1),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('Nasiya qaytarish sanasi:',
+                            style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: is58mm ? 6.5 : 7.5,
+                                color: PdfColors.black)),
+                        pw.Text(formatDate(sale.debtDueDate!),
+                            style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: is58mm ? 6.5 : 7.5,
+                                color: PdfColors.black)),
+                      ],
+                    ),
+                  ],
+                ],
+                pw.SizedBox(height: 5),
+
+                // 11. Qaytarish shartlari
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 2.5, horizontal: 4),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.black, width: 0.8),
+                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        _cleanAscii(
+                            'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)'),
+                        style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.2 : 7.5),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                      pw.SizedBox(height: 1),
+                      pw.Text(
+                        _cleanAscii('(Mahsulot butun va chek taqdim etilganda)'),
+                        style: pw.TextStyle(
+                            font: fontBold,
+                            fontSize: is58mm ? 5.5 : 6.5,
+                            color: PdfColors.black),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                      pw.SizedBox(height: 1),
+                      pw.Text(
+                        _cleanAscii('(Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)'),
+                        style: pw.TextStyle(
+                            font: fontBold,
+                            fontSize: is58mm ? 5.2 : 6.3,
+                            color: PdfColors.black),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 5),
+
+                // 12. QR-kod
+                pw.Center(
+                  child: pw.BarcodeWidget(
+                    data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
+                    barcode: pw.Barcode.qrCode(),
+                    color: PdfColors.black,
+                    width: is58mm ? 42 : 54,
+                    height: is58mm ? 42 : 54,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+
+                // 13. Xaridingiz uchun tashakkur yozuvi
+                pw.Text('Xaridingiz uchun tashakkur!',
+                    style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5),
+                    textAlign: pw.TextAlign.center),
+
+                // Kesish pichog'i uchun bo'sh joy
+                pw.SizedBox(height: 20 * PdfPageFormat.mm),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    return doc.save();
+  }
+
   Future<void> _printPdf(BuildContext context,
       {bool forcePickPrinter = false, bool forcePdf = false}) async {
     final sale = widget.sale;
@@ -582,377 +982,24 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         }
       }
 
-      final doc = pw.Document();
-      // To'q, aniq va chuqur qora (bold monospaced) — termal printerlarda hira chiqishini 100% yo'qotadi
-      final font = pw.Font.courierBold();
-      final fontBold = pw.Font.courierBold();
-
-      // Xprinter XP-80 (80mm) va 58mm termal printerlar uchun qat'iy fizik bosish maydoni (Printable Area):
-      // Xprinter XP-80 da termal bosish kallagi (printhead) kengligi = 72.0 mm (576 dots @ 203 DPI).
-      // 58mm printerlarda = 48.0 mm (384 dots @ 203 DPI).
-      // Kenglik 72.0 mm dan oshmasligi o'ng tomondagi narx va summalarning kesilib qolishini 100% yo'qotadi!
-      final pdfPageWidth = (is58mm ? 48.0 : 72.0) * PdfPageFormat.mm;
-      final marginLeft = (is58mm ? 1.0 : 1.5) * PdfPageFormat.mm;
-      final marginRight = (is58mm ? 1.0 : 1.5) * PdfPageFormat.mm;
-      final marginTop = 2.0 * PdfPageFormat.mm;
-      final marginBottom = 2.0 * PdfPageFormat.mm;
-
-      final String paymentLabel;
-      final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
-      if (pm == 'karta' || pm == 'card') {
-        paymentLabel = 'Karta';
-      } else if (pm == 'bank' || pm == 'transfer') {
-        paymentLabel = sale.bankAccount != null && sale.bankAccount!.isNotEmpty
-            ? 'Bank (${sale.bankAccount})'
-            : 'Bank hisob raqami';
-      } else {
-        paymentLabel = 'Naqd';
-      }
-
-      doc.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat(
-            pdfPageWidth,
-            double.infinity,
-            marginLeft: marginLeft,
-            marginRight: marginRight,
-            marginTop: marginTop,
-            marginBottom: marginBottom,
-          ),
-          build: (pw.Context ctx) {
-            return pw.Container(
-              width: double.infinity,
-              alignment: pw.Alignment.topCenter,
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                mainAxisSize: pw.MainAxisSize.min,
-                children: [
-                  // 1. NTJ Logotipi
-                  pw.Center(
-                    child: pw.Image(
-                      pw.MemoryImage(ReceiptLogoData.bytesWhite),
-                      width: is58mm ? 70 : 92,
-                      fit: pw.BoxFit.contain,
-                    ),
-                  ),
-                  pw.SizedBox(height: 3),
-
-                  // 2. NAMUNA TOSH JILO nomi
-                  pw.Text(
-                    'NAMUNA TOSH JILO',
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: is58mm ? 8.5 : 10.5,
-                      color: PdfColors.black,
-                    ),
-                    textAlign: pw.TextAlign.center,
-                  ),
-                  pw.SizedBox(height: 1),
-
-                  // 3. Korxona yo'nalishi, manzili va telefon raqamlari
-                  pw.Text(
-                    _cleanAscii(CompanyInfo.businessType),
-                    style: pw.TextStyle(
-                      font: font,
-                      fontSize: is58mm ? 6.0 : 7.2,
-                      color: PdfColors.black,
-                    ),
-                    textAlign: pw.TextAlign.center,
-                  ),
-                  pw.SizedBox(height: 1),
-                  pw.Text(
-                    _cleanAscii('Manzil: ${CompanyInfo.address}'),
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.2 : 7.5),
-                    textAlign: pw.TextAlign.center,
-                  ),
-                  pw.Text(
-                    _cleanAscii('Tel: ${CompanyInfo.phonesInline}'),
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.2 : 7.5),
-                    textAlign: pw.TextAlign.center,
-                  ),
-                  pw.SizedBox(height: 3),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1.0),
-                  pw.SizedBox(height: 2),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(
-                          _cleanAscii(
-                              'Chek No: #${sale.id.toString().padLeft(6, '0')}'),
-                          style: pw.TextStyle(
-                              font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                      pw.Text(formatDateTime(sale.createdAt ?? DateTime.now()),
-                          style: pw.TextStyle(
-                              font: font, fontSize: is58mm ? 6.8 : 8)),
-                    ],
-                  ),
-                  pw.SizedBox(height: 2),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Expanded(
-                        child: pw.Text(
-                            _cleanAscii(
-                                'Sotuvchi: ${sale.cashierName ?? 'Kassir'}'),
-                            style: pw.TextStyle(
-                                font: font, fontSize: is58mm ? 6.8 : 8)),
-                      ),
-                      pw.SizedBox(width: 6),
-                      pw.Text(
-                          _cleanAscii(
-                              "To'lov: $paymentLabel"),
-                          style: pw.TextStyle(
-                              font: font, fontSize: is58mm ? 6.8 : 8)),
-                    ],
-                  ),
-                  if (sale.customerName?.isNotEmpty == true) ...[
-                    pw.SizedBox(height: 2),
-                    pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text(
-                        _cleanAscii(
-                            'Xaridor: ${sale.customerName} ${sale.customerPhone ?? ''}'),
-                        style: pw.TextStyle(
-                            font: fontBold, fontSize: is58mm ? 6.8 : 8),
-                      ),
-                    ),
-                  ],
-                  pw.SizedBox(height: 4),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
-                  pw.SizedBox(height: 3),
-                  // 6. Mahsulotlar jadvali sarlavhasi
-                  pw.Row(
-                    children: [
-                      pw.Expanded(
-                        child: pw.Text(
-                          'Mahsulot',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
-                        ),
-                      ),
-                      pw.Container(
-                        width: is58mm ? 26 : 34,
-                        alignment: pw.Alignment.centerRight,
-                        child: pw.Text(
-                          'Miqdor',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
-                        ),
-                      ),
-                      pw.Container(
-                        width: is58mm ? 52 : 68,
-                        alignment: pw.Alignment.centerRight,
-                        child: pw.Text(
-                          'Summa',
-                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
-                        ),
-                      ),
-                    ],
-                  ),
-                  pw.SizedBox(height: 2),
-                  pw.Divider(color: PdfColors.black, thickness: 0.8),
-                  pw.SizedBox(height: 2),
-
-                  // 7. Mahsulotlar ro'yxati (uzun nomlar keyingi qatorga o'tadi, narxi ostida, o'ngda miqdor va summa qat'iy saqlanadi)
-                  for (final item in sale.items) ...[
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(vertical: 2.0),
-                      child: pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              children: [
-                                pw.Text(
-                                  _cleanAscii(item.productName),
-                                  style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
-                                ),
-                                pw.Text(
-                                  '${money(item.unitPrice)} / birlik',
-                                  style: pw.TextStyle(font: font, fontSize: is58mm ? 5.8 : 7.0, color: PdfColors.grey900),
-                                ),
-                              ],
-                            ),
-                          ),
-                          pw.Container(
-                            width: is58mm ? 26 : 34,
-                            alignment: pw.Alignment.topRight,
-                            child: pw.Text(
-                              item.quantity.toStringAsFixed(1),
-                              style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
-                            ),
-                          ),
-                          pw.Container(
-                            width: is58mm ? 52 : 68,
-                            alignment: pw.Alignment.topRight,
-                            child: pw.Text(
-                              _cleanAscii(money(item.lineTotal)),
-                              style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  pw.SizedBox(height: 3),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
-                  pw.SizedBox(height: 3),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text('JAMI:',
-                          style: pw.TextStyle(
-                              font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
-                      pw.Text(_cleanAscii(money(sale.total)),
-                          style: pw.TextStyle(
-                              font: fontBold, fontSize: is58mm ? 9.5 : 11.5)),
-                    ],
-                  ),
-                  if (sale.currencyRate != null && sale.currencyRate! > 0) ...[
-                    pw.SizedBox(height: 1),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('USD (\$):',
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                        pw.Text(
-                            _cleanAscii(
-                                moneyUsd(sale.total / sale.currencyRate!)),
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                      ],
-                    ),
-                    pw.SizedBox(height: 1),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('Kurs (\$1 =):',
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 6.5 : 8)),
-                        pw.Text(_cleanAscii(money(sale.currencyRate!)),
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 6.5 : 8)),
-                      ],
-                    ),
-                  ],
-                  pw.SizedBox(height: 2),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text("To'landi:",
-                          style: pw.TextStyle(
-                              font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                      pw.Text(_cleanAscii(money(sale.paid)),
-                          style: pw.TextStyle(
-                              font: fontBold, fontSize: is58mm ? 7.5 : 9)),
-                    ],
-                  ),
-                  if (sale.debt > 0.005) ...[
-                    pw.SizedBox(height: 2),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('Qarz (Nasiya):',
-                            style: pw.TextStyle(
-                                font: fontBold,
-                                fontSize: is58mm ? 7.5 : 9,
-                                color: PdfColors.black)),
-                        pw.Text(_cleanAscii(money(sale.debt)),
-                            style: pw.TextStyle(
-                                font: fontBold,
-                                fontSize: is58mm ? 7.5 : 9,
-                                color: PdfColors.black)),
-                      ],
-                    ),
-                    if (sale.debtDueDate != null) ...[
-                      pw.SizedBox(height: 1),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('Nasiya qaytarish sanasi:',
-                              style: pw.TextStyle(
-                                  font: fontBold,
-                                  fontSize: is58mm ? 6.5 : 7.8,
-                                  color: PdfColors.black)),
-                          pw.Text(formatDate(sale.debtDueDate!),
-                              style: pw.TextStyle(
-                                  font: fontBold,
-                                  fontSize: is58mm ? 6.5 : 7.8,
-                                  color: PdfColors.black)),
-                        ],
-                      ),
-                    ],
-                  ],
-                  pw.SizedBox(height: 5),
-                  pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(
-                        vertical: 2.5, horizontal: 4),
-                    decoration: pw.BoxDecoration(
-                      border:
-                          pw.Border.all(color: PdfColors.black, width: 0.8),
-                      borderRadius:
-                          const pw.BorderRadius.all(pw.Radius.circular(3)),
-                    ),
-                    child: pw.Column(
-                      children: [
-                        pw.Text(
-                          _cleanAscii(
-                              'Qaytarish muddati: ${sale.returnDays} kun (${formatDate(sale.returnDeadline)} gacha)'),
-                          style: pw.TextStyle(
-                              font: fontBold, fontSize: is58mm ? 6.2 : 7.8),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                        pw.SizedBox(height: 1),
-                        pw.Text(
-                          _cleanAscii(
-                              '(Mahsulot butun va chek taqdim etilganda)'),
-                          style: pw.TextStyle(
-                              font: fontBold,
-                              fontSize: is58mm ? 5.5 : 6.5,
-                              color: PdfColors.black),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                        pw.SizedBox(height: 1),
-                        pw.Text(
-                          _cleanAscii(
-                              '(Kesilgan va ishlov berilgan mahsulotlar qaytarib olinmaydi)'),
-                          style: pw.TextStyle(
-                              font: fontBold,
-                              fontSize: is58mm ? 5.2 : 6.3,
-                              color: PdfColors.black),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  pw.Center(
-                    child: pw.BarcodeWidget(
-                      data: 'NTJ-CHEK-#${sale.id}-${sale.total.round()}UZS',
-                      barcode: pw.Barcode.qrCode(),
-                      color: PdfColors.black,
-                      width: is58mm ? 42 : 56,
-                      height: is58mm ? 42 : 56,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Text('Xaridingiz uchun tashakkur!',
-                      style:
-                          pw.TextStyle(font: fontBold, fontSize: is58mm ? 7 : 8.5),
-                      textAlign: pw.TextAlign.center),
-                  // Kesish pichog'i uchun bo'sh joy
-                  pw.SizedBox(height: 20 * PdfPageFormat.mm),
-                ],
-              ),
-            );
-          },
-        ),
+      // Xprinter XP-80 va 80mm qog'oz uchun standart boshlang'ich format:
+      // Drayverda "New paper (78.0 x 296.9 mm)" o'rnatilgan bo'lsa, usePrinterSettings: true
+      // orqali Windows to'g'ridan-to'g'ri drayverning o'zidagi parametrlarni oladi.
+      final defaultRollFormat = PdfPageFormat(
+        (is58mm ? 48.0 : 78.0) * PdfPageFormat.mm,
+        double.infinity,
+        marginLeft: (is58mm ? 1.0 : 2.0) * PdfPageFormat.mm,
+        marginRight: (is58mm ? 1.5 : 3.5) * PdfPageFormat.mm,
+        marginTop: 2.0 * PdfPageFormat.mm,
+        marginBottom: 2.0 * PdfPageFormat.mm,
       );
 
-      // Web muhitida Printing.layoutPdf orqali chiqariladi (listPrinters chaqirilmaydi!)
+      // Web muhitida Printing.layoutPdf orqali chiqariladi
       if (kIsWeb) {
         await Printing.layoutPdf(
-          onLayout: (format) async => doc.save(),
+          onLayout: (format) => _buildReceiptPdfBytes(sale, format),
+          format: defaultRollFormat,
+          usePrinterSettings: true,
           name: 'Chek_${sale.id}.pdf',
         );
         return;
@@ -1003,33 +1050,45 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       }
 
       if (targetPrinter != null) {
-        // Printerga to'g'ridan-to'g'ri (direct) yuborish — hech qanday dialogsiz va drayver oynasisiz!
+        // Printer drayver sozlamalarini (usePrinterSettings: true) olgan holda to'g'ridan-to'g'ri chop etish:
         try {
           final success = await Printing.directPrintPdf(
             printer: targetPrinter,
-            onLayout: (format) async => doc.save(),
+            usePrinterSettings: true,
+            format: defaultRollFormat,
+            dynamicLayout: true,
+            onLayout: (format) => _buildReceiptPdfBytes(sale, format),
             name: 'Chek_${sale.id}.pdf',
           );
           if (!success) {
             await Printing.layoutPdf(
-              onLayout: (format) async => doc.save(),
+              usePrinterSettings: true,
+              format: defaultRollFormat,
+              dynamicLayout: true,
+              onLayout: (format) => _buildReceiptPdfBytes(sale, format),
               name: 'Chek_${sale.id}.pdf',
             );
           }
         } catch (_) {
           await Printing.layoutPdf(
-            onLayout: (format) async => doc.save(),
+            usePrinterSettings: true,
+            format: defaultRollFormat,
+            dynamicLayout: true,
+            onLayout: (format) => _buildReceiptPdfBytes(sale, format),
             name: 'Chek_${sale.id}.pdf',
           );
         }
         if (mounted) {
           showMessage(
-              context, '✓ "${targetPrinter.name}" printeriga avtomatik chop etildi');
+              context, '✓ "${targetPrinter.name}" printeriga drayver sozlamalari asosida chop etildi');
         }
       } else {
-        // Agar birorta ham printer topilmasa, tizim dialogi
+        // Agar printer topilmasa, tizim dialogi
         await Printing.layoutPdf(
-          onLayout: (format) async => doc.save(),
+          usePrinterSettings: true,
+          format: defaultRollFormat,
+          dynamicLayout: true,
+          onLayout: (format) => _buildReceiptPdfBytes(sale, format),
           name: 'Chek_${sale.id}.pdf',
         );
       }
