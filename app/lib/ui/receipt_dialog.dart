@@ -164,6 +164,12 @@ int? extractSaleId(String code) {
   return int.tryParse(digits);
 }
 
+class ReceiptDialogTestHelper {
+  static Future<Uint8List> buildPdfBytes(SaleResult sale, PdfPageFormat driverFormat) {
+    return _ReceiptDialogState().buildPdfBytesForTest(sale, driverFormat);
+  }
+}
+
 class ReceiptDialog extends StatefulWidget {
   const ReceiptDialog({super.key, required this.sale});
 
@@ -561,6 +567,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 ''';
   }
 
+  Future<Uint8List> buildPdfBytesForTest(SaleResult sale, PdfPageFormat driverFormat) {
+    return _buildReceiptPdfBytes(sale, driverFormat);
+  }
+
   Future<Uint8List> _buildReceiptPdfBytes(
       SaleResult sale, PdfPageFormat driverFormat) async {
     final doc = pw.Document();
@@ -571,19 +581,48 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
 
     final is58mm = LocalPrinterStore.getSavedPaperWidth() <= 58;
 
-    // Standart 80mm kassa qog'ozi (Korzinka, Makro va yirik do'konlar standarti):
-    // Qog'oz ruloni = 80.0 mm.
-    // Chapdan 4.0 mm va o'ngdan 4.0 mm simmetrik hoshiya tashlanadi.
-    // O'rtadagi faol chek kengligi = 72.0 mm (XP-80 ning fizik bosish kallagi).
-    // Natijada chek 80mm qog'ozning qoq o'rtasida chiroyli va tekis bo'lib chiqadi!
-    final double targetPaperWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
-    final double effMarginLeft = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
-    final double effMarginRight = (is58mm ? 2.0 : 4.0) * PdfPageFormat.mm;
+    final rawWidth = driverFormat.width;
+    final rawAvailable = driverFormat.availableWidth;
+
+    // 1. Qog'oz kengligini TO'G'RIDAN-TO'G'RI DRAYVERDAN olish:
+    // Xprinter XP-80 drayverida qog'oz o'lchami "New paper (78.0 mm x 296.9 mm)" yoki "80 mm" bo'ladi.
+    // Agar drayver haqiqiy POS o'lchamini (65mm dan 85mm gacha) qaytarsa, qat'iy drayvernikini olamiz!
+    final double targetPaperWidth;
+    if (rawWidth >= 65 * PdfPageFormat.mm && rawWidth <= 85 * PdfPageFormat.mm) {
+      targetPaperWidth = rawWidth; // Drayverdagi haqiqiy qog'oz kengligi (78.0mm yoki 80.0mm)
+    } else if (rawWidth >= 45 * PdfPageFormat.mm && rawWidth < 65 * PdfPageFormat.mm) {
+      targetPaperWidth = rawWidth; // 58mm printer drayveri
+    } else {
+      targetPaperWidth = (is58mm ? 58.0 : 78.0) * PdfPageFormat.mm;
+    }
+
+    // 2. Printerning haqiqiy fizik termal bosish kengligi (Printable Area):
+    // Xprinter XP-80 apparat termal bosish kallagi (printhead) = 72.0 mm (576 nuqta @ 203 DPI).
+    // Drayver bergan availableWidth 60mm dan 73mm gacha bo'lsa, drayverning o'z printable kengligidan foydalanamiz:
+    final double targetPrintableWidth;
+    if (rawAvailable >= 60 * PdfPageFormat.mm && rawAvailable <= 72.5 * PdfPageFormat.mm) {
+      targetPrintableWidth = rawAvailable;
+    } else {
+      targetPrintableWidth = (is58mm ? 48.0 : 70.0) * PdfPageFormat.mm;
+    }
+
+    // 3. Simmetrik markazlashtirish (Korzinka va zamonaviy supermarketlar standarti):
+    // Qog'oz bilan bosish maydoni orasidagi farq chap va o'ng tomonga teng (50/50) taqsimlanadi.
+    // Masalan 78mm da: chapdan 3mm, o'rtada 72mm chek, o'ngdan 3mm.
+    // 80mm da: chapdan 4mm, o'rtada 72mm chek, o'ngdan 4mm.
+    // Chek qog'ozning qoq o'rtasida simmetrik, toza va professional bo'lib chiqadi!
+    final double remainingMargin = targetPaperWidth - targetPrintableWidth;
+    final double sideMargin = remainingMargin > 0
+        ? remainingMargin / 2.0
+        : (is58mm ? 1.0 : 2.0) * PdfPageFormat.mm;
+
+    final double effMarginLeft = sideMargin;
+    final double effMarginRight = sideMargin;
     final double effMarginTop = 2.0 * PdfPageFormat.mm;
     final double effMarginBottom = 2.0 * PdfPageFormat.mm;
 
-    // Faol kontent kengligi: 80mm da 72.0 mm, 58mm da 54.0 mm
-    final double maxContentWidth = (is58mm ? 54.0 : 72.0) * PdfPageFormat.mm;
+    // Faol kontent kengligi: drayverning printable kengligi bo'yicha
+    final double maxContentWidth = targetPrintableWidth;
 
     final String paymentLabel;
     final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
