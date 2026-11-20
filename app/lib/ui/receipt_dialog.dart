@@ -564,41 +564,24 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
   Future<Uint8List> _buildReceiptPdfBytes(
       SaleResult sale, PdfPageFormat driverFormat) async {
     final doc = pw.Document();
-    final font = pw.Font.courierBold();
-    final fontBold = pw.Font.courierBold();
+    // HelveticaBold — qalin, to'q qora va serifsiz sans-serif shrift:
+    // Termal printerlarda (203 DPI) har bir harf chizig'i 2-3 ta termal nuqtani qamrab olib,
+    // yozuvlarni kulrang/hira emas, maksimal qora va tiniq (chuqur kontrastli) bosib chiqaradi.
+    final font = pw.Font.helveticaBold();
+    final fontBold = pw.Font.helveticaBold();
 
-    final rawWidth = driverFormat.width;
-    final is58mm = LocalPrinterStore.getSavedPaperWidth() <= 58 ||
-        (rawWidth > 0 && rawWidth <= 60 * PdfPageFormat.mm);
+    final is58mm = LocalPrinterStore.getSavedPaperWidth() <= 58;
 
-    // Drayverdan kelgan qog'oz kengligi (Xprinter XP-80 da ko'pincha 78.0mm yoki 80.0mm):
-    // Agar drayver standart A4 (210mm) yoki kutilmagan katta qiymat bersa, 78.0 mm qilib olamiz.
-    final double targetPaperWidth;
-    if (rawWidth >= 65 * PdfPageFormat.mm && rawWidth <= 85 * PdfPageFormat.mm) {
-      targetPaperWidth = rawWidth;
-    } else if (rawWidth > 40 * PdfPageFormat.mm && rawWidth <= 60 * PdfPageFormat.mm) {
-      targetPaperWidth = rawWidth;
-    } else {
-      targetPaperWidth = (is58mm ? 48.0 : 78.0) * PdfPageFormat.mm;
-    }
-
-    // Chap va o'ng xavfsiz hoshiyalar (kamida 2.0mm chapdan, 3.5mm o'ngdan):
-    // Bu qog'oz sal surilgan taqdirda ham o'ng chetdagi narx va yozuvlar kesilishini 100% yo'qotadi!
-    final double effMarginLeft = math.max(
-      driverFormat.marginLeft > 0 ? driverFormat.marginLeft : 0.0,
-      (is58mm ? 1.0 : 2.0) * PdfPageFormat.mm,
-    );
-    final double effMarginRight = math.max(
-      driverFormat.marginRight > 0 ? driverFormat.marginRight : 0.0,
-      (is58mm ? 1.5 : 3.5) * PdfPageFormat.mm,
-    );
+    // Xprinter XP-80 termal bosish kallagi (printhead) kengligi = qat'iy 72.0 mm (576 dots @ 203 DPI).
+    // Foydalanuvchi talabiga ko'ra kenglik aynan 72.0 mm ga sozlandi:
+    final double targetPaperWidth = (is58mm ? 48.0 : 72.0) * PdfPageFormat.mm;
+    final double effMarginLeft = (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm;
+    final double effMarginRight = (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm;
     final double effMarginTop = 2.0 * PdfPageFormat.mm;
     final double effMarginBottom = 2.0 * PdfPageFormat.mm;
 
-    // Xprinter XP-80 termal bosish kallagi (printhead) maydoni ichida cheklangan foydali kenglik:
-    // 80mm printerlarda apparat bosish kengligi maksimum 72.0 mm (576 dots).
-    // Shu sababli ichki kontent kengligi hech qachon 67.0 mm dan oshmaydi.
-    final double maxContentWidth = (is58mm ? 44.0 : 67.0) * PdfPageFormat.mm;
+    // 72mm kenglikdan 2mm hoshiya ayrilganda kontent to'liq 70.0 mm bo'ladi
+    final double maxContentWidth = (is58mm ? 46.4 : 70.0) * PdfPageFormat.mm;
 
     final String paymentLabel;
     final pm = (sale.paymentMethod ?? 'cash').toLowerCase();
@@ -612,10 +595,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       paymentLabel = 'Naqd';
     }
 
-    final double fontSizeBase = is58mm ? 6.5 : 7.8;
-    final double fontSizeHeader = is58mm ? 8.5 : 10.5;
+    final double fontSizeBase = is58mm ? 6.5 : 8.0;
+    final double fontSizeHeader = is58mm ? 8.5 : 11.0;
     final double colQtyWidth = is58mm ? 24 : 28;
-    final double colSumWidth = is58mm ? 56 : 78;
+    final double colSumWidth = is58mm ? 56 : 74;
 
     doc.addPage(
       pw.Page(
@@ -779,7 +762,7 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                                 style: pw.TextStyle(
                                   font: font,
                                   fontSize: is58mm ? 5.6 : 6.8,
-                                  color: PdfColors.grey900,
+                                  color: PdfColors.black,
                                 ),
                               ),
                             ],
@@ -982,14 +965,12 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         }
       }
 
-      // Xprinter XP-80 va 80mm qog'oz uchun standart boshlang'ich format:
-      // Drayverda "New paper (78.0 x 296.9 mm)" o'rnatilgan bo'lsa, usePrinterSettings: true
-      // orqali Windows to'g'ridan-to'g'ri drayverning o'zidagi parametrlarni oladi.
+      // Xprinter XP-80 va 80mm qog'oz uchun standart 72.0 mm format (576 dots @ 203 DPI):
       final defaultRollFormat = PdfPageFormat(
-        (is58mm ? 48.0 : 78.0) * PdfPageFormat.mm,
+        (is58mm ? 48.0 : 72.0) * PdfPageFormat.mm,
         double.infinity,
-        marginLeft: (is58mm ? 1.0 : 2.0) * PdfPageFormat.mm,
-        marginRight: (is58mm ? 1.5 : 3.5) * PdfPageFormat.mm,
+        marginLeft: (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm,
+        marginRight: (is58mm ? 0.8 : 1.0) * PdfPageFormat.mm,
         marginTop: 2.0 * PdfPageFormat.mm,
         marginBottom: 2.0 * PdfPageFormat.mm,
       );
