@@ -587,10 +587,13 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
       final font = pw.Font.courierBold();
       final fontBold = pw.Font.courierBold();
 
-      final pdfPageWidth = (is58mm ? 58.0 : 80.0) * PdfPageFormat.mm;
-      // 80 mm qog'ozda 2 yonida aynan 3 mm joy qolishi uchun:
-      final marginLeft = (is58mm ? 2.0 : 3.0) * PdfPageFormat.mm;
-      final marginRight = (is58mm ? 2.0 : 3.0) * PdfPageFormat.mm;
+      // Xprinter XP-80 (80mm) va 58mm termal printerlar uchun qat'iy fizik bosish maydoni (Printable Area):
+      // Xprinter XP-80 da termal bosish kallagi (printhead) kengligi = 72.0 mm (576 dots @ 203 DPI).
+      // 58mm printerlarda = 48.0 mm (384 dots @ 203 DPI).
+      // Kenglik 72.0 mm dan oshmasligi o'ng tomondagi narx va summalarning kesilib qolishini 100% yo'qotadi!
+      final pdfPageWidth = (is58mm ? 48.0 : 72.0) * PdfPageFormat.mm;
+      final marginLeft = (is58mm ? 1.0 : 1.5) * PdfPageFormat.mm;
+      final marginRight = (is58mm ? 1.0 : 1.5) * PdfPageFormat.mm;
       final marginTop = 2.0 * PdfPageFormat.mm;
       final marginBottom = 2.0 * PdfPageFormat.mm;
 
@@ -620,32 +623,56 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
             return pw.Container(
               width: double.infinity,
               alignment: pw.Alignment.topCenter,
-              padding: pw.EdgeInsets.zero,
               child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 mainAxisSize: pw.MainAxisSize.min,
                 children: [
+                  // 1. NTJ Logotipi
                   pw.Center(
                     child: pw.Image(
                       pw.MemoryImage(ReceiptLogoData.bytesWhite),
-                      width: is58mm ? 75 : 100,
+                      width: is58mm ? 70 : 92,
                       fit: pw.BoxFit.contain,
                     ),
                   ),
                   pw.SizedBox(height: 3),
+
+                  // 2. NAMUNA TOSH JILO nomi
+                  pw.Text(
+                    'NAMUNA TOSH JILO',
+                    style: pw.TextStyle(
+                      font: fontBold,
+                      fontSize: is58mm ? 8.5 : 10.5,
+                      color: PdfColors.black,
+                    ),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.SizedBox(height: 1),
+
+                  // 3. Korxona yo'nalishi, manzili va telefon raqamlari
+                  pw.Text(
+                    _cleanAscii(CompanyInfo.businessType),
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: is58mm ? 6.0 : 7.2,
+                      color: PdfColors.black,
+                    ),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.SizedBox(height: 1),
                   pw.Text(
                     _cleanAscii('Manzil: ${CompanyInfo.address}'),
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.2 : 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
                   pw.Text(
                     _cleanAscii('Tel: ${CompanyInfo.phonesInline}'),
-                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.5 : 8),
+                    style: pw.TextStyle(font: font, fontSize: is58mm ? 6.2 : 7.5),
                     textAlign: pw.TextAlign.center,
                   ),
-                  pw.SizedBox(height: 4),
-                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
                   pw.SizedBox(height: 3),
+                  pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1.0),
+                  pw.SizedBox(height: 2),
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
@@ -693,63 +720,78 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                   pw.SizedBox(height: 4),
                   pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
                   pw.SizedBox(height: 3),
-                  // Mahsulotlar ro'yxati
+                  // 6. Mahsulotlar jadvali sarlavhasi
                   pw.Row(
                     children: [
                       pw.Expanded(
-                        flex: 5,
-                        child: pw.Text('Nomi',
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 7 : 8.5)),
+                        child: pw.Text(
+                          'Mahsulot',
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
+                        ),
                       ),
-                      pw.Expanded(
-                        flex: 2,
-                        child: pw.Text('Miqdor',
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 7 : 8.5)),
+                      pw.Container(
+                        width: is58mm ? 26 : 34,
+                        alignment: pw.Alignment.centerRight,
+                        child: pw.Text(
+                          'Miqdor',
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
+                        ),
                       ),
-                      pw.Expanded(
-                        flex: 3,
-                        child: pw.Text('Summa',
-                            textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(
-                                font: fontBold, fontSize: is58mm ? 7 : 8.5)),
+                      pw.Container(
+                        width: is58mm ? 52 : 68,
+                        alignment: pw.Alignment.centerRight,
+                        child: pw.Text(
+                          'Summa',
+                          style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
+                        ),
                       ),
                     ],
                   ),
-                  pw.SizedBox(height: 3),
+                  pw.SizedBox(height: 2),
+                  pw.Divider(color: PdfColors.black, thickness: 0.8),
+                  pw.SizedBox(height: 2),
+
+                  // 7. Mahsulotlar ro'yxati (uzun nomlar keyingi qatorga o'tadi, narxi ostida, o'ngda miqdor va summa qat'iy saqlanadi)
                   for (final item in sale.items) ...[
-                    pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Expanded(
-                          flex: 5,
-                          child: pw.Text(_cleanAscii(item.productName),
-                              style: pw.TextStyle(
-                                  font: font, fontSize: is58mm ? 6.8 : 8)),
-                        ),
-                        pw.Expanded(
-                          flex: 2,
-                          child: pw.Text(
-                            item.quantity.toStringAsFixed(1),
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                                font: font, fontSize: is58mm ? 6.8 : 8),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 2.0),
+                      child: pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Expanded(
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text(
+                                  _cleanAscii(item.productName),
+                                  style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
+                                ),
+                                pw.Text(
+                                  '${money(item.unitPrice)} / birlik',
+                                  style: pw.TextStyle(font: font, fontSize: is58mm ? 5.8 : 7.0, color: PdfColors.grey900),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        pw.Expanded(
-                          flex: 3,
-                          child: pw.Text(
-                            _cleanAscii(money(item.lineTotal)),
-                            textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(
-                                font: font, fontSize: is58mm ? 6.8 : 8),
+                          pw.Container(
+                            width: is58mm ? 26 : 34,
+                            alignment: pw.Alignment.topRight,
+                            child: pw.Text(
+                              item.quantity.toStringAsFixed(1),
+                              style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
+                            ),
                           ),
-                        ),
-                      ],
+                          pw.Container(
+                            width: is58mm ? 52 : 68,
+                            alignment: pw.Alignment.topRight,
+                            child: pw.Text(
+                              _cleanAscii(money(item.lineTotal)),
+                              style: pw.TextStyle(font: fontBold, fontSize: is58mm ? 6.8 : 8.2),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    pw.SizedBox(height: 2),
                   ],
                   pw.SizedBox(height: 3),
                   pw.Divider(borderStyle: pw.BorderStyle.dashed, color: PdfColors.black, thickness: 1),
@@ -916,40 +958,64 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         return;
       }
 
-      // Windows desktop muhiti uchun:
+      // Windows desktop muhiti uchun printerni aqlli avtomatik qidirish va eslab qolish:
       final savedUrl = LocalPrinterStore.getSavedPrinterUrl();
+      final savedName = LocalPrinterStore.getSavedPrinterName();
       Printer? targetPrinter;
 
-      if (!forcePickPrinter && savedUrl != null && savedUrl.isNotEmpty) {
-        try {
-          final printers = await Printing.listPrinters();
-          targetPrinter = printers.where((p) => p.url == savedUrl).firstOrNull;
-        } catch (_) {}
-      }
+      List<Printer> printers = [];
+      try {
+        printers = await Printing.listPrinters();
+      } catch (_) {}
 
-      // Agar majburiy almashtirish so'ralsa
-      if (forcePickPrinter) {
-        if (!mounted) return;
-        targetPrinter = await _showPrinterPickerDialog(context);
-        if (targetPrinter == null && mounted) {
-          // Foydalanuvchi tizim dialogini tanlagan bo'lsa
-          await Printing.layoutPdf(
-            onLayout: (format) async => doc.save(),
-            name: 'Chek_${sale.id}.pdf',
-          );
-          return;
+      if (!forcePickPrinter && printers.isNotEmpty) {
+        // 1. Avval saqlangan URL bo'yicha:
+        if (savedUrl != null && savedUrl.isNotEmpty) {
+          targetPrinter = printers.where((p) => p.url == savedUrl).firstOrNull;
+        }
+        // 2. Agar USB port qayta ulanganda URL o'zgarsa, saqlangan NOMI (masalan "Xprinter XP-80") bo'yicha:
+        if (targetPrinter == null && savedName != null && savedName.isNotEmpty) {
+          targetPrinter = printers.where((p) => p.name.trim().toLowerCase() == savedName.trim().toLowerCase()).firstOrNull;
+        }
+        // 3. Tizimda Xprinter yoki XP-80 deb nomlangan termal printerni avtomatik aniqlash:
+        targetPrinter ??= printers.where((p) {
+          final n = p.name.toLowerCase();
+          return n.contains('xprinter') ||
+              n.contains('xp-80') ||
+              n.contains('xp80') ||
+              n.contains('pos-80') ||
+              n.contains('thermal');
+        }).firstOrNull;
+        // 4. Tizimdagi standart (default) printer:
+        targetPrinter ??= printers.where((p) => p.isDefault).firstOrNull;
+
+        // Topilgan printerni doimiy xotiraga saqlab qo'yamiz (har safar so'ramasligi uchun):
+        if (targetPrinter != null) {
+          LocalPrinterStore.savePrinter(targetPrinter.url, targetPrinter.name, 80);
         }
       }
 
+      // Agar foydalanuvchi printerni qo'lda almashtirmoqchi bo'lsa (sozlash tugmasi bosilganda):
+      if (forcePickPrinter) {
+        if (!mounted) return;
+        targetPrinter = await _showPrinterPickerDialog(context);
+        if (targetPrinter == null) return;
+      }
+
       if (targetPrinter != null) {
-        // Printerga to'g'ridan-to'g'ri (direct) yuborish — Windows print preview drayveri siqishidan
-        // o'tmasdan, maksimal aniqlikda (sharp va to'q qora) chiqishini ta'minlaydi
+        // Printerga to'g'ridan-to'g'ri (direct) yuborish — hech qanday dialogsiz va drayver oynasisiz!
         try {
-          await Printing.directPrintPdf(
+          final success = await Printing.directPrintPdf(
             printer: targetPrinter,
             onLayout: (format) async => doc.save(),
             name: 'Chek_${sale.id}.pdf',
           );
+          if (!success) {
+            await Printing.layoutPdf(
+              onLayout: (format) async => doc.save(),
+              name: 'Chek_${sale.id}.pdf',
+            );
+          }
         } catch (_) {
           await Printing.layoutPdf(
             onLayout: (format) async => doc.save(),
@@ -958,26 +1024,10 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
         }
         if (mounted) {
           showMessage(
-              context, '✓ "${targetPrinter.name}" printeriga yuborildi');
+              context, '✓ "${targetPrinter.name}" printeriga avtomatik chop etildi');
         }
       } else {
-        // Birinchi marta tizimda printerlar bo'lsa, tanlashni taklif qilamiz
-        final printers = await Printing.listPrinters();
-        if (printers.isNotEmpty && savedUrl == null) {
-          if (!mounted) return;
-          final chosen = await _showPrinterPickerDialog(context);
-          if (chosen != null) {
-            await Printing.layoutPdf(
-              onLayout: (format) async => doc.save(),
-              name: 'Chek_${sale.id}.pdf',
-            );
-            if (mounted) {
-              showMessage(context, '✓ "${chosen.name}" printeriga yuborildi');
-            }
-            return;
-          }
-        }
-
+        // Agar birorta ham printer topilmasa, tizim dialogi
         await Printing.layoutPdf(
           onLayout: (format) async => doc.save(),
           name: 'Chek_${sale.id}.pdf',
@@ -1412,6 +1462,20 @@ class _ReceiptDialogState extends State<ReceiptDialog> {
                               ),
                             ),
                             const SizedBox(height: 6),
+                            Center(
+                              child: Text(
+                                CompanyInfo.name,
+                                style: const TextStyle(
+                                  fontFamily: 'Courier',
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                  letterSpacing: 0.3,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
                             Center(
                               child: Text(
                                 'Manzil: ${CompanyInfo.address}',
